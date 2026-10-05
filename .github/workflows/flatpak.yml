@@ -16,10 +16,10 @@ jobs:
   flatpak:
     name: Build bundle
     runs-on: ubuntu-24.04
-    # The image ships flatpak-builder with the GNOME 50 Platform and SDK
+    # The image ships flatpak-builder with the GNOME 51 Platform and SDK
     # preinstalled, matching runtime-version in the manifest.
     container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
       options: --privileged
 
     steps:

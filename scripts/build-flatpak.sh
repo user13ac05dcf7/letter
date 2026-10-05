@@ -28,7 +28,7 @@ if ! command -v flatpak-builder >/dev/null; then
 fi
 
 flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install -y --user flathub org.gnome.Platform//50 org.gnome.Sdk//50
+flatpak install -y --user flathub org.gnome.Platform//51 org.gnome.Sdk//51
 
 echo "Building $manifest (first run downloads EDS/GOA and can take a while)…"
 # dir source copies the tree; leftover Meson/flatpak dirs break the letter module.
