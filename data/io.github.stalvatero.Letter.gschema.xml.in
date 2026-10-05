@@ -22,7 +22,7 @@
       <description>Whether the folder sidebar is visible on wide layouts.</description>
     </key>
     <key name="show-people" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>Show people</summary>
       <description>Whether the folder pane lists the people you exchange mail with instead of folders.</description>
     </key>

@@ -62,7 +62,7 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 
 ### People
 
-- The people button in the folder pane switches it from folders to the people you exchange mail with, sorted by your most recent exchange, with unread badges
+- The folder pane lists the people you exchange mail with, sorted by your most recent exchange, with unread badges; the people button in its header switches to folders and back
 - Pick a person to see their mail to you and yours to them as conversations, whichever folder it sits in, including Sent and archives; mail on which they are only on Cc belongs to its sender
 - **All People** at the top shows all your mail at once
 - Filter the list by name or address; right-click a person to write to them or copy their address
