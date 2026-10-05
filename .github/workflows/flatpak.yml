@@ -1,0 +1,36 @@
+name: Flatpak
+
+on:
+  # Any branch, so feature branches of this fork get a bundle to try.
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flatpak-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flatpak:
+    name: Build bundle
+    runs-on: ubuntu-24.04
+    # The image ships flatpak-builder with the GNOME 50 Platform and SDK
+    # preinstalled, matching runtime-version in the manifest.
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # The first run builds EDS, Evolution and evolution-ews from source and
+      # takes a while; later runs restore those modules from the cache.
+      - name: Build
+        uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8
+        with:
+          manifest-path: io.github.stalvatero.Letter.yml
+          bundle: Letter-x86_64.flatpak
+          cache-key: flatpak-builder-${{ hashFiles('io.github.stalvatero.Letter.yml', 'patches/**', 'flatpak/**') }}
