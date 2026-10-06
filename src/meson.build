@@ -48,6 +48,7 @@ mail_sources = files(
   'search-field.vala',
   'contact-store.vala',
   'contact-picker.vala',
+  'people.vala',
   'calendar-store.vala',
   'invitation-bar.vala',
   'preferences-dialog.vala',
