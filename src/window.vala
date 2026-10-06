@@ -989,7 +989,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         GenericArray<Message> messages,
         HashTable<string, uint8>? known_uids = null,
         bool persist_disk = true,
-        bool accept_empty = false
+        bool accept_empty = false,
+        bool accept_server_shrink = false
     ) {
         var key = message_cache_key (account, folder);
         var previous = this.message_cache.get (key);
@@ -1004,24 +1005,42 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* Always drop locally-hidden (archived/moved pending flush) so Camel
          * summaries and disk header caches cannot resurrect them. */
         var visible = visible_messages (account, folder, messages);
-        /* Scale-based shrink guard (any folder that already has a large Letter
-         * list / disk index / high-water). Kind/name do not gate this. */
+        /* Scale-based shrink guard. accept_server_shrink is a finished Gmail
+         * Important refresh: that shorter list is the label, so it replaces
+         * the cache. Every other large folder still keeps the prior list. */
         if (previous != null
-            && previous.length >= MailSession.HEADER_LIST_LARGE
-            && visible.length + LARGE_HEADER_GAP < previous.length) {
-            var water = header_high_water (account, folder);
-            if (water == 0 || visible.length + LARGE_HEADER_GAP < water) {
-                var kept = previous.length;
-                visible = merge_header_lists_keep (previous, visible);
-                Utils.sync_log (
-                    "RAM header cache skip shrink “%s” (keep %u, reject %u)".printf (
-                        folder.name,
-                        kept,
-                        messages.length
-                    )
-                );
-            }
+            && HeaderListPolicy.ram_cache_refuses_shrink (
+                previous.length,
+                visible.length,
+                header_high_water (account, folder),
+                MailSession.HEADER_LIST_LARGE,
+                (uint) LARGE_HEADER_GAP,
+                accept_server_shrink
+            )) {
+            var kept = previous.length;
+            visible = merge_header_lists_keep (previous, visible);
+            Utils.sync_log (
+                "RAM header cache skip shrink “%s” (keep %u, reject %u)".printf (
+                    folder.name,
+                    kept,
+                    messages.length
+                )
+            );
+        } else if (accept_server_shrink
+            && previous != null
+            && visible.length < previous.length) {
+            Utils.sync_log (
+                "header cache accept shrink “%s” (%u ← %u)".printf (
+                    folder.name,
+                    visible.length,
+                    previous.length
+                )
+            );
         }
+        var before_retired = visible.length;
+        if (this.mail_session != null)
+            visible = this.mail_session.without_retired_moves (account, folder, visible);
+        var retired_drop = visible.length < before_retired;
         /* Tip-merge / local-archive appends land at the end; keep newest-first
          * so Archive (and every large list) is not scrolled “alla rinfusa”. */
         sort_messages_by_date (visible);
@@ -1051,36 +1070,39 @@ public class Mail.Window : Adw.ApplicationWindow {
             notify_new_arrivals (account, folder, visible, known);
         if (accept_empty && visible.length == 0)
             clear_header_high_water (account, folder);
-        if (persist_disk) {
-            if (accept_empty && visible.length == 0) {
-                /* Write now. A debounced save of the previous list, or a
-                 * click before the 1.5s timer, would put the old index back. */
-                persist_empty_header_list_now (account, folder);
+        if (persist_disk && accept_empty && visible.length == 0) {
+            /* Write now. A debounced save of the previous list, or a
+             * click before the 1.5s timer, would put the old index back. */
+            persist_empty_header_list_now (account, folder);
+        } else if (retired_drop || (persist_disk && accept_server_shrink)) {
+            /* Retired move ids, and a finished Gmail Important refresh, are
+             * real removals. Write them now so the next open cannot put the
+             * old rows back. */
+            persist_trusted_header_list_now (account, folder, visible);
+        } else if (persist_disk) {
+            /* Never overwrite a larger on-disk header list with a Camel/Graph
+             * partial — that dropped Archive from ~6k back to ~2.7k across
+             * restarts while body cache (GiB) still looked full. */
+            var prev_n = previous != null ? previous.length : 0;
+            var disk_n = disk_header_list_count (account, folder);
+            var floor = uint.max (prev_n, disk_n);
+            var water = header_high_water (account, folder);
+            var catastrophic = floor >= MailSession.HEADER_LIST_LARGE
+                && visible.length + LARGE_HEADER_GAP < floor
+                && (water == 0 || visible.length + LARGE_HEADER_GAP < water);
+            if (catastrophic) {
+                Utils.sync_log (
+                    "disk header cache skip shrink “%s” (%u ← floor %u ram %u disk %u, watermark %u)".printf (
+                        folder.name,
+                        visible.length,
+                        floor,
+                        prev_n,
+                        disk_n,
+                        water
+                    )
+                );
             } else {
-                /* Never overwrite a larger on-disk header list with a Camel/Graph
-                 * partial — that dropped Archive from ~6k back to ~2.7k across
-                 * restarts while body cache (GiB) still looked full. */
-                var prev_n = previous != null ? previous.length : 0;
-                var disk_n = disk_header_list_count (account, folder);
-                var floor = uint.max (prev_n, disk_n);
-                var water = header_high_water (account, folder);
-                var catastrophic = floor >= MailSession.HEADER_LIST_LARGE
-                    && visible.length + LARGE_HEADER_GAP < floor
-                    && (water == 0 || visible.length + LARGE_HEADER_GAP < water);
-                if (catastrophic) {
-                    Utils.sync_log (
-                        "disk header cache skip shrink “%s” (%u ← floor %u ram %u disk %u, watermark %u)".printf (
-                            folder.name,
-                            visible.length,
-                            floor,
-                            prev_n,
-                            disk_n,
-                            water
-                        )
-                    );
-                } else {
-                    queue_header_list_cache_save (account, folder, visible);
-                }
+                queue_header_list_cache_save (account, folder, visible);
             }
         }
         enforce_message_cache_ceiling ();
@@ -1220,6 +1242,30 @@ public class Mail.Window : Adw.ApplicationWindow {
             folder.name,
             new GenericArray<Message> ()
         );
+    }
+
+    /* Finished Gmail Important refresh. Cancels a pending save of the longer
+     * list and lowers the high-water to the list just accepted. */
+    private void persist_trusted_header_list_now (
+        Account account,
+        Folder folder,
+        GenericArray<Message> messages
+    ) {
+        var key = message_cache_key (account, folder);
+        var existing = this.header_cache_save_sources.get (key);
+        if (existing != 0) {
+            Source.remove (existing);
+            this.header_cache_save_sources.remove (key);
+        }
+        save_header_list_cache (
+            account.source_uid ?? account.uid,
+            folder.full_name,
+            folder.name,
+            messages,
+            true
+        );
+        this.header_count_high_water.set (key, messages.length);
+        save_header_high_water (account, folder, messages.length);
     }
 
 
@@ -1427,7 +1473,21 @@ public class Mail.Window : Adw.ApplicationWindow {
                 && refresh_timeout_seconds != MailSession.REFRESH_INFO_SKIP
                 && !this.mail_session.last_list_refresh_incomplete
                 && !this.mail_session.last_list_refresh_failed;
-            store_folder_messages (account, folder, messages, known, true, accept_empty);
+            var accept_important = messages.length > 0
+                && HeaderListPolicy.trust_gmail_important_refresh (
+                    account.kind,
+                    folder.kind,
+                    this.mail_session.last_list_refresh_completed
+                );
+            store_folder_messages (
+                account,
+                folder,
+                messages,
+                known,
+                true,
+                accept_empty,
+                accept_important
+            );
             Utils.sync_log ("align “%s” ok %s → %u headers".printf (
                 folder.name,
                 Utils.sync_ms (t0),
@@ -5286,7 +5346,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         string account_uid,
         string folder_full_name,
         string folder_name,
-        GenericArray<Message> messages
+        GenericArray<Message> messages,
+        bool accept_shrink = false
     ) {
         var path = MailSession.header_list_cache_file (account_uid, folder_full_name);
         uint write_n = 0;
@@ -5309,8 +5370,9 @@ public class Mail.Window : Adw.ApplicationWindow {
             } catch (Error e) {
             }
             /* Never replace a larger index with a non-empty partial.
-             * write_n == 0 is allowed (Empty folder / explicit clear). */
-            if (disk_n > 0 && write_n > 0 && write_n + 500 < disk_n) {
+             * write_n == 0 is allowed (Empty folder / explicit clear).
+             * accept_shrink is a finished Gmail Important refresh. */
+            if (HeaderListPolicy.disk_cache_refuses_shrink (disk_n, write_n, accept_shrink)) {
                 Utils.sync_log (
                     "disk header cache refuse shrink “%s” (%u ← disk %u)".printf (
                         folder_name,
@@ -6154,17 +6216,13 @@ public class Mail.Window : Adw.ApplicationWindow {
             return;
 
         var row = new MessageRow ();
-        row.mark_read_clicked.connect (() => mark_row_read (row));
+        /* Methods, not lambdas. A closure capturing the row (and its gesture)
+         * would keep every discarded list row alive. */
+        row.mark_read_clicked.connect (mark_row_read);
         var click = new Gtk.GestureClick () {
             button = Gdk.BUTTON_SECONDARY,
         };
-        click.pressed.connect ((n, x, y) => {
-            if (!this.message_selection.is_selected (item.position))
-                this.message_selection.select_item (item.position, true);
-            var conversation = item.item as Conversation ?? row.conversation;
-            popup_message_menu (row, x, y, conversation, null);
-            click.set_state (Gtk.EventSequenceState.CLAIMED);
-        });
+        click.pressed.connect (on_message_secondary_pressed);
         row.add_controller (click);
         item.child = row;
     }
@@ -6184,7 +6242,25 @@ public class Mail.Window : Adw.ApplicationWindow {
     private void on_message_item_unbind (Object object) {
         var item = object as Gtk.ListItem;
         var row = item != null ? item.child as MessageRow : null;
-        row?.unbind ();
+        if (row != null) {
+            row.list_position = Gtk.INVALID_LIST_POSITION;
+            row.unbind ();
+        }
+    }
+
+    private void on_message_secondary_pressed (Gtk.GestureClick click, int n, double x, double y) {
+        unowned MessageRow? row = click.widget as MessageRow;
+        if (row == null)
+            return;
+        /* This call may recycle the row. The extra ref lasts until return. */
+        row.ref ();
+        var conversation = row.conversation;
+        var position = row.list_position;
+        click.set_state (Gtk.EventSequenceState.CLAIMED);
+        if (position != Gtk.INVALID_LIST_POSITION && !this.message_selection.is_selected (position))
+            this.message_selection.select_item (position, true);
+        popup_message_menu (row, x, y, conversation, null);
+        row.unref ();
     }
 
     private uint selected_count () {
@@ -6648,6 +6724,8 @@ public class Mail.Window : Adw.ApplicationWindow {
                     var syncing = e.message == _(
                         "This message is still syncing with the server. Try again in a moment."
                     );
+                    if (syncing && yield open_moved_copy (account, folder, message, cancellable))
+                        return;
                     var busy = this.camel_align_busy || this.folder_sync_active
                         || this.startup_sync_active || this.scheduled_sync_active;
                     if (syncing && busy && attempt + 1 < 8) {
@@ -6655,6 +6733,10 @@ public class Mail.Window : Adw.ApplicationWindow {
                         yield;
                         continue;
                     }
+                    if (syncing)
+                        e = new IOError.NOT_FOUND (
+                            _("This copy is no longer on the server.")
+                        );
                     throw e;
                 }
 
@@ -6696,6 +6778,108 @@ public class Mail.Window : Adw.ApplicationWindow {
             if (status_token != 0)
                 hide_sync_status (status_token);
         }
+    }
+
+    /* M365 moves change the item id. The optimistic Archive row keeps the
+     * Inbox id; Graph may later tip the new id without dropping the old one
+     * (large-folder shrink guard). Open the live twin by Message-ID. */
+    private async bool open_moved_copy (
+        Account account,
+        Folder folder,
+        Message ghost,
+        Cancellable cancellable
+    ) {
+        if (ghost.msgid_hash == 0 || this.mail_session == null)
+            return false;
+        var cache = this.message_cache.get (message_cache_key (account, folder));
+        if (cache == null)
+            return false;
+
+        Message? twin = null;
+        for (uint i = 0; i < cache.length; i++) {
+            var candidate = cache[i];
+            if (candidate.uid == null || candidate.uid.length == 0)
+                continue;
+            if (candidate.uid == ghost.uid)
+                continue;
+            if (candidate.msgid_hash != ghost.msgid_hash)
+                continue;
+            twin = candidate;
+            break;
+        }
+        if (twin == null)
+            return false;
+
+        MessageContent? content = null;
+        try {
+            content = yield this.mail_session.load_message (
+                account,
+                folder,
+                twin.uid,
+                cancellable
+            );
+            if (content != null && content.is_unready_shell () && !content.shell_confirmed)
+                content = null;
+        } catch (Error e) {
+            if (Utils.is_cancelled_error (e) || cancellable.is_cancelled ())
+                return false;
+            debug ("Moved copy “%s” uid=%s: %s", folder.name, twin.uid, e.message);
+            return false;
+        }
+        if (content == null || cancellable.is_cancelled () || this.open_message_uid != ghost.uid)
+            return false;
+
+        var want_flag = ghost.flagged;
+        var ghost_uid = ghost.uid;
+        this.mail_session.rekey_body (account, folder, ghost_uid, folder, twin.uid);
+        this.mail_session.retire_moved_uid (account, folder, ghost_uid);
+        remove_from_folder_cache (account, folder, ghost_uid);
+        remove_from_search_results (ghost_uid, folder.full_name);
+        if (folder.total > 0)
+            folder.total--;
+        refresh_folder_badge (folder);
+
+        if (this.open_conversation != null) {
+            this.open_conversation.remove_uid (ghost_uid, folder.full_name);
+            this.open_conversation.add_message (twin);
+            this.open_conversation.refresh ();
+            fill_thread_list (this.open_conversation, twin);
+        }
+
+        if (want_flag && !twin.flagged) {
+            twin.flagged = true;
+            var uids = new GenericArray<string> ();
+            uids.add (twin.uid);
+            this.mail_session.set_uids_flagged.begin (
+                account,
+                folder,
+                uids,
+                true,
+                (obj, res) => {
+                    try {
+                        this.mail_session.set_uids_flagged.end (res);
+                    } catch (Error e) {
+                        debug ("Could not copy bookmark to moved id: %s", e.message);
+                    }
+                }
+            );
+        }
+
+        var after = this.message_cache.get (message_cache_key (account, folder));
+        if (after != null)
+            persist_trusted_header_list_now (account, folder, after);
+
+        this.open_message = twin;
+        this.open_message_uid = twin.uid;
+        this.open_content = content;
+        this.message_reader.show_content (content, twin.outgoing);
+        update_message_actions ();
+        schedule_mark_seen (account, folder, twin);
+        prefetch_thread_bodies.begin (twin);
+        Utils.sync_log (
+            "open moved copy “%s” %s → %s".printf (folder.name, ghost_uid, twin.uid)
+        );
+        return true;
     }
 
     private async void prefetch_thread_bodies (Message opened) {
@@ -8283,17 +8467,21 @@ public class Mail.Window : Adw.ApplicationWindow {
         var message = item.message;
         var from = item.from;
         var uid = item.uid;
+        /* After a Graph flush the Message may already carry the new id. */
+        var current_uid = message.uid;
         var unseen = !message.seen;
 
         this.hidden_uids.remove (hide_key (account, from, uid));
+        if (this.mail_session != null)
+            this.mail_session.unretire_moved_uid (account, destination, uid);
+        this.mail_session.rekey_body (account, destination, current_uid, from, uid);
         Conversation.apply_folder (message, from, uid);
         message.folder_name = item.folder_name;
         message.outgoing = item.outgoing;
         message.local_only = item.local_only;
         if (item.folder_full_name != null)
             message.folder_full_name = item.folder_full_name;
-        this.mail_session.rekey_body (account, destination, message.uid, from, uid);
-        remove_from_folder_cache (account, destination, message.uid);
+        remove_from_folder_cache (account, destination, current_uid);
         add_to_folder_cache (account, from, message);
         from.total++;
         if (unseen)
@@ -9085,8 +9273,8 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void connect_folder_row (FolderRow row) {
-        /* Methods take the row as the sender. A lambda capturing the row it is
-         * connected to would keep the row alive after the folder list is rebuilt. */
+        /* The row is the signal sender. A lambda capturing it would keep the
+         * row alive after the folder list is rebuilt. */
         row.context_pressed.connect (popup_folder_menu);
         row.expander_toggled.connect (toggle_folder_collapsed);
     }
@@ -9217,35 +9405,47 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void connect_thread_context (ThreadRow row, Conversation conversation) {
+        row.context_conversation = conversation;
         var open_click = new Gtk.GestureClick () {
             button = Gdk.BUTTON_PRIMARY,
         };
         open_click.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
-        /* The handlers hold the row and its gesture unowned: the row owns both,
-         * and owned references would keep every thread row ever shown alive. */
-        unowned ThreadRow thread_row = row;
-        unowned Gtk.GestureClick click = open_click;
-        open_click.pressed.connect ((n) => {
-            if (n != 2)
-                return;
-            if (!thread_row.is_selected ()) {
-                this.thread_list.select_row (thread_row);
-                on_thread_row_selected (thread_row);
-            }
-            if (!thread_row.message.is_placeholder)
-                open_message_window.begin (thread_row.message);
-            click.set_state (Gtk.EventSequenceState.CLAIMED);
-        });
+        open_click.pressed.connect (on_thread_primary_pressed);
         row.add_controller (open_click);
-        row.context_pressed.connect ((x, y) => {
-            if (!thread_row.is_selected ())
-                this.thread_list.select_row (thread_row);
-            on_thread_row_selected (thread_row);
-            if (is_thread_bulk ())
-                popup_bulk_message_menu (thread_row, x, y);
-            else
-                popup_message_menu (thread_row, x, y, conversation, thread_row.message);
-        });
+        row.context_pressed.connect (on_thread_context_pressed);
+    }
+
+    private void on_thread_primary_pressed (Gtk.GestureClick click, int n, double x, double y) {
+        if (n != 2)
+            return;
+        unowned ThreadRow? row = click.widget as ThreadRow;
+        if (row == null)
+            return;
+        row.ref ();
+        var message = row.message;
+        var selected = row.is_selected ();
+        click.set_state (Gtk.EventSequenceState.CLAIMED);
+        if (!selected) {
+            this.thread_list.select_row (row);
+            on_thread_row_selected (row);
+        }
+        if (!message.is_placeholder)
+            open_message_window.begin (message);
+        row.unref ();
+    }
+
+    private void on_thread_context_pressed (ThreadRow row, double x, double y) {
+        row.ref ();
+        var message = row.message;
+        var conversation = row.context_conversation;
+        if (!row.is_selected ())
+            this.thread_list.select_row (row);
+        on_thread_row_selected (row);
+        if (is_thread_bulk ())
+            popup_bulk_message_menu (row, x, y);
+        else
+            popup_message_menu (row, x, y, conversation, message);
+        row.unref ();
     }
 
     private void popup_folder_menu (FolderRow row, double x, double y) {

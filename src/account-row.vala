@@ -62,8 +62,8 @@ public class Mail.FolderRow : Gtk.ListBoxRow {
         this.expander.add_css_class ("dim-label");
         var expander_click = new Gtk.GestureClick ();
         expander_click.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
-        /* Gesture handlers are methods, not lambdas: a closure holding the
-         * gesture and the row would keep every replaced row alive. */
+        /* A method, not a lambda. A closure that kept the gesture and the
+         * row would keep every replaced folder row alive. */
         expander_click.pressed.connect (on_expander_pressed);
         this.expander.add_controller (expander_click);
         box.append (this.expander);
@@ -185,6 +185,7 @@ public class Mail.MessageRow : Gtk.Box {
         this.unread_indicator.set_size_request (2, 28);
         var mark_click = new Gtk.GestureClick ();
         mark_click.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
+        /* A method, not a lambda, so the gesture does not keep the row alive. */
         mark_click.pressed.connect (on_mark_pressed);
         this.unread_indicator.add_controller (mark_click);
 
@@ -272,7 +273,6 @@ public class Mail.MessageRow : Gtk.Box {
         append (content);
     }
 
-    /* A method handler, not a lambda, so the gesture does not keep the row alive. */
     private void on_mark_pressed (Gtk.GestureClick click, int n_press, double x, double y) {
         if (this.conversation == null || this.conversation.seen)
             return;

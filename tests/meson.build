@@ -68,6 +68,26 @@ test_rows = executable(
     dependency('gobject-2.0'),
   ],
   include_directories: config_h_dir,
+  vala_args: [
+    '--pkg', 'gtk4',
+    '--pkg', 'libadwaita-1',
+  ],
 )
 
 test('rows', test_rows)
+
+test_important_cache = executable(
+  'test-important-cache',
+  [
+    meson.project_source_root() / 'src' / 'account.vala',
+    meson.project_source_root() / 'src' / 'header-list-policy.vala',
+    'test-important-cache.vala',
+  ],
+  dependencies: [
+    glib_dep,
+    dependency('gobject-2.0'),
+  ],
+  include_directories: config_h_dir,
+)
+
+test('important-cache', test_important_cache)

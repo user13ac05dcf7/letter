@@ -644,6 +644,8 @@ public class Mail.MailSession : Camel.Session {
     public bool last_list_refresh_failed { get; private set; }
     /* Camel UID summary shrank past INCOMPLETE_REFRESH_SHRINK_MAX this refresh. */
     public bool last_list_refresh_rewound { get; private set; }
+    /* refresh_info ran and returned. Skipped, timed out, and failed walks stay false. */
+    public bool last_list_refresh_completed { get; private set; }
 
     public async GenericArray<Message> list_messages (
         Account account,
@@ -666,10 +668,13 @@ public class Mail.MailSession : Camel.Session {
 
         this.last_list_refresh_failed = false;
         this.last_list_refresh_rewound = false;
+        this.last_list_refresh_completed = false;
         var refresh_completed = true;
+        var refresh_performed = false;
         if (refresh
             && refresh_timeout_seconds != REFRESH_INFO_SKIP
             && !folder_has_pending_flags (account, folder)) {
+            refresh_performed = true;
             refresh_completed = yield refresh_folder_info (
                 camel_folder,
                 high,
@@ -678,6 +683,12 @@ public class Mail.MailSession : Camel.Session {
             );
         }
         this.last_list_refresh_incomplete = refresh && !refresh_completed;
+        /* Pending flags and REFRESH_INFO_SKIP leave refresh_completed true
+         * without talking to the server. That must not count as finished. */
+        var server_refresh_finished = refresh_performed
+            && refresh_completed
+            && !this.last_list_refresh_failed;
+        this.last_list_refresh_completed = server_refresh_finished;
 
         if (cancellable != null && cancellable.is_cancelled ())
             throw new IOError.CANCELLED ("Cancelled");
@@ -714,34 +725,33 @@ public class Mail.MailSession : Camel.Session {
          *    the server). Empty Trash/Junk from Letter already cleared the
          *    list before this call; a finished walk that returns no UIDs
          *    does the same for any other folder.
-         * 3. Complete refresh + previous already large (≥ HEADER_LIST_LARGE)
-         *    + catastrophic shrink to a non-empty partial → keep prior list.
-         *    Online Archive and any big custom folder can "complete" with a
-         *    tiny local UID set; kind/name must not gate this.
-         * 4. Small folders + complete refresh → trust Camel (normal deletes).
+         * 3. Finished Gmail Important refresh → accept a shorter list. The
+         *    folder is a label; the rows that left it must not stay marked
+         *    important elsewhere. The walk must have run to completion.
+         *    A skipped, timed-out, or failed refresh does not qualify.
+         * 4. Every other complete refresh + previous already large
+         *    (≥ HEADER_LIST_LARGE) + catastrophic shrink to a non-empty
+         *    partial → keep prior list. Online Archive and any big custom
+         *    folder can "complete" with a tiny local UID set. Kind and name
+         *    do not open this door for them.
+         * 5. Small folders + complete refresh → trust Camel (normal deletes).
          *
          * Empty Trash/Junk *from Letter* clears RAM/disk/high-water first, so
          * previous is already empty before the next list_messages. */
         if (previous != null
             && previous.length > 0
             && messages.length + INCOMPLETE_REFRESH_SHRINK_MAX < previous.length) {
-            var keep = false;
             string reason;
-            if (refresh && !refresh_completed) {
-                keep = true;
-                reason = "incomplete refresh";
-            } else if (messages.length == 0 && refresh && refresh_completed) {
-                keep = false;
-                reason = "complete empty";
-            } else if (previous.length >= HEADER_LIST_LARGE) {
-                keep = true;
-                reason = refresh
-                    ? (refresh_completed ? "large-folder refuse shrink" : "incomplete refresh")
-                    : "large-folder local refuse shrink";
-            } else {
-                keep = false;
-                reason = "small-folder trust shrink";
-            }
+            var keep = HeaderListPolicy.keep_prior_on_shrink (
+                account.kind,
+                folder.kind,
+                previous.length,
+                messages.length,
+                refresh,
+                refresh_completed,
+                server_refresh_finished,
+                out reason
+            );
 
             if (keep) {
                 var kept = previous.length;
@@ -765,7 +775,9 @@ public class Mail.MailSession : Camel.Session {
                  * Inbox is skipped on every later launch. */
                 if (!refresh_completed)
                     this.last_list_refresh_incomplete = true;
-            } else if (reason == "complete empty" || reason == "small-folder trust shrink") {
+            } else if (reason == "complete empty"
+                || reason == "small-folder trust shrink"
+                || reason == "complete Important") {
                 Utils.sync_log (
                     "headers “%s” %s (%u ← %u)".printf (
                         folder.name,
@@ -806,6 +818,7 @@ public class Mail.MailSession : Camel.Session {
         apply_counts_from_messages (folder, messages);
         messages = retain_local_only (messages, previous);
         Conversation.prune_duplicate_sends (messages);
+        messages = without_retired_moves (account, folder, messages);
         apply_counts_from_messages (folder, messages);
         return messages;
     }
@@ -1507,10 +1520,10 @@ public class Mail.MailSession : Camel.Session {
     /* Folders with at least this many known headers are treated as *large*
      * for list UX and shrink protection — objective scale, not folder kind
      * or display name (custom archive, big Sent, big Trash, …). */
-    public const uint HEADER_LIST_LARGE = 500;
+    public const uint HEADER_LIST_LARGE = HeaderListPolicy.LARGE;
     /* After a timed-out / untrusted refresh, reject Camel merges that shrink
      * Letter's header list by more than this (partial summaries look "empty"). */
-    public const uint INCOMPLETE_REFRESH_SHRINK_MAX = 100;
+    public const uint INCOMPLETE_REFRESH_SHRINK_MAX = HeaderListPolicy.SHRINK_SLOP;
 
     public static bool is_force_refresh_timeout (uint timeout_seconds) {
         return timeout_seconds == REFRESH_INFO_FORCE
@@ -5468,13 +5481,11 @@ public class Mail.MailSession : Camel.Session {
                 if (transferred != null && i < transferred.length
                     && transferred[i] != null && transferred[i].length > 0)
                     new_uid = transferred[i];
-                rekey_body (job.account, job.from, uid, job.destination, new_uid);
+                Message? message = null;
                 var msg_index = done + i;
-                if (job.messages != null && msg_index < job.messages.length) {
-                    var message = job.messages[msg_index];
-                    if (message != null && new_uid != message.uid)
-                        message.uid = new_uid;
-                }
+                if (job.messages != null && msg_index < job.messages.length)
+                    message = job.messages[msg_index];
+                note_transferred_uid (job, uid, new_uid, message);
             }
 
             job.stall_rounds = 0;
@@ -5953,13 +5964,11 @@ public class Mail.MailSession : Camel.Session {
                 new_uid = transferred[i];
             if (!message_at_destination (dest, uid) && !message_at_destination (dest, new_uid))
                 break;
-            rekey_body (job.account, job.from, uid, job.destination, new_uid);
+            Message? message = null;
             var msg_index = done + i;
-            if (job.messages != null && msg_index < job.messages.length) {
-                var message = job.messages[msg_index];
-                if (message != null && new_uid != message.uid)
-                    message.uid = new_uid;
-            }
+            if (job.messages != null && msg_index < job.messages.length)
+                message = job.messages[msg_index];
+            note_transferred_uid (job, uid, new_uid, message);
             claimed++;
         }
         return claimed;
@@ -6285,6 +6294,121 @@ public class Mail.MailSession : Camel.Session {
      * Camel's full UID set (collect_messages) on every cold start. */
     public static string header_list_cache_dir () {
         return Path.build_filename (Environment.get_user_cache_dir (), "letter", "header-lists");
+    }
+
+    private HashTable<string, uint8>? retired_moved_uids;
+    private bool retired_moved_loaded;
+
+    private static string retired_moved_file () {
+        return Path.build_filename (header_list_cache_dir (), "retired-moved");
+    }
+
+    private static string retired_moved_key (Account account, Folder folder, string uid) {
+        return "%s\n%s\n%s".printf (account.source_uid ?? account.uid, folder.full_name, uid);
+    }
+
+    private void load_retired_moves () {
+        if (this.retired_moved_loaded)
+            return;
+        this.retired_moved_loaded = true;
+        this.retired_moved_uids = new HashTable<string, uint8> (str_hash, str_equal);
+        var path = retired_moved_file ();
+        if (!FileUtils.test (path, FileTest.IS_REGULAR))
+            return;
+        string contents;
+        try {
+            FileUtils.get_contents (path, out contents);
+        } catch (Error e) {
+            return;
+        }
+        var lines = contents.split ("\n");
+        for (uint i = 0; i < lines.length; i++) {
+            if (lines[i].length > 0)
+                this.retired_moved_uids.set (lines[i], 1);
+        }
+    }
+
+    private void store_retired_moves () {
+        if (this.retired_moved_uids == null)
+            return;
+        var path = retired_moved_file ();
+        var dir = Path.get_dirname (path);
+        try {
+            File.new_for_path (dir).make_directory_with_parents ();
+        } catch (Error e) {
+            if (!(e is IOError.EXISTS))
+                return;
+        }
+        var builder = new StringBuilder ();
+        this.retired_moved_uids.foreach ((key, value) => {
+            builder.append (key);
+            builder.append_c ('\n');
+        });
+        try {
+            FileUtils.set_contents (path, builder.str);
+        } catch (Error e) {
+            debug ("Could not write retired move ids: %s", e.message);
+        }
+    }
+
+    /* The source Graph id dies when the move is confirmed and the server
+     * assigns a new one. The destination list must not keep the old id. */
+    public void retire_moved_uid (Account account, Folder folder, string uid) {
+        if (uid.length == 0)
+            return;
+        load_retired_moves ();
+        var key = retired_moved_key (account, folder, uid);
+        if (this.retired_moved_uids.contains (key))
+            return;
+        this.retired_moved_uids.set (key, 1);
+        store_retired_moves ();
+        Utils.sync_log ("retire moved id “%s”".printf (folder.name));
+    }
+
+    public void unretire_moved_uid (Account account, Folder folder, string uid) {
+        if (uid.length == 0)
+            return;
+        load_retired_moves ();
+        var key = retired_moved_key (account, folder, uid);
+        if (!this.retired_moved_uids.contains (key))
+            return;
+        this.retired_moved_uids.remove (key);
+        store_retired_moves ();
+    }
+
+    public GenericArray<Message> without_retired_moves (
+        Account account,
+        Folder folder,
+        GenericArray<Message> messages
+    ) {
+        load_retired_moves ();
+        var prefix = "%s\n%s\n".printf (account.source_uid ?? account.uid, folder.full_name);
+        var drop = new HashTable<string, uint8> (str_hash, str_equal);
+        this.retired_moved_uids.foreach ((key, value) => {
+            if (key.has_prefix (prefix))
+                drop.set (key.substring (prefix.length), 1);
+        });
+        var kept = HeaderListPolicy.without_retired (messages, drop);
+        if (kept != messages) {
+            Utils.sync_log ("headers “%s” drop %u moved-away ids".printf (
+                folder.name,
+                messages.length - kept.length
+            ));
+        }
+        return kept;
+    }
+
+    private void note_transferred_uid (
+        TransferFlushJob job,
+        string uid,
+        string new_uid,
+        Message? message
+    ) {
+        if (new_uid.length > 0 && new_uid != uid)
+            retire_moved_uid (job.account, job.destination, uid);
+        rekey_body (job.account, job.from, uid, job.destination, new_uid);
+        if (message != null && new_uid != message.uid)
+            message.uid = new_uid;
     }
 
     public static string header_list_cache_file (string account_uid, string folder_full_name) {
