@@ -1,5 +1,5 @@
-data/io.github.stalvatero.Letter.desktop.in.in
-data/io.github.stalvatero.Letter.metainfo.xml.in.in
+data/io.github.user13ac05dcf7.Letter.desktop.in.in
+data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in
 src/application.vala
 src/window.vala
 src/window.blp

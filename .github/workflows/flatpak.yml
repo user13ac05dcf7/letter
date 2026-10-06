@@ -17,7 +17,9 @@ env:
   # GitHub Pages, which Dakota preinstalls Letter from.
   PUBLISH_REF: refs/heads/flatpak-ci
   COLLECTION_ID: io.github.user13ac05dcf7.Letter
-  APP_ID: io.github.stalvatero.Letter
+  APP_ID: io.github.user13ac05dcf7.Letter
+  # The ID this fork shipped under before; installs of it are rebased.
+  OLD_APP_ID: io.github.stalvatero.Letter
 
 jobs:
   flatpak:
@@ -58,11 +60,11 @@ jobs:
       - name: Build
         uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8
         with:
-          manifest-path: io.github.stalvatero.Letter.yml
+          manifest-path: io.github.user13ac05dcf7.Letter.yml
           bundle: Letter-x86_64.flatpak
           branch: stable
           gpg-sign: ${{ steps.key.outputs.fingerprint }}
-          cache-key: flatpak-builder-${{ hashFiles('io.github.stalvatero.Letter.yml', 'patches/**', 'flatpak/**') }}
+          cache-key: flatpak-builder-${{ hashFiles('io.github.user13ac05dcf7.Letter.yml', 'patches/**', 'flatpak/**') }}
 
       - name: Prepare the repository site
         if: github.ref == env.PUBLISH_REF
@@ -76,6 +78,11 @@ jobs:
             echo "ERROR: $ref is bound to $binding, not $COLLECTION_ID" >&2
             exit 1
           fi
+          # Mark the old ID end-of-life: `flatpak update` then installs the new
+          # ID in its place, and Flatpak moves ~/.var/app/$OLD_APP_ID over.
+          flatpak build-commit-from --gpg-sign="$FINGERPRINT" \
+            --end-of-life-rebase="$OLD_APP_ID=$APP_ID" \
+            --src-ref="$ref" repo "app/$OLD_APP_ID/x86_64/stable"
           flatpak build-update-repo --gpg-sign="$FINGERPRINT" --generate-static-deltas \
             --prune --title="Letter" --default-branch=stable repo
 
@@ -105,6 +112,8 @@ jobs:
           DeployCollectionID=$COLLECTION_ID
           GPGKey=$key
           EOF
+          # Links to the old ID's file keep working and install the new ID.
+          cp "site/$APP_ID.flatpakref" "site/$OLD_APP_ID.flatpakref"
           printf '<!doctype html><title>Letter Flatpak</title><p><a href="%s.flatpakref">Install Letter</a> · <a href="letter.flatpakrepo">Add the repository</a></p>\n' \
             "$APP_ID" > site/index.html
 

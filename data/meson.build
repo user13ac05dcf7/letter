@@ -6,7 +6,7 @@ desktop_conf.set('bindir', prefix / get_option('bindir'))
 
 desktop_file = i18n.merge_file(
   input: configure_file(
-    input: 'io.github.stalvatero.Letter.desktop.in.in',
+    input: 'io.github.user13ac05dcf7.Letter.desktop.in.in',
     output: app_id + '.desktop.in',
     configuration: desktop_conf,
   ),
@@ -29,7 +29,7 @@ metainfo_conf.set('version', meson.project_version())
 
 metainfo_file = i18n.merge_file(
   input: configure_file(
-    input: 'io.github.stalvatero.Letter.metainfo.xml.in.in',
+    input: 'io.github.user13ac05dcf7.Letter.metainfo.xml.in.in',
     output: app_id + '.metainfo.xml.in',
     configuration: metainfo_conf,
   ),
@@ -53,21 +53,21 @@ gschema_conf.set('app_id', app_id)
 gschema_conf.set('gettext_package', meson.project_name())
 
 gschema_file = configure_file(
-  input: 'io.github.stalvatero.Letter.gschema.xml.in',
+  input: 'io.github.user13ac05dcf7.Letter.gschema.xml.in',
   output: app_id + '.gschema.xml',
   configuration: gschema_conf,
   install: true,
   install_dir: datadir / 'glib-2.0' / 'schemas',
 )
 
-mail_app_id = get_option('profile') == 'development' ? 'io.github.stalvatero.Mail.Devel' : 'io.github.stalvatero.Mail'
+mail_app_id = get_option('profile') == 'development' ? 'io.github.user13ac05dcf7.Mail.Devel' : 'io.github.user13ac05dcf7.Mail'
 
 gschema_conf_mail = configuration_data()
 gschema_conf_mail.set('app_id', mail_app_id)
 gschema_conf_mail.set('gettext_package', meson.project_name())
 
 mail_gschema_file = configure_file(
-  input: 'io.github.stalvatero.Mail.gschema.xml.in',
+  input: 'io.github.user13ac05dcf7.Mail.gschema.xml.in',
   output: mail_app_id + '.gschema.xml',
   configuration: gschema_conf_mail,
   install: true,
@@ -86,13 +86,13 @@ custom_target(
 )
 
 install_data(
-  'icons/hicolor/scalable/apps/io.github.stalvatero.Letter.svg',
+  'icons/hicolor/scalable/apps/io.github.user13ac05dcf7.Letter.svg',
   rename: app_id + '.svg',
   install_dir: datadir / 'icons' / 'hicolor' / 'scalable' / 'apps',
 )
 
 install_data(
-  'icons/hicolor/symbolic/apps/io.github.stalvatero.Letter-symbolic.svg',
+  'icons/hicolor/symbolic/apps/io.github.user13ac05dcf7.Letter-symbolic.svg',
   rename: app_id + '-symbolic.svg',
   install_dir: datadir / 'icons' / 'hicolor' / 'symbolic' / 'apps',
 )

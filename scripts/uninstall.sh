@@ -95,12 +95,12 @@ else
   say "No usable $BUILD_DIR here; removing common installed files under $PREFIX"
   sudo_run rm -f \
     "$PREFIX/bin/letter" \
-    "$PREFIX/share/applications/io.github.stalvatero.Letter.desktop" \
-    "$PREFIX/share/metainfo/io.github.stalvatero.Letter.metainfo.xml" \
-    "$PREFIX/share/glib-2.0/schemas/io.github.stalvatero.Letter.gschema.xml" \
-    "$PREFIX/share/glib-2.0/schemas/io.github.stalvatero.Mail.gschema.xml" \
-    "$PREFIX/share/icons/hicolor/scalable/apps/io.github.stalvatero.Letter.svg" \
-    "$PREFIX/share/icons/hicolor/symbolic/apps/io.github.stalvatero.Letter-symbolic.svg"
+    "$PREFIX/share/applications/io.github.user13ac05dcf7.Letter.desktop" \
+    "$PREFIX/share/metainfo/io.github.user13ac05dcf7.Letter.metainfo.xml" \
+    "$PREFIX/share/glib-2.0/schemas/io.github.user13ac05dcf7.Letter.gschema.xml" \
+    "$PREFIX/share/glib-2.0/schemas/io.github.user13ac05dcf7.Mail.gschema.xml" \
+    "$PREFIX/share/icons/hicolor/scalable/apps/io.github.user13ac05dcf7.Letter.svg" \
+    "$PREFIX/share/icons/hicolor/symbolic/apps/io.github.user13ac05dcf7.Letter-symbolic.svg"
   sudo_run rm -rf "$PREFIX/share/letter"
   # Translations and any leftover schema compile artifacts.
   sudo_run find "$PREFIX/share/locale" -name 'letter.mo' -delete 2>/dev/null || true

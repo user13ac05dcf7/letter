@@ -126,8 +126,8 @@ public class Mail.Application : Adw.Application {
         };
 
         string old_app_id = Config.PROFILE == "development"
-            ? "io.github.stalvatero.Mail.Devel"
-            : "io.github.stalvatero.Mail";
+            ? "io.github.user13ac05dcf7.Mail.Devel"
+            : "io.github.user13ac05dcf7.Mail";
 
         try {
             var old = new Settings (old_app_id);

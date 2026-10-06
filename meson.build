@@ -14,13 +14,15 @@ gnome = import('gnome')
 i18n = import('i18n')
 
 if get_option('profile') == 'development'
-  app_id = 'io.github.stalvatero.Letter.Devel'
+  app_id = 'io.github.user13ac05dcf7.Letter.Devel'
   app_name = 'Letter (Development)'
 else
-  app_id = 'io.github.stalvatero.Letter'
+  app_id = 'io.github.user13ac05dcf7.Letter'
   app_name = 'Letter'
 endif
 
+# Resource and settings paths keep upstream's name: they are internal, and
+# keeping them carries settings over from io.github.stalvatero.Letter.
 resource_path = '/io/github/stalvatero/Letter'
 
 valac = meson.get_compiler('vala')

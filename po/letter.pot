@@ -19,31 +19,31 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #. Translators: the application name shown in the app grid, window title and tooltips
-#: data/io.github.stalvatero.Letter.desktop.in.in:3
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:4
+#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:3
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:4
 msgid "@app_name@"
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.desktop.in.in:4
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:5
+#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:4
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:5
 msgid "Read and send mail"
 msgstr ""
 
 #. Translators: Search terms to find this application. Do not translate or localize the semicolons. The list MUST also end with a semicolon.
-#: data/io.github.stalvatero.Letter.desktop.in.in:12
+#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:12
 msgid "email;mail;imap;google;outlook;exchange;"
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.desktop.in.in:20 src/window.blp:242
+#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:20 src/window.blp:242
 #: src/compose-dialog.vala:77
 msgid "New Message"
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:9
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:9
 msgid "Salvatore Oscurato"
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:12
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:12
 msgid ""
 "Letter is a GNOME mail client built on GTK 4 and libadwaita. It uses GNOME "
 "Online Accounts and Evolution Data Server, the same stack as Calendar and "
@@ -51,13 +51,13 @@ msgid ""
 "configured on the desktop appear here without a second setup."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:19
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:19
 msgid ""
 "Read conversations, search, compose HTML mail, and get notifications. Add "
 "accounts in Settings → Online Accounts. Letter needs GNOME 50 or later."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:61
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:61
 msgid ""
 "Fifth 1.0 release candidate. Brazilian Portuguese translation, Debian/"
 "Ubuntu .deb on Releases beside Flatpak, reliable list selection after "
@@ -66,7 +66,7 @@ msgid ""
 "365)."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:72
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:72
 msgid ""
 "Fourth 1.0 release candidate. Recipient chips offer Write to and Copy Email; "
 "compose gains high priority, Paste and Match Style, and Space to commit "
@@ -74,7 +74,7 @@ msgid ""
 "Archive/Sent sync, Draft tip refresh, and aggregate notification sound."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:83
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:83
 msgid ""
 "Third 1.0 release candidate. Soft archive, trash, move, and flags stay local "
 "until the sync timer, F5, startup, or quit, with an on-disk mutation "
@@ -84,7 +84,7 @@ msgid ""
 "evolution-ews stack for Graph mail in the sandbox."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:96
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:96
 msgid ""
 "Second 1.0 release candidate. Completes the German UI translation, fixes "
 "Microsoft 365 bookmarks against Outlook Flag (not High Importance), shows a "
@@ -93,14 +93,14 @@ msgid ""
 "latency fixes from after rc.1."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:107
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:107
 msgid ""
 "First 1.0 release candidate. Daily-use mail with cache-first sync, undo for "
 "archive, move and trash, Inbox on every startup, and an experimental Flatpak "
 "bundle. Feedback and remaining translations welcome before 1.0.0."
 msgstr ""
 
-#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:117
+#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:117
 msgid ""
 "First public beta: reading, composing, search, notifications, and GNOME "
 "Online Accounts."

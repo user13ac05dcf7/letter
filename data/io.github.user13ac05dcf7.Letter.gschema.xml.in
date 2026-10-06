@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+  <!-- The path keeps upstream's name so settings survive the app ID rename. -->
   <schema id="@app_id@" path="/io/github/stalvatero/Letter/" gettext-domain="@gettext_package@">
     <key name="window-width" type="i">
       <default>1100</default>

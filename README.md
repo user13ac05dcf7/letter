@@ -139,7 +139,7 @@ Add an account in **Settings → Online Accounts**, then open Letter.
 ## Uninstall
 
 ```sh
-flatpak uninstall --user io.github.stalvatero.Letter
+flatpak uninstall --user io.github.user13ac05dcf7.Letter
 ```
 
 

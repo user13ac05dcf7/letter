@@ -50,8 +50,8 @@ jobs:
 
       - name: Validate desktop metadata and translations
         run: |
-          desktop-file-validate build-ci/data/io.github.stalvatero.Letter.desktop
-          appstreamcli validate --no-net build-ci/data/io.github.stalvatero.Letter.metainfo.xml
+          desktop-file-validate build-ci/data/io.github.user13ac05dcf7.Letter.desktop
+          appstreamcli validate --no-net build-ci/data/io.github.user13ac05dcf7.Letter.metainfo.xml
           for catalog in po/*.po; do
             msgfmt --check "$catalog" -o /dev/null
           done

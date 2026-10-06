@@ -6,9 +6,9 @@
 #
 # Quick test (from the repo root):
 #   ./scripts/build-flatpak.sh
-#   flatpak run io.github.stalvatero.Letter
+#   flatpak run io.github.user13ac05dcf7.Letter
 
-app-id: io.github.stalvatero.Letter
+app-id: io.github.user13ac05dcf7.Letter
 runtime: org.gnome.Platform
 runtime-version: '51'
 sdk: org.gnome.Sdk

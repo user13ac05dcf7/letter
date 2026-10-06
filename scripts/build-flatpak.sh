@@ -14,7 +14,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
-manifest=io.github.stalvatero.Letter.yml
+manifest=io.github.user13ac05dcf7.Letter.yml
 build_dir="${FLATPAK_BUILD_DIR:-build-flatpak}"
 repo_dir="${FLATPAK_REPO_DIR:-repo}"
 # Prefer meson version for Release asset names (Letter-1.0.0-rc.N-…, no leading "v").
@@ -52,17 +52,17 @@ flatpak-builder \
   "$manifest"
 
 echo
-flatpak build-bundle "$repo_dir" "$bundle" io.github.stalvatero.Letter
+flatpak build-bundle "$repo_dir" "$bundle" io.github.user13ac05dcf7.Letter
 echo "Bundle: $root/$bundle"
 echo
 echo "Copy that file to another machine (or a VM), then:"
 echo "  flatpak install --user ./$(basename "$bundle")"
-echo "  flatpak run io.github.stalvatero.Letter"
+echo "  flatpak run io.github.user13ac05dcf7.Letter"
 if [ "$do_install" = "1" ]; then
   echo
   echo "Also installed for this user. Note: same app-id as a /usr/local install,"
   echo "so the app drawer may prefer Flatpak. Uninstall with:"
-  echo "  flatpak uninstall --user io.github.stalvatero.Letter"
+  echo "  flatpak uninstall --user io.github.user13ac05dcf7.Letter"
 else
   echo
   echo "Not installed locally (source install / drawer unchanged)."
