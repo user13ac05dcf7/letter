@@ -12,6 +12,7 @@ void main () {
     assert_count (placeholder_sent_copy (), 1, "local send matches the Sent copy");
     assert_count (two_real_sends (), 2, "two real sent messages stay apart");
     trashed_mail_leaves_cross_folder_view ();
+    changed_subject_regroups ();
     assert_norm ("RDS Os 21 Deco lista pdv", "rds os 21 deco lista pdv");
     assert_norm ("Re:RDS Os 21 Deco lista pdv", "rds os 21 deco lista pdv");
     assert_norm ("R: Re:RDS Os 21 Deco lista pdv", "rds os 21 deco lista pdv");
@@ -43,6 +44,21 @@ void trashed_mail_leaves_cross_folder_view () {
     conversation.hidden_folders = null;
     if (conversation.listed_count != 2)
         error ("without hidden folders every message counts");
+}
+
+/* Subjects are normalized once per message and kept; a new subject must
+ * not reuse the old form. */
+void changed_subject_regroups () {
+    var a = message ("inbox", "1", "Meeting", 11);
+    var b = message ("inbox", "2", "Re: Meeting", 22);
+    b.msgid_refs = { 11 };
+    assert_count (Mail.Conversation.group (primary (a, b), null), 1, "reply joins before the change");
+    b.subject = "Something else";
+    assert_count (Mail.Conversation.group (primary (a, b), null), 2, "a changed subject leaves the thread");
+    var across = Mail.Conversation.group_across (primary (a, b), null, null);
+    assert_count (across, 2, "group_across groups like group");
+    if (across[0].list_folder != null || across[0].subject.length == 0)
+        error ("group_across lists across folders and fills the summary");
 }
 
 GenericArray<Mail.Conversation> independent_same_subject () {

@@ -510,6 +510,11 @@ public enum Mail.FolderKind {
 public class Mail.Message : Object {
     public string uid { get; set; }
     public string subject { get; set; }
+    /* The subject as Conversation shows and compares it, worked out once
+     * per subject instead of on every grouping. */
+    public string? subject_forms_of;
+    public string? display_subject_form;
+    public string? normalized_subject_form;
     public string from { get; set; }
     public string to { get; set; }
     public string cc { get; set; default = ""; }

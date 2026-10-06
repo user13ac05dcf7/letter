@@ -149,6 +149,19 @@ public class Mail.Conversation : Object {
     }
 
     public void refresh () {
+        update_summary ();
+        notify_property ("subject");
+        notify_property ("participants");
+        notify_property ("preview");
+        notify_property ("date");
+        notify_property ("unread");
+        notify_property ("has-attachment");
+        notify_property ("seen");
+    }
+
+    /* Works out what the list shows. A conversation that was just grouped
+     * has no one to notify yet. */
+    private void update_summary () {
         this.messages.sort ((a, b) => {
             if (a.date < b.date)
                 return -1;
@@ -164,7 +177,7 @@ public class Mail.Conversation : Object {
         }
 
         var last = listed_last ?? this.latest;
-        this.subject = last != null ? display_subject (last.subject) : _("(No subject)");
+        this.subject = last != null ? message_display_subject (last) : _("(No subject)");
         this.preview = last != null ? last.preview : null;
         this.date = last != null ? last.date : 0;
         this.has_attachment = false;
@@ -214,14 +227,6 @@ public class Mail.Conversation : Object {
         } else {
             this.participants = _("%s, %s +%u").printf (names[0], names[1], names.length - 2);
         }
-
-        notify_property ("subject");
-        notify_property ("participants");
-        notify_property ("preview");
-        notify_property ("date");
-        notify_property ("unread");
-        notify_property ("has-attachment");
-        notify_property ("seen");
     }
 
     public void prefer_preview (Message message) {
@@ -249,53 +254,39 @@ public class Mail.Conversation : Object {
         GenericArray<Message> primary,
         GenericArray<Message>? extras
     ) {
-        var all = new GenericArray<Message> ();
-        var primary_keys = new HashTable<string, uint8> (str_hash, str_equal);
-        for (uint i = 0; i < primary.length; i++) {
-            primary_keys.set (message_key (primary[i]), 1);
-            all.add (primary[i]);
-        }
-        if (extras != null) {
-            for (uint i = 0; i < extras.length; i++) {
-                var message = extras[i];
-                if (primary_keys.contains (message_key (message)))
-                    continue;
-                all.add (message);
-            }
-        }
+        return group_listing (
+            primary,
+            extras,
+            primary.length > 0 ? primary[0].folder_full_name : null,
+            null
+        );
+    }
 
+    /* For views across folders: every message is listed except those in
+     * hidden folders, set before the one refresh of each conversation. */
+    public static GenericArray<Conversation> group_across (
+        GenericArray<Message> primary,
+        GenericArray<Message>? extras,
+        HashTable<string, uint8>? hidden_folders
+    ) {
+        return group_listing (primary, extras, null, hidden_folders);
+    }
+
+    private static GenericArray<Conversation> group_listing (
+        GenericArray<Message> primary,
+        GenericArray<Message>? extras,
+        string? list_folder,
+        HashTable<string, uint8>? hidden_folders
+    ) {
+        HashTable<string, uint8>? primary_keys;
+        var all = with_extras (primary, extras, out primary_keys);
         var n = all.length;
         var sets = new ThreadUnion ((int) n);
-        var hash_owner = new HashTable<string, int> (str_hash, str_equal);
-        var key_owner = new HashTable<string, int> (str_hash, str_equal);
-
-        for (int i = 0; i < (int) n; i++) {
-            var message = all[i];
-            // Every link (Message-ID, References, Conversation-ID, Thread-Index)
-            // is gated by normalized subject. "Reply all" + changed subject starts
-            // a new conversation; later replies to that mail stay with the new one.
-            var subject = normalize_subject (message.subject);
-            touch_hash (sets, hash_owner, message.msgid_hash, subject, i);
-            var refs = message.msgid_refs;
-            if (refs != null) {
-                for (uint r = 0; r < refs.length; r++)
-                    touch_hash (sets, hash_owner, refs[r], subject, i);
-            }
-            touch_key (sets, key_owner, conversation_subject_key (message), i);
-        }
-
-        for (int i = 0; i < (int) n; i++) {
-            if (!all[i].is_placeholder)
-                continue;
-            for (int j = 0; j < (int) n; j++) {
-                if (i == j)
-                    continue;
-                if (same_outgoing_send (all[i], all[j]))
-                    sets.merge (i, j);
-            }
-        }
-
-        return conversations_from_sets (primary, all, sets, primary_keys);
+        var links = new ThreadLinks (sets, (int) n);
+        for (int i = 0; i < (int) n; i++)
+            links.link (all[i], i);
+        merge_placeholder_sends (all, sets);
+        return conversations_from_sets (all, sets, primary_keys, list_folder, hidden_folders);
     }
 
     /* Same as group, with Idle yields so Archive-sized lists do not freeze UI. */
@@ -303,36 +294,13 @@ public class Mail.Conversation : Object {
         GenericArray<Message> primary,
         GenericArray<Message>? extras
     ) {
-        var all = new GenericArray<Message> ();
-        var primary_keys = new HashTable<string, uint8> (str_hash, str_equal);
-        for (uint i = 0; i < primary.length; i++) {
-            primary_keys.set (message_key (primary[i]), 1);
-            all.add (primary[i]);
-        }
-        if (extras != null) {
-            for (uint i = 0; i < extras.length; i++) {
-                var message = extras[i];
-                if (primary_keys.contains (message_key (message)))
-                    continue;
-                all.add (message);
-            }
-        }
-
+        HashTable<string, uint8>? primary_keys;
+        var all = with_extras (primary, extras, out primary_keys);
         var n = all.length;
         var sets = new ThreadUnion ((int) n);
-        var hash_owner = new HashTable<string, int> (str_hash, str_equal);
-        var key_owner = new HashTable<string, int> (str_hash, str_equal);
-
+        var links = new ThreadLinks (sets, (int) n);
         for (int i = 0; i < (int) n; i++) {
-            var message = all[i];
-            var subject = normalize_subject (message.subject);
-            touch_hash (sets, hash_owner, message.msgid_hash, subject, i);
-            var refs = message.msgid_refs;
-            if (refs != null) {
-                for (uint r = 0; r < refs.length; r++)
-                    touch_hash (sets, hash_owner, refs[r], subject, i);
-            }
-            touch_key (sets, key_owner, conversation_subject_key (message), i);
+            links.link (all[i], i);
             if (i % 64 == 63) {
                 Idle.add (group_async.callback);
                 yield;
@@ -354,39 +322,93 @@ public class Mail.Conversation : Object {
             }
         }
 
-        return conversations_from_sets (primary, all, sets, primary_keys);
+        return conversations_from_sets (
+            all,
+            sets,
+            primary_keys,
+            primary.length > 0 ? primary[0].folder_full_name : null,
+            null
+        );
+    }
+
+    /* The primary messages and the extras that are not among them. The keys
+     * of the primary messages are only needed when extras came along: without
+     * them every conversation holds a primary message. */
+    private static GenericArray<Message> with_extras (
+        GenericArray<Message> primary,
+        GenericArray<Message>? extras,
+        out HashTable<string, uint8>? primary_keys
+    ) {
+        var all = new GenericArray<Message> ();
+        primary_keys = null;
+        if (extras == null || extras.length == 0) {
+            for (uint i = 0; i < primary.length; i++)
+                all.add (primary[i]);
+            return all;
+        }
+
+        primary_keys = new HashTable<string, uint8> (str_hash, str_equal);
+        for (uint i = 0; i < primary.length; i++) {
+            primary_keys.set (message_key (primary[i]), 1);
+            all.add (primary[i]);
+        }
+        for (uint i = 0; i < extras.length; i++) {
+            var message = extras[i];
+            if (primary_keys.contains (message_key (message)))
+                continue;
+            all.add (message);
+        }
+        return all;
+    }
+
+    private static void merge_placeholder_sends (GenericArray<Message> all, ThreadUnion sets) {
+        var n = (int) all.length;
+        for (int i = 0; i < n; i++) {
+            if (!all[i].is_placeholder)
+                continue;
+            for (int j = 0; j < n; j++) {
+                if (i == j)
+                    continue;
+                if (same_outgoing_send (all[i], all[j]))
+                    sets.merge (i, j);
+            }
+        }
     }
 
     private static GenericArray<Conversation> conversations_from_sets (
-        GenericArray<Message> primary,
         GenericArray<Message> all,
         ThreadUnion sets,
-        HashTable<string, uint8> primary_keys
+        HashTable<string, uint8>? primary_keys,
+        string? list_folder,
+        HashTable<string, uint8>? hidden_folders
     ) {
-        var n = all.length;
-        var buckets = new HashTable<string, GenericArray<Message>> (str_hash, str_equal);
-        for (int i = 0; i < (int) n; i++) {
-            var key = sets.find (i).to_string ();
-            var bucket = buckets.get (key);
-            if (bucket == null) {
-                bucket = new GenericArray<Message> ();
-                buckets.set (key, bucket);
+        var n = (int) all.length;
+        var bucket_of = new int[n];
+        for (int i = 0; i < n; i++)
+            bucket_of[i] = -1;
+        var buckets = new GenericArray<GenericArray<Message>> ();
+        for (int i = 0; i < n; i++) {
+            var root = sets.find (i);
+            if (bucket_of[root] < 0) {
+                bucket_of[root] = (int) buckets.length;
+                buckets.add (new GenericArray<Message> ());
             }
-            bucket.add (all[i]);
+            buckets[bucket_of[root]].add (all[i]);
         }
 
         var conversations = new GenericArray<Conversation> ();
-        string? list_folder = primary.length > 0 ? primary[0].folder_full_name : null;
-        buckets.foreach ((key, bucket) => {
+        for (uint b = 0; b < buckets.length; b++) {
+            var bucket = buckets[b];
             var conversation = new Conversation ();
             conversation.list_folder = list_folder;
+            conversation.hidden_folders = hidden_folders;
             for (uint i = 0; i < bucket.length; i++)
                 conversation.add_message (bucket[i]);
-            if (!contains_primary (conversation, primary_keys))
-                return;
-            conversation.refresh ();
+            if (primary_keys != null && !contains_primary (conversation, primary_keys))
+                continue;
+            conversation.update_summary ();
             conversations.add (conversation);
-        });
+        }
 
         conversations.sort ((a, b) => {
             if (a.date < b.date)
@@ -467,9 +489,38 @@ public class Mail.Conversation : Object {
         return c == ':' || c == '[' || c == '(';
     }
 
+    private static string? no_subject_folded;
+
     public static string normalize_subject (string? raw) {
-        var text = display_subject (raw).casefold ();
-        if (text == _("(No subject)").casefold ())
+        return normalized_from_display (display_subject (raw));
+    }
+
+    /* display_subject () and normalize_subject () of a message, kept on the
+     * message until its subject changes. */
+    internal static unowned string message_display_subject (Message message) {
+        update_subject_forms (message);
+        return message.display_subject_form;
+    }
+
+    internal static unowned string message_subject_key (Message message) {
+        update_subject_forms (message);
+        return message.normalized_subject_form;
+    }
+
+    private static void update_subject_forms (Message message) {
+        var subject = message.subject ?? "";
+        if (message.subject_forms_of != null && message.subject_forms_of == subject)
+            return;
+        message.display_subject_form = display_subject (subject);
+        message.normalized_subject_form = normalized_from_display (message.display_subject_form);
+        message.subject_forms_of = subject;
+    }
+
+    private static string normalized_from_display (string display) {
+        var text = display.casefold ();
+        if (no_subject_folded == null)
+            no_subject_folded = _("(No subject)").casefold ();
+        if (text == no_subject_folded)
             return "";
 
         return collapse_spaces (text);
@@ -514,38 +565,6 @@ public class Mail.Conversation : Object {
                 return true;
         }
         return false;
-    }
-
-    private static string? conversation_subject_key (Message message) {
-        var key = message.conversation_key;
-        if (key == null || key.length == 0)
-            return null;
-        return "%s\n%s".printf (key, normalize_subject (message.subject));
-    }
-
-    private static void touch_hash (
-        ThreadUnion sets,
-        HashTable<string, int> owner,
-        uint64 hash,
-        string subject,
-        int index
-    ) {
-        if (hash == 0)
-            return;
-        var key = "%s\n%s".printf (hash.to_string (), subject);
-        if (owner.contains (key))
-            sets.merge (index, owner.get (key));
-        else
-            owner.set (key, index);
-    }
-
-    private static void touch_key (ThreadUnion sets, HashTable<string, int> owner, string? key, int index) {
-        if (key == null || key.length == 0)
-            return;
-        if (owner.contains (key))
-            sets.merge (index, owner.get (key));
-        else
-            owner.set (key, index);
     }
 
     private static string thread_id (GenericArray<Message> messages) {
@@ -707,6 +726,69 @@ public class Mail.Conversation : Object {
             default:
                 return false;
         }
+    }
+}
+
+/* Joins messages that share a link (Message-ID, References, Conversation-ID)
+ * and the same normalized subject. Message-IDs are keyed by number; only a
+ * second subject on one ID needs a string key. */
+private class Mail.ThreadLinks {
+    private ThreadUnion sets;
+    private int[] subject_of;
+    private HashTable<string, int> subject_ids = new HashTable<string, int> (str_hash, str_equal);
+    private HashTable<uint64?, int> hash_owner = new HashTable<uint64?, int> (int64_hash, int64_equal);
+    private HashTable<string, int> other_subject_owner = new HashTable<string, int> (str_hash, str_equal);
+    private HashTable<string, int> key_owner = new HashTable<string, int> (str_hash, str_equal);
+
+    public ThreadLinks (ThreadUnion sets, int n) {
+        this.sets = sets;
+        this.subject_of = new int[n];
+    }
+
+    public void link (Message message, int index) {
+        // Every link (Message-ID, References, Conversation-ID, Thread-Index)
+        // is gated by normalized subject. "Reply all" + changed subject starts
+        // a new conversation; later replies to that mail stay with the new one.
+        unowned string subject = Conversation.message_subject_key (message);
+        int id;
+        if (!this.subject_ids.lookup_extended (subject, null, out id)) {
+            id = (int) this.subject_ids.size ();
+            this.subject_ids.set (subject, id);
+        }
+        this.subject_of[index] = id;
+
+        touch_hash (message.msgid_hash, subject, index);
+        var refs = message.msgid_refs;
+        if (refs != null) {
+            for (uint r = 0; r < refs.length; r++)
+                touch_hash (refs[r], subject, index);
+        }
+        var key = message.conversation_key;
+        if (key != null && key.length > 0)
+            touch (this.key_owner, "%s\n%s".printf (key, subject), index);
+    }
+
+    private void touch_hash (uint64 hash, string subject, int index) {
+        if (hash == 0)
+            return;
+        int owner;
+        if (!this.hash_owner.lookup_extended (hash, null, out owner)) {
+            this.hash_owner.set (hash, index);
+            return;
+        }
+        if (this.subject_of[owner] == this.subject_of[index]) {
+            this.sets.merge (index, owner);
+            return;
+        }
+        touch (this.other_subject_owner, "%s\n%s".printf (hash.to_string (), subject), index);
+    }
+
+    private void touch (HashTable<string, int> owners, string key, int index) {
+        int owner;
+        if (owners.lookup_extended (key, null, out owner))
+            this.sets.merge (index, owner);
+        else
+            owners.set (key, index);
     }
 }
 

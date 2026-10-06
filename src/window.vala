@@ -4883,13 +4883,10 @@ public class Mail.Window : Adw.ApplicationWindow {
             var related = people_related_messages (account, messages);
             related_ms = Utils.sync_ms (t_group);
             t_group = Utils.sync_tick ();
-            conversations = Conversation.group (messages, related);
+            conversations = Conversation.group_across (messages, related, hidden);
             for (uint i = 0; i < conversations.length; i++) {
-                conversations[i].list_folder = null;
-                conversations[i].hidden_folders = hidden;
                 for (uint j = 0; j < conversations[i].messages.length; j++)
                     conversations[i].messages[j].show_folder = true;
-                conversations[i].refresh ();
             }
         } else {
             conversations = Conversation.as_singles (messages);
