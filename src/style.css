@@ -120,6 +120,10 @@
   font-weight: 600;
 }
 
+.person-row .person-address {
+  font-size: 0.85em;
+}
+
 .folder-row .folder-count {
   font-size: 0.85em;
   font-weight: 600;

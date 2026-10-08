@@ -351,6 +351,7 @@ public class Mail.PersonRow : Gtk.Box {
     private Adw.Avatar avatar;
     private Gtk.Image icon;
     private Gtk.Label name_label;
+    private Gtk.Label address_label;
     private Gtk.Label count_label;
     private ulong name_handler;
     private ulong unread_handler;
@@ -363,7 +364,7 @@ public class Mail.PersonRow : Gtk.Box {
         add_css_class ("folder-row");
         add_css_class ("person-row");
 
-        this.avatar = new Adw.Avatar (24, null, true);
+        this.avatar = new Adw.Avatar (32, null, true);
         append (this.avatar);
         this.icon = new Gtk.Image () {
             pixel_size = 16,
@@ -373,14 +374,26 @@ public class Mail.PersonRow : Gtk.Box {
         this.icon.add_css_class ("folder-icon");
         append (this.icon);
 
-        this.name_label = new Gtk.Label ("") {
+        var text = new Gtk.Box (Gtk.Orientation.VERTICAL, 0) {
             hexpand = true,
+            valign = Gtk.Align.CENTER,
+        };
+        this.name_label = new Gtk.Label ("") {
             xalign = 0,
             ellipsize = Pango.EllipsizeMode.END,
             use_markup = false,
         };
         this.name_label.add_css_class ("folder-name");
-        append (this.name_label);
+        text.append (this.name_label);
+        this.address_label = new Gtk.Label ("") {
+            xalign = 0,
+            ellipsize = Pango.EllipsizeMode.MIDDLE,
+            use_markup = false,
+        };
+        this.address_label.add_css_class ("person-address");
+        this.address_label.add_css_class ("dim-label");
+        text.append (this.address_label);
+        append (text);
 
         this.count_label = new Gtk.Label ("") {
             use_markup = false,
@@ -428,7 +441,10 @@ public class Mail.PersonRow : Gtk.Box {
         this.name_label.label = name;
         if (!this.person.is_all)
             this.avatar.text = name;
-        this.tooltip_text = this.person.has_email ? this.person.address : null;
+        var has_email = this.person.has_email;
+        this.address_label.label = has_email ? this.person.address : "";
+        this.address_label.visible = has_email;
+        this.tooltip_text = has_email ? this.person.address : null;
     }
 
     private void update_unread () {
