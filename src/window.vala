@@ -19,6 +19,8 @@ public class Mail.Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned Gtk.Box account_rail;
     [GtkChild]
+    private unowned Gtk.Box account_rail_add_slot;
+    [GtkChild]
     private unowned Gtk.Button account_rail_add;
     [GtkChild]
     private unowned Gtk.Box account_rail_list;
@@ -33,6 +35,8 @@ public class Mail.Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned Gtk.Paned content_split;
     [GtkChild]
+    private unowned Adw.HeaderBar folder_header;
+    [GtkChild]
     private unowned Gtk.ToggleButton sidebar_button;
     [GtkChild]
     private unowned Adw.WindowTitle folder_title;
@@ -42,6 +46,16 @@ public class Mail.Window : Adw.ApplicationWindow {
     private unowned Adw.Bin folder_bin;
     [GtkChild]
     private unowned Adw.StatusPage no_folders_page;
+    [GtkChild]
+    private unowned Gtk.Box mail_area;
+    [GtkChild]
+    private unowned Adw.ToolbarView unified_mail;
+    [GtkChild]
+    private unowned Adw.HeaderBar conversation_header;
+    [GtkChild]
+    private unowned Gtk.Button compose_button;
+    [GtkChild]
+    private unowned Gtk.Label compose_label;
     [GtkChild]
     private unowned Adw.WindowTitle conversation_title;
     [GtkChild]
@@ -66,9 +80,25 @@ public class Mail.Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned Adw.Spinner conversation_sync_spinner;
     [GtkChild]
+    private unowned Gtk.Paned split_mail;
+    [GtkChild]
+    private unowned Adw.ToolbarView list_mail;
+    [GtkChild]
+    private unowned Adw.HeaderBar list_header;
+    [GtkChild]
+    private unowned Adw.Bin list_mail_slot;
+    [GtkChild]
+    private unowned Adw.ToolbarView reader_mail;
+    [GtkChild]
+    private unowned Adw.HeaderBar reader_header;
+    [GtkChild]
+    private unowned Adw.Bin reader_mail_slot;
+    [GtkChild]
     private unowned Gtk.Box folder_status_bar;
     [GtkChild]
     private unowned Gtk.Label folder_status_label;
+    private bool reading_pane_split;
+    private bool clamping_split_mail;
 
     private Settings settings;
     private Gtk.ListBox account_list;
@@ -110,7 +140,6 @@ public class Mail.Window : Adw.ApplicationWindow {
     private Gtk.ScrolledWindow message_scrolled;
     private Gtk.Box list_pane;
     private Adw.Bin list_body;
-    private Gtk.Revealer search_banner;
     private Gtk.Label search_cache_notice;
     private Gtk.Box search_actions;
     private Gtk.Button search_match_any_button;
@@ -309,14 +338,20 @@ public class Mail.Window : Adw.ApplicationWindow {
         apply_account_sidebar (this.sidebar_button.active);
         if (this.folder_split.collapsed)
             on_folder_split_collapsed ();
+        this.settings.changed["account-rail"].connect (apply_account_rail);
+        apply_account_rail ();
         this.content_split.position = this.settings.get_int ("folder-pane-width")
             .clamp (FOLDER_PANE_MIN, FOLDER_PANE_MAX);
         this.content_split.notify["position"].connect (on_folder_pane_resized);
-        this.message_split.position = this.settings.get_int ("message-pane-width")
+        var message_pane_width = this.settings.get_int ("message-pane-width")
             .clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+        this.message_split.position = message_pane_width;
+        this.split_mail.position = message_pane_width;
         this.message_split.notify["position"].connect (on_message_pane_resized);
+        this.split_mail.notify["position"].connect (on_split_mail_resized);
         this.settings.changed["reading-pane"].connect (apply_reading_pane);
         apply_reading_pane ();
+        notify["default-width"].connect (() => update_search_field_width ());
 
         this.folder_spinner = new Adw.SpinnerPaintable (this.no_folders_page);
         this.conversation_spinner = new Adw.SpinnerPaintable (this.conversation_page);
@@ -329,6 +364,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.collapsed_folders = new HashTable<string, uint8> (str_hash, str_equal);
         this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
         this.account_row_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
+        sync_toolbar_header_sizes ();
         foreach (var key in this.settings.get_strv ("collapsed-folders")) {
             if (key.length > 0)
                 this.collapsed_folders.set (key, 1);
@@ -341,6 +377,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             respond_invitation.begin (invitation, status);
         });
         this.message_reader.compose_to.connect (on_compose_to);
+        this.message_reader.forward_image.connect (on_forward_image);
         this.thread_list = new Gtk.ListBox () {
             selection_mode = Gtk.SelectionMode.MULTIPLE,
             hexpand = true,
@@ -574,27 +611,6 @@ public class Mail.Window : Adw.ApplicationWindow {
             vexpand = true,
             child = this.message_list,
         };
-        var search_bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8) {
-            hexpand = true,
-        };
-        search_bar.add_css_class ("search-banner");
-        var search_label = new Gtk.Label (_("Search Results")) {
-            hexpand = true,
-            xalign = 0,
-            ellipsize = Pango.EllipsizeMode.END,
-        };
-        search_label.add_css_class ("heading");
-        var close_search = new Gtk.Button.with_label (_("Close Search"));
-        close_search.add_css_class ("flat");
-        close_search.clicked.connect (on_search_stopped);
-        search_bar.append (search_label);
-        search_bar.append (close_search);
-        this.search_banner = new Gtk.Revealer () {
-            child = search_bar,
-            transition_type = Gtk.RevealerTransitionType.SLIDE_DOWN,
-            hexpand = true,
-            reveal_child = false,
-        };
         var escape = new Gtk.EventControllerKey ();
         escape.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
         escape.key_pressed.connect ((keyval, keycode, state) => {
@@ -615,7 +631,6 @@ public class Mail.Window : Adw.ApplicationWindow {
             child = this.message_scrolled,
         };
         this.list_pane = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-        this.list_pane.append (this.search_banner);
         this.list_pane.append (this.list_body);
         this.list_pane.append (this.search_deeper_bar);
 
@@ -1917,7 +1932,7 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private bool in_search_mode () {
-        return this.search_text.length > 0 || this.search_banner.reveal_child;
+        return this.search_text.length > 0;
     }
 
     private void apply_search_query (SearchQuery query) {
@@ -1933,7 +1948,6 @@ public class Mail.Window : Adw.ApplicationWindow {
         if (query.is_empty) {
             this.search_results = null;
             this.search_tokens = new GenericArray<string> ();
-            this.search_banner.reveal_child = false;
             set_search_deeper_bar (false);
             highlight_selected_folder ();
             redisplay_current_list ();
@@ -1947,7 +1961,6 @@ public class Mail.Window : Adw.ApplicationWindow {
 
     private void enter_search_mode () {
         this.folder_list.unselect_all ();
-        this.search_banner.reveal_child = true;
         this.conversation_title.title = _("Search Results");
         this.conversation_title.subtitle = "";
         apply_offline_heading ();
@@ -1967,7 +1980,6 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.search_text = "";
         this.search_tokens = new GenericArray<string> ();
         this.search_generation++;
-        this.search_banner.reveal_child = false;
         this.search_deeper_consumed = false;
         set_search_deeper_bar (false);
         this.clearing_search = true;
@@ -2928,9 +2940,7 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void sync_account_row_sizes () {
-        this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
-        this.account_header_sizes.add_widget (this.account_header);
-        this.account_header_sizes.add_widget (this.account_rail_add);
+        sync_toolbar_header_sizes ();
 
         this.account_row_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
         Gtk.Widget? rail = this.account_rail_list.get_first_child ();
@@ -2941,8 +2951,21 @@ public class Mail.Window : Adw.ApplicationWindow {
         }
     }
 
+    /* One continuous header height: rail +, accounts, folders, messages. */
+    private void sync_toolbar_header_sizes () {
+        this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
+        this.account_header_sizes.add_widget (this.account_header);
+        this.account_header_sizes.add_widget (this.account_rail_add_slot);
+        this.account_header_sizes.add_widget (this.folder_header);
+        if (this.reading_pane_split) {
+            this.account_header_sizes.add_widget (this.list_header);
+            this.account_header_sizes.add_widget (this.reader_header);
+        } else {
+            this.account_header_sizes.add_widget (this.conversation_header);
+        }
+    }
+
     private void apply_account_sidebar (bool expanded) {
-        this.account_rail.visible = true;
         this.account_pane.visible = true;
         this.folder_split.show_sidebar = expanded;
         this.folder_split.min_sidebar_width = ACCOUNT_PANE_MIN;
@@ -2951,6 +2974,19 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.sidebar_button.tooltip_text = expanded
             ? _("Hide account list")
             : _("Show account list");
+        apply_account_rail ();
+    }
+
+    private void apply_account_rail () {
+        var mode = this.settings.get_string ("account-rail");
+        this.account_rail.remove_css_class ("rail-theme");
+        if (mode == "hide") {
+            this.account_rail.visible = false;
+            return;
+        }
+        this.account_rail.visible = true;
+        if (mode == "theme")
+            this.account_rail.add_css_class ("rail-theme");
     }
 
     private void on_folder_split_collapsed () {
@@ -7422,19 +7458,114 @@ public class Mail.Window : Adw.ApplicationWindow {
 
     private void apply_reading_pane () {
         var mode = this.settings.get_string ("reading-pane");
+        var split = mode == "right";
+        if (split != this.reading_pane_split) {
+            if (split)
+                enter_split_reading_headers ();
+            else
+                enter_unified_reading_headers ();
+            this.reading_pane_split = split;
+            sync_toolbar_header_sizes ();
+        }
+
         if (mode == "bottom") {
             this.message_split.orientation = Gtk.Orientation.VERTICAL;
             this.reader_bin.visible = true;
+            this.reader_mail.visible = true;
         } else if (mode == "hidden") {
             this.reader_bin.visible = false;
+            this.reader_mail.visible = false;
         } else {
             this.message_split.orientation = Gtk.Orientation.HORIZONTAL;
             this.reader_bin.visible = true;
+            this.reader_mail.visible = true;
         }
+        update_search_field_width ();
+    }
+
+    private void enter_split_reading_headers () {
+        var pos = this.message_split.position.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+        detach_mail_chrome ();
+        this.message_split.start_child = null;
+        this.message_split.end_child = null;
+        this.list_mail_slot.child = this.list_bin;
+        this.reader_mail_slot.child = this.reader_bin;
+
+        this.list_header.title_widget = this.conversation_title;
+        this.list_header.pack_end (this.conversation_button);
+        this.list_header.pack_end (this.unread_filter_button);
+
+        this.reader_header.pack_start (this.compose_button);
+        this.reader_header.pack_start (this.message_search);
+        this.reader_header.pack_end (this.menu_button);
+        this.reader_header.pack_end (this.conversation_sync_spinner);
+
+        this.unified_mail.visible = false;
+        this.split_mail.visible = true;
+        this.clamping_split_mail = true;
+        this.split_mail.position = pos;
+        this.clamping_split_mail = false;
+    }
+
+    private void enter_unified_reading_headers () {
+        var pos = this.split_mail.position.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+        detach_mail_chrome ();
+        this.list_mail_slot.child = null;
+        this.reader_mail_slot.child = null;
+        this.message_split.start_child = this.list_bin;
+        this.message_split.end_child = this.reader_bin;
+
+        this.conversation_header.pack_start (this.compose_button);
+        this.conversation_header.pack_start (this.unread_filter_button);
+        this.conversation_header.pack_start (this.conversation_button);
+        this.conversation_header.pack_start (this.message_search);
+        this.conversation_header.title_widget = this.conversation_title;
+        this.conversation_header.pack_end (this.menu_button);
+        this.conversation_header.pack_end (this.conversation_sync_spinner);
+
+        this.split_mail.visible = false;
+        this.unified_mail.visible = true;
+        this.clamping_message_pane = true;
+        this.message_split.position = pos;
+        this.clamping_message_pane = false;
+    }
+
+    private void detach_mail_chrome () {
+        header_detach (this.compose_button);
+        header_detach (this.unread_filter_button);
+        header_detach (this.conversation_button);
+        header_detach (this.message_search);
+        header_detach (this.menu_button);
+        header_detach (this.conversation_sync_spinner);
+        if (this.conversation_header.title_widget == this.conversation_title)
+            this.conversation_header.title_widget = null;
+        if (this.list_header.title_widget == this.conversation_title)
+            this.list_header.title_widget = null;
+        if (this.reader_header.title_widget == this.conversation_title)
+            this.reader_header.title_widget = null;
+    }
+
+    private static void header_detach (Gtk.Widget widget) {
+        var parent = widget.get_parent ();
+        if (parent == null)
+            return;
+        var bar = parent as Adw.HeaderBar;
+        if (bar != null)
+            bar.remove (widget);
+        else if (parent is Gtk.Box)
+            ((Gtk.Box) parent).remove (widget);
+    }
+
+    private void update_search_field_width () {
+        var narrow = this.get_width () > 0 && this.get_width () < 1100;
+        if (this.reading_pane_split)
+            this.message_search.width_request = narrow ? 240 : 330;
+        else
+            this.message_search.width_request = narrow ? 180 : 220;
     }
 
     private void on_message_pane_resized () {
-        if (this.clamping_message_pane)
+        if (this.clamping_message_pane || this.reading_pane_split)
             return;
 
         var pos = this.message_split.position;
@@ -7443,6 +7574,21 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.clamping_message_pane = true;
             this.message_split.position = clamped;
             this.clamping_message_pane = false;
+        }
+
+        this.settings.set_int ("message-pane-width", clamped);
+    }
+
+    private void on_split_mail_resized () {
+        if (this.clamping_split_mail || !this.reading_pane_split)
+            return;
+
+        var pos = this.split_mail.position;
+        var clamped = pos.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+        if (clamped != pos) {
+            this.clamping_split_mail = true;
+            this.split_mail.position = clamped;
+            this.clamping_split_mail = false;
         }
 
         this.settings.set_int ("message-pane-width", clamped);
@@ -7679,6 +7825,37 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.selected_account,
             Utils.format_recipient (recipient)
         );
+        compose.present ();
+    }
+
+    private void on_forward_image (Attachment attachment) {
+        if (this.mail_session == null) {
+            this.toast_overlay.add_toast (new Adw.Toast (_("Evolution Data Server is unavailable.")) {
+                timeout = 4,
+            });
+            return;
+        }
+
+        var app = get_application () as Application;
+        if (app == null)
+            return;
+
+        if (Utils.sendable_account_count (app.accounts) == 0) {
+            this.toast_overlay.add_toast (new Adw.Toast (_("No account is configured to send mail.")) {
+                timeout = 4,
+            });
+            return;
+        }
+
+        var compose = new ComposeWindow (
+            app,
+            this.mail_session,
+            app.accounts,
+            this.selected_account
+        );
+        var files = new GenericArray<Attachment> ();
+        files.add (attachment);
+        compose.attach_pending_files (files);
         compose.present ();
     }
 

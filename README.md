@@ -10,14 +10,15 @@ This is not a GNOME Core application, but it follows the clean GNOME 50 look and
 
 Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 
-**1.0.0** is the current release. Reading, composing, search, notifications, and cache-first sync are in place. Install the Flatpak from [Releases](https://github.com/stalvatero/letter/releases). Account setup still happens only in GNOME Settings → Online Accounts. There is no in-app IMAP wizard and no mailbox that exists only inside Letter.
+**1.5.0** is the current release. Reading, composing, search, notifications, and cache-first sync are in place, with Appearance preferences for theme, reading mode, and the accounts rail. Install the Flatpak from [Releases](https://github.com/stalvatero/letter/releases). Account setup still happens only in GNOME Settings → Online Accounts. There is no in-app IMAP wizard and no mailbox that exists only inside Letter.
 
 ### Available languages
 
-- English
-- Italian
-- German (translation by [Christian Lauinger](https://github.com/ChrisLauinger77))
 - Brazilian Portuguese (translation by [Thiago Haeitmann](https://github.com/ThiagoHaeitmann))
+- English
+- German (translation by [Christian Lauinger](https://github.com/ChrisLauinger77))
+- Greek (translation by [Ioannis Argyropoulos](https://github.com/Argy22))
+- Italian
 - More will come — translations via pull request are very welcome.
 
 

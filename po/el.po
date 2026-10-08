@@ -1,94 +1,96 @@
-# Italian translation for Letter.
-# SPDX-FileCopyrightText: 2026 stalvatero
+# Greek translation for Letter.
+# SPDX-FileCopyrightText: 2026 Ioannis Argyropoulos
 # SPDX-License-Identifier: GPL-3.0-or-later
 msgid ""
 msgstr ""
 "Project-Id-Version: letter 1.0.0-rc.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-09-25 16:50+0200\n"
-"PO-Revision-Date: 2026-09-08 15:22+0200\n"
-"Last-Translator: stalvatero\n"
-"Language-Team: Italian\n"
-"Language: it\n"
+"PO-Revision-Date: 2026-10-6 10:40+0200\n"
+"Last-Translator: Ioannis Argyropoulos\n"
+"Language-Team: Greek\n"
+"Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #. Translators: the application name shown in the app grid, window title and tooltips
-#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:3
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:4
+#: data/io.github.stalvatero.Letter.desktop.in.in:3
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:4
 msgid "@app_name@"
-msgstr "Lettera"
+msgstr "@app_name@"
 
-#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:4
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:5
+#: data/io.github.stalvatero.Letter.desktop.in.in:4
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:5
 msgid "Read and send mail"
-msgstr "Leggi e invia la posta"
+msgstr "Ανάγνωση και αποστολή αλληλογραφίας"
 
-#. Translators: Search terms to find this application. Do not translate or localize the semicolons. The list MUST also end with a semicolon.
-#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:12
+#. Translators: Search terms to find this application. Do not translate or
+#. localize the semicolons. The list MUST also end with a semicolon.
+#: data/io.github.stalvatero.Letter.desktop.in.in:12
 msgid "email;mail;imap;google;outlook;exchange;"
-msgstr "email;posta;mail;imap;google;outlook;exchange;"
+msgstr "email;mail;imap;google;outlook;exchange;"
 
-#: data/io.github.user13ac05dcf7.Letter.desktop.in.in:20 src/window.blp:242
+#: data/io.github.stalvatero.Letter.desktop.in.in:20 src/window.blp:242
 #: src/compose-dialog.vala:77
 msgid "New Message"
-msgstr "Nuovo messaggio"
+msgstr "Νέο μήνυμα"
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:9
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:9
 msgid "Salvatore Oscurato"
 msgstr "Salvatore Oscurato"
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:12
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:12
 msgid ""
 "Letter is a GNOME mail client built on GTK 4 and libadwaita. It uses GNOME "
 "Online Accounts and Evolution Data Server, the same stack as Calendar and "
 "Contacts, so Google, Microsoft 365, Exchange, and IMAP accounts already "
 "configured on the desktop appear here without a second setup."
 msgstr ""
-"Lettera è un client di posta GNOME basato su GTK 4 e libadwaita. Usa Account "
-"online GNOME e Evolution Data Server, lo stesso stack di Calendario e "
-"Contatti, così gli account Google, Microsoft 365, Exchange e IMAP già "
-"configurati sul desktop compaiono qui senza una seconda configurazione."
+"Το Letter είναι ένα πρόγραμμα ηλεκτρονικού ταχυδρομείου του GNOME, βασισμένο"
+" στο GTK 4 και στη βιβλιοθήκη libadwaita. Χρησιμοποιεί το GNOME Online "
+"Accounts και τον Evolution Data Server, την ίδια υποδομή με το Ημερολόγιο "
+"και τις Επαφές, οπότε οι λογαριασμοί Google, Microsoft 365, Exchange και "
+"IMAP που έχουν ήδη ρυθμιστεί στον επιτραπέζιο υπολογιστή εμφανίζονται εδώ "
+"χωρίς καμία επιπλέον ρύθμιση."
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:19
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:19
 msgid ""
 "Read conversations, search, compose HTML mail, and get notifications. Add "
 "accounts in Settings → Online Accounts. Letter needs GNOME 50 or later."
 msgstr ""
-"Leggi le conversazioni, cerca, componi posta HTML e ricevi notifiche. "
-"Aggiungi gli account in Impostazioni → Account online. Lettera richiede "
-"GNOME 50 o successivo."
+"Ανάγνωση συνομιλιών, αναζήτηση, σύνταξη HTML mail και λήψη ειδοποιήσεων. "
+"Προσθέστε λογαριασμό στις Ρυθμίσεις → Online Accounts. Το Letter απαιτεί "
+"GNOME 50 ή νεότερο."
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:61
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:61
 msgid ""
-"Fifth 1.0 release candidate. Brazilian Portuguese translation, Debian/"
-"Ubuntu .deb on Releases beside Flatpak, reliable list selection after "
-"emptying a conversation from the current folder, and compose no longer "
-"autosaves drafts every two minutes (avoids duplicate drafts on Microsoft "
-"365)."
+"Fifth 1.0 release candidate. Brazilian Portuguese translation, Debian/Ubuntu"
+" .deb on Releases beside Flatpak, reliable list selection after emptying a "
+"conversation from the current folder, and compose no longer autosaves drafts"
+" every two minutes (avoids duplicate drafts on Microsoft 365)."
 msgstr ""
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:72
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:72
 msgid ""
-"Fourth 1.0 release candidate. Recipient chips offer Write to and Copy Email; "
-"compose gains high priority, Paste and Match Style, and Space to commit "
+"Fourth 1.0 release candidate. Recipient chips offer Write to and Copy Email;"
+" compose gains high priority, Paste and Match Style, and Space to commit "
 "addresses. Open and save .eml files, bulk actions in multi-select, quieter "
 "Archive/Sent sync, Draft tip refresh, and aggregate notification sound."
 msgstr ""
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:83
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:83
 msgid ""
-"Third 1.0 release candidate. Soft archive, trash, move, and flags stay local "
-"until the sync timer, F5, startup, or quit, with an on-disk mutation "
+"Third 1.0 release candidate. Soft archive, trash, move, and flags stay local"
+" until the sync timer, F5, startup, or quit, with an on-disk mutation "
 "registry so pending work survives a crash. Microsoft 365 Archive moves are "
-"bulk and fast again (Camel freeze around transfer). Virtual Outbox for Send, "
-"Drafts autosave every two minutes, and Flatpak ships a minimal Evolution + "
+"bulk and fast again (Camel freeze around transfer). Virtual Outbox for Send,"
+" Drafts autosave every two minutes, and Flatpak ships a minimal Evolution + "
 "evolution-ews stack for Graph mail in the sandbox."
 msgstr ""
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:96
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:96
 msgid ""
 "Second 1.0 release candidate. Completes the German UI translation, fixes "
 "Microsoft 365 bookmarks against Outlook Flag (not High Importance), shows a "
@@ -97,14 +99,14 @@ msgid ""
 "latency fixes from after rc.1."
 msgstr ""
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:107
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:107
 msgid ""
 "First 1.0 release candidate. Daily-use mail with cache-first sync, undo for "
-"archive, move and trash, Inbox on every startup, and an experimental Flatpak "
-"bundle. Feedback and remaining translations welcome before 1.0.0."
+"archive, move and trash, Inbox on every startup, and an experimental Flatpak"
+" bundle. Feedback and remaining translations welcome before 1.0.0."
 msgstr ""
 
-#: data/io.github.user13ac05dcf7.Letter.metainfo.xml.in.in:117
+#: data/io.github.stalvatero.Letter.metainfo.xml.in.in:117
 msgid ""
 "First public beta: reading, composing, search, notifications, and GNOME "
 "Online Accounts."
@@ -112,11 +114,11 @@ msgstr ""
 
 #: src/application.vala:52
 msgid "Compose a new message"
-msgstr "Componi un nuovo messaggio"
+msgstr "Σύνταξη νέου μηνύματος"
 
 #: src/application.vala:279 src/application.vala:285
 msgid "Could not open this message file."
-msgstr "Impossibile aprire questo file messaggio."
+msgstr "Αδυναμία φόρτωσης μηνύματος."
 
 #: src/application.vala:282
 msgid "OK"
@@ -125,67 +127,68 @@ msgstr "OK"
 #: src/application.vala:425
 msgid "A GNOME mail client that shares accounts with Calendar and Contacts."
 msgstr ""
-"Un client di posta GNOME che condivide gli account con Calendario e Contatti."
+"Ένα πρόγραμμα αλληλογραφίας GNOME που μοιράζεται λογαριασμούς με το "
+"Ημερολόγιο και τις Επαφές."
 
 #: src/application.vala:431
 msgid "translator-credits"
-msgstr "Salvatore Oscurato"
+msgstr "συντελεστής μετάφρασης"
 
 #: src/application.vala:444 src/preferences-dialog.vala:39
 msgid "General"
-msgstr "Generale"
+msgstr "Γενικά"
 
 #: src/application.vala:445
 msgid "Quit"
-msgstr "Esci"
+msgstr "Έξοδος"
 
 #: src/application.vala:446 src/preferences-dialog.vala:29
 msgid "Preferences"
-msgstr "Preferenze"
+msgstr "Προτιμήσεις"
 
 #: src/application.vala:447
 msgid "Keyboard shortcuts"
-msgstr "Scorciatoie da tastiera"
+msgstr "Συντομεύσεις πληκτρολογίου"
 
 #: src/application.vala:450
 msgid "Letter shortcuts"
-msgstr "Scorciatoie di Lettera"
+msgstr "Συντομεύσεις Letter"
 
 #: src/application.vala:451 src/window.blp:287 src/search-field.vala:17
 msgid "Search"
-msgstr "Cerca"
+msgstr "Αναζήτηση"
 
 #: src/application.vala:452
 msgid "New message"
-msgstr "Nuovo messaggio"
+msgstr "Νέο μήνυμα"
 
 #: src/application.vala:453 src/window.vala:10027 src/message-reader.vala:1212
 #: src/message-reader.vala:1278
 msgid "Reply"
-msgstr "Rispondi"
+msgstr "Απάντηση"
 
 #: src/application.vala:454 src/window.vala:10029 src/message-reader.vala:1213
 msgid "Reply All"
-msgstr "Rispondi a tutti"
+msgstr "Απάντηση σε όλους"
 
 #: src/application.vala:455 src/window.vala:10030 src/message-reader.vala:1214
 msgid "Forward"
-msgstr "Inoltra"
+msgstr "Προώθηση"
 
 #: src/application.vala:456 src/application.vala:525 src/window.vala:353
 #: src/window.vala:6522 src/window.vala:10038 src/window.vala:10104
 #: src/notifier.vala:104 src/message-reader.vala:1222
 msgid "Archive"
-msgstr "Archivia"
+msgstr "Αρχειοθέτηση"
 
 #: src/application.vala:457
 msgid "Mark as unread"
-msgstr "Segna come non letta"
+msgstr "Επισήμανση ως μη αναγνωσμένο"
 
 #: src/application.vala:458 src/window.vala:10054 src/message-reader.vala:1235
 #: src/message-reader.vala:1306
 msgid "Bookmark"
-msgstr "Aggiungi segnalibro"
+msgstr "Σελιδοδείκτης"
 
 #: src/application.vala:459 src/application.vala:530 src/window.vala:355
 #: src/window.vala:6542 src/window.vala:8123 src/window.vala:10066
@@ -193,295 +196,268 @@ msgstr "Aggiungi segnalibro"
 #: src/compose-dialog.vala:2417 src/signature-editor.vala:218
 #: src/signature-editor.vala:264 src/message-window.vala:395
 msgid "Delete"
-msgstr "Elimina"
+msgstr "Διαγραφή"
 
 #: src/application.vala:460 src/window.vala:8313
 msgid "Undo"
-msgstr "Annulla"
+msgstr "Αναίρεση"
 
 #: src/application.vala:461 src/window.vala:10058 src/message-reader.vala:1245
 #: src/compose-dialog.vala:114 src/eml-viewer.vala:39
 msgid "Print"
-msgstr "Stampa"
+msgstr "Εκτύπωση"
 
 #: src/application.vala:462
 msgid "Zoom In"
-msgstr "Ingrandisci"
+msgstr "Μεγέθυνση"
 
 #: src/application.vala:463
 msgid "Zoom Out"
-msgstr "Riduci"
+msgstr "Σμίκρυνση"
 
 #: src/application.vala:464
 msgid "Reset Zoom"
-msgstr "Ripristina zoom"
+msgstr "Επαναφορά κλίμακας"
 
 #: src/application.vala:465
 msgid "Refresh"
-msgstr "Aggiorna"
+msgstr "Ανανέωση"
 
 #: src/application.vala:466
 msgid "Fullscreen"
-msgstr "Schermo intero"
+msgstr "Πλήρης οθόνη"
 
 #: src/application.vala:467
 msgid "Toggle sidebar"
-msgstr "Barra laterale"
+msgstr "Εναλλαγή πλευρικής στήλης"
 
 #: src/window.vala:340
 msgid "Messages in this conversation"
-msgstr "Messaggi in questa conversazione"
+msgstr "Μηνύματα σε αυτήν τη συνομιλία"
 
 #: src/window.vala:354 src/window.vala:6527 src/window.vala:8930
 #: src/window.vala:10036 src/window.vala:10102 src/message-reader.vala:1223
 msgid "Move"
-msgstr "Sposta"
+msgstr "Μετακίνηση"
 
 #: src/window.vala:486 src/window.vala:3336 src/window.vala:3673
 msgid "Search Results"
-msgstr "Risultati della ricerca"
+msgstr "Αποτελέσματα αναζήτησης"
 
 #: src/window.vala:492
 msgid "Close Search"
-msgstr "Chiudi ricerca"
+msgstr "Κλείσιμο αναζήτησης"
 
 #: src/window.vala:517 src/window.vala:3916
 msgid "Showing conversations"
-msgstr "Vista conversazioni"
+msgstr "Εμφάνιση συνομιλιών"
 
 #: src/window.vala:518 src/window.vala:3917 src/window.blp:278
 msgid "Group by conversation"
-msgstr "Raggruppa in conversazioni"
+msgstr "Ομαδοποίηση βάσει συνομιλιών"
 
 #: src/window.vala:526
-msgid "Press Enter to search."
-msgstr ""
+msgid "Chips and Enter run search."
+msgstr "Τα πλακίδια και το Enter εκτελούν αναζήτηση."
 
 #: src/window.vala:1696
 #, c-format
 msgid "Sent “%s”"
-msgstr "Inviato «%s»"
+msgstr "Αποστολή “%s”"
 
 #: src/window.vala:1703
 #, c-format
 msgid "Could not send “%s”: %s"
-msgstr "Impossibile inviare «%s»: %s"
+msgstr "Αδυναμία αποστολής “%s”: %s"
 
 #: src/window.vala:1707 src/window.vala:5087 src/window.vala:6705
 msgid "Outbox"
-msgstr "Posta in uscita"
+msgstr "Εξερχόμενα"
 
 #: src/window.vala:1785 src/window.vala:5166 src/window.vala:10000
 msgid "Sending…"
-msgstr "Invio in corso…"
+msgstr "Αποστολή…"
 
 #: src/window.vala:2800
 msgid "Checking folders…"
-msgstr "Controllo delle cartelle…"
+msgstr "Έλεγχος φακέλων…"
 
 #: src/window.vala:2863
 #, c-format
 msgid "Updating “%s” from server…"
-msgstr "Aggiornamento di “%s” dal server…"
+msgstr "Ενημέρωση του “%s” από τον διακομιστή…"
 
 #: src/window.vala:2864 src/window.vala:2997
 #, c-format
 msgid "Updating “%s”…"
-msgstr "Aggiornamento di «%s»…"
+msgstr "Ενημέρωση “%s”…"
 
 #: src/window.vala:3021
 #, c-format
 msgid "Downloading messages in “%s”…"
-msgstr "Download dei messaggi in «%s»…"
+msgstr "Λήψη μηνυμάτων σε “%s”…"
 
 #: src/window.vala:3371
 msgid "Searching…"
-msgstr "Ricerca in corso…"
-
-#: src/window.vala
-msgid "Match any word"
-msgstr "Qualsiasi parola"
-
-#: src/window.vala
-msgid "Search earlier messages"
-msgstr "Cerca messaggi precedenti"
-
-#: src/window.vala
-msgid "Can’t find what you’re looking for? Search more items by clicking the button below. It may take a few more seconds."
-msgstr "Non trovi quello che cerchi? Ricerca altri elementi cliccando sul pulsante sotto. Può richiedere qualche secondo in più."
-
-
-
-#: src/window.vala
-msgid "No message contains every word. Try “Match any word”, or search earlier messages already downloaded on this device."
-msgstr "Nessun messaggio contiene tutte le parole. Prova “Qualsiasi parola”, oppure cerca messaggi precedenti già scaricati su questo dispositivo."
-
-#: src/window.vala
-msgid "No cached messages match. Search earlier messages already on this device, or download more of the mailbox in Preferences."
-msgstr "Nessun messaggio in cache corrisponde. Cerca messaggi precedenti già su questo dispositivo, oppure scarica altra posta in Preferenze."
-
-#: src/window.vala
-msgid "Indexing more local messages…"
-msgstr "Indicizzazione di altri messaggi locali…"
-
-#: src/window.vala
-msgid "No more downloaded bodies to index. Widen the download window in Preferences, or open older folders."
-msgstr "Non ci sono altri corpi scaricati da indicizzare. Amplia la finestra di download in Preferenze, oppure apri cartelle più vecchie."
-
-#: src/window.vala
-msgid "Searching message bodies…"
-msgstr "Ricerca nei corpi dei messaggi…"
-
+msgstr "Αναζήτηση…"
 
 #: src/window.vala:3675 src/window.vala:6887
 #, c-format
 msgid "%d match"
 msgid_plural "%d matches"
-msgstr[0] "%d risultato"
-msgstr[1] "%d risultati"
+msgstr[0] "%d αντιστοιχία"
+msgstr[1] "%d αντιστοιχίες"
 
 #: src/window.vala:3681
 msgid ""
 "Results include subject, from, to, and preview from Letter’s index, plus "
 "bodies already downloaded to this device."
 msgstr ""
-"I risultati includono oggetto, mittente, destinatario e anteprima "
-"dall’indice di Letter, più i corpi già scaricati su questo dispositivo."
+"Τα αποτελέσματα περιλαμβάνουν θέμα, αποστολέα, παραλήπτη και προεπισκόπηση "
+"από το ευρετήριο του Letter, καθώς και σώματα μηνυμάτων που έχουν ήδη ληφθεί"
+" σε αυτήν τη συσκευή."
 
 #: src/window.vala:3688
 msgid "No Matches"
-msgstr "Nessun risultato"
+msgstr "Καμία αντιστοιχία"
 
 #: src/window.vala:3689
 msgid ""
 "No cached messages match. Download more of the mailbox (or widen the body "
 "window in Preferences) and try again."
 msgstr ""
-"Nessun messaggio in cache corrisponde. Scarica altra posta (o amplia la "
-"finestra dei corpi in Preferenze) e riprova."
+"Κανένα μήνυμα στην τοπική κρυφή μνήμη δεν ταιριάζει. Κατεβάστε περισσότερα "
+"από το γραμματοκιβώτιο (ή διευρύνετε το παράθυρο σωμάτων μηνυμάτων στις "
+"Προτιμήσεις) και δοκιμάστε ξανά."
 
 #: src/window.vala:3898
 msgid "Showing unread messages"
-msgstr "Solo messaggi non letti"
+msgstr "Εμφάνιση μη αναγνωσμένων μηνυμάτων"
 
 #: src/window.vala:3899 src/window.blp:268
 msgid "Show unread only"
-msgstr "Solo non lette"
+msgstr "Εμφάνιση μόνο των μη αναγνωσμένων"
 
 #: src/window.vala:4014 src/window.vala:4168 src/window.vala:4183
 #: src/window.vala:4186 src/window.vala:4278 src/window.vala:4281
 #: src/window.vala:4508
 msgid "Offline"
-msgstr "Offline"
+msgstr "Εκτός σύνδεσης"
 
 #: src/window.vala:4144
 msgid "Hide account list"
-msgstr "Nascondi elenco account"
+msgstr "Απόκρυψη λίστας λογαριασμών"
 
 #: src/window.vala:4145
 msgid "Show account list"
-msgstr "Mostra elenco account"
+msgstr "Εμφάνιση λίστας λογαριασμών"
 
 #: src/window.vala:4169
 msgid "Offline — enable the service in Online Accounts settings"
-msgstr "Offline — abilita il servizio in impostazioni account online"
+msgstr ""
+"Εκτός σύνδεσης — ενεργοποιήστε την υπηρεσία στις ρυθμίσεις του Online "
+"Accounts"
 
 #: src/window.vala:4184 src/window.vala:4279
 msgid "Enable the mail service in Online Accounts settings"
-msgstr "Abilita il servizio in impostazioni account online"
+msgstr ""
+"Ενεργοποιήστε την υπηρεσία αλληλογραφίας στις ρυθμίσεις του Online Accounts"
 
 #: src/window.vala:4192
 msgid "Evolution Data Server Unavailable"
-msgstr "Evolution Data Server non disponibile"
+msgstr "Ο Evolution Data Server δεν είναι διαθέσιμος"
 
 #: src/window.vala:4193
 msgid "Letter needs the same data server used by Calendar and Contacts."
 msgstr ""
-"Lettera ha bisogno dello stesso data server usato da Calendario e Contatti."
+"Το Letter χρειάζεται τον ίδιο διακομιστή δεδομένων που χρησιμοποιούν το "
+"Ημερολόγιο και οι Επαφές."
 
 #: src/window.vala:4205 src/window.vala:4247 src/window.vala:4338
 msgid "Loading Folders"
-msgstr "Caricamento cartelle"
+msgstr "Φόρτωση φακέλων"
 
 #: src/window.vala:4209 src/window.vala:4253 src/window.blp:329
 msgid "Select a Folder"
-msgstr "Seleziona una cartella"
+msgstr "Επιλέξτε φάκελο"
 
 #: src/window.vala:4210 src/window.vala:4254 src/window.blp:330
 msgid "Messages from the selected folder will appear here."
-msgstr "I messaggi della cartella selezionata compariranno qui."
+msgstr "Τα μηνύματα του επιλεγμένου φακέλου θα εμφανίζονται εδώ."
 
 #: src/window.vala:4217
 #, c-format
 msgid "Preparing mail for “%s”…"
-msgstr "Preparazione della posta per «%s»…"
+msgstr "Προετοιμασία αλληλογραφίας για το “%s”…"
 
 #: src/window.vala:4225
 msgid "Mail Account Not Ready"
-msgstr "Account di posta non pronto"
+msgstr "Ο λογαριασμός αλληλογραφίας δεν είναι έτοιμος"
 
 #: src/window.vala:4226
 msgid ""
 "Evolution Data Server has not published this account yet. Try again in a "
 "moment."
 msgstr ""
-"Evolution Data Server non ha ancora pubblicato questo account. Riprova tra "
-"un momento."
+"Ο Evolution Data Server δεν έχει δημοσιεύσει ακόμη αυτόν τον λογαριασμό. "
+"Δοκιμάστε ξανά σε λίγο."
 
 #: src/window.vala:4249
 #, c-format
 msgid "Connecting to “%s”…"
-msgstr "Connessione a «%s»…"
+msgstr "Σύνδεση με το “%s”…"
 
 #: src/window.vala:4264
 msgid "No Folders"
-msgstr "Nessuna cartella"
+msgstr "Κανένας φάκελος"
 
 #: src/window.vala:4265
 msgid "The account did not publish any subscribed folders."
-msgstr "L'account non ha pubblicato cartelle sottoscritte."
+msgstr ""
+"Ο λογαριασμός δεν δημοσίευσε φακέλους στους οποίους έχει γίνει εγγραφή."
 
 #: src/window.vala:4285
 msgid "Could Not Load Folders"
-msgstr "Impossibile caricare le cartelle"
+msgstr "Δεν ήταν δυνατή η φόρτωση των φακέλων"
 
 #: src/window.vala:4340
 #, c-format
 msgid "Waiting for folders from “%s”…"
-msgstr "In attesa delle cartelle di «%s»…"
+msgstr "Αναμονή για φακέλους από το “%s”…"
 
 #: src/window.vala:4521
 msgid "Loading local cache…"
-msgstr "Caricamento della cache locale…"
+msgstr "Φόρτωση τοπικής κρυφής μνήμης…"
 
 #: src/window.vala:4735
 msgid "Gmail Labels"
-msgstr "Etichette Gmail"
+msgstr "Ετικέτες Gmail"
 
 #: src/window.vala:4736
 msgid ""
 "“[Gmail]” groups labels such as Important and Starred. Open one of those "
 "folders to read mail."
 msgstr ""
-"«[Gmail]» raggruppa etichette come Importanti e Speciali. Apri una di quelle "
-"cartelle per leggere la posta."
+"Το “[Gmail]” ομαδοποιεί ετικέτες όπως Σημαντικά και Με αστέρι. Ανοίξτε έναν "
+"από αυτούς τους φακέλους για να διαβάσετε αλληλογραφία."
 
 #: src/window.vala:4790
 msgid "Loading Messages"
-msgstr "Caricamento messaggi"
+msgstr "Φόρτωση μηνυμάτων"
 
 #: src/window.vala:4791
 #, c-format
 msgid "Reading the local list for “%s”…"
-msgstr "Lettura dell’elenco locale di «%s»…"
+msgstr "Ανάγνωση της τοπικής λίστας για το “%s”…"
 
 #: src/window.vala:4923
 msgid ""
 "Bookmark a message to collect it here. Bookmarks sync with the flag used by "
 "Outlook, Gmail, and IMAP."
 msgstr ""
-"Aggiungi un segnalibro a un messaggio per raccoglierlo qui. I segnalibri "
-"corrispondono al contrassegno di Outlook, Gmail e IMAP."
+"Προσθέστε σελιδοδείκτη σε ένα μήνυμα για να το συγκεντρώσετε εδώ. Οι "
+"σελιδοδείκτες συγχρονίζονται με τη σημαία που χρησιμοποιούν το Outlook, το "
+"Gmail και το IMAP."
 
 #: src/window.vala:4928
 msgid ""
@@ -490,46 +466,50 @@ msgid ""
 "(bundles 3.58+) or upgrade evolution-ews. Bookmarks you set here still work "
 "locally."
 msgstr ""
-"Il provider Microsoft 365 di questo sistema è più vecchio di evolution-ews "
-"3.58, quindi i contrassegni di Outlook non vengono importati in Letter. Usa "
-"il Flatpak (include la 3.58+) oppure aggiorna evolution-ews. I segnalibri "
-"che imposti qui restano comunque validi in locale."
+"Ο πάροχος αλληλογραφίας Microsoft 365 αυτού του συστήματος είναι παλαιότερος"
+" από το evolution-ews 3.58, επομένως οι σημαίες του Outlook δεν εισάγονται "
+"στο Letter. Χρησιμοποιήστε την έκδοση Flatpak (περιλαμβάνει την 3.58+) ή "
+"αναβαθμίστε το evolution-ews. Οι σελιδοδείκτες που ορίζετε εδώ εξακολουθούν "
+"να λειτουργούν τοπικά."
 
 #: src/window.vala:4931
 msgid "No Bookmarks"
-msgstr "Nessun segnalibro"
+msgstr "Κανένας σελιδοδείκτης"
 
 #: src/window.vala:4954
 msgid "No Unread Bookmarks"
-msgstr "Nessun segnalibro non letto"
+msgstr "Κανένας μη αναγνωσμένος σελιδοδείκτης"
 
 #: src/window.vala:4955 src/window.vala:6101 src/window.vala:6116
 #: src/window.vala:8577
 msgid "Turn off the unread filter to see the rest of this folder."
-msgstr "Disattiva il filtro non lette per vedere il resto della cartella."
+msgstr ""
+"Απενεργοποιήστε το φίλτρο μη αναγνωσμένων για να δείτε τα υπόλοιπα αυτού του"
+" φακέλου."
 
 #: src/window.vala:4997
 msgid "Bookmarks"
-msgstr "Segnalibri"
+msgstr "Σελιδοδείκτες"
 
 #: src/window.vala:5167
 msgid "Waiting to send"
-msgstr "In attesa di invio"
+msgstr "Αναμονή για αποστολή"
 
 #: src/window.vala:5192
 msgid "Outbox Empty"
-msgstr "Posta in uscita vuota"
+msgstr "Τα Εξερχόμενα είναι κενά"
 
 #: src/window.vala:5193
 msgid "Messages you send are kept here until delivery succeeds."
-msgstr "I messaggi che invii restano qui finché la consegna non riesce."
+msgstr ""
+"Τα μηνύματα που στέλνετε διατηρούνται εδώ μέχρι να ολοκληρωθεί η παράδοση."
 
 #: src/window.vala:5942
 #, c-format
 msgid "%u more new message"
 msgid_plural "%u more new messages"
-msgstr[0] "%u altro nuovo messaggio"
-msgstr[1] "%u altri nuovi messaggi"
+msgstr[0] "%u ακόμη νέο μήνυμα"
+msgstr[1] "%u ακόμη νέα μηνύματα"
 
 #: src/window.vala:5970 src/window.vala:6665 src/window.vala:7383
 #: src/conversation.vala:162 src/conversation.vala:429
@@ -540,150 +520,148 @@ msgstr[1] "%u altri nuovi messaggi"
 #: src/utils.vala:2298 src/outbox-store.vala:27 src/message-window.vala:281
 #: src/message-window.vala:297
 msgid "(No subject)"
-msgstr "(Nessun oggetto)"
+msgstr "(Χωρίς θέμα)"
 
 #: src/window.vala:6054
 msgid "Grouping Conversations"
-msgstr "Raggruppamento conversazioni"
+msgstr "Ομαδοποίηση συνομιλιών"
 
 #: src/window.vala:6055
 #, c-format
 msgid "Building threads for “%s”…"
-msgstr "Creazione thread per «%s»…"
+msgstr "Δημιουργία νημάτων για το “%s”…"
 
 #: src/window.vala:6095 src/window.vala:8581 src/window.vala:9928
 msgid "No Messages"
-msgstr "Nessun messaggio"
+msgstr "Κανένα μήνυμα"
 
 #: src/window.vala:6096 src/window.vala:8582 src/window.vala:9929
 msgid "This folder is empty."
-msgstr "Questa cartella è vuota."
+msgstr "Αυτός ο φάκελος είναι κενός."
 
 #: src/window.vala:6100 src/window.vala:6115 src/window.vala:8576
 msgid "No Unread Messages"
-msgstr "Nessun messaggio non letto"
+msgstr "Κανένα μη αναγνωσμένο μήνυμα"
 
 #: src/window.vala:6497
 #, c-format
 msgid "%u conversation selected"
 msgid_plural "%u conversations selected"
-msgstr[0] "%u conversazione selezionata"
-msgstr[1] "%u conversazioni selezionate"
+msgstr[0] "Επιλέχθηκε %u συνομιλία"
+msgstr[1] "Επιλέχθηκαν %u συνομιλίες"
 
 #: src/window.vala:6532 src/window.vala:10050 src/window.vala:10109
 #: src/message-reader.vala:1228 src/message-reader.vala:1293
 msgid "Mark as Read"
-msgstr "Segna come letta"
+msgstr "Επισήμανση ως αναγνωσμένο"
 
 #: src/window.vala:6537 src/window.vala:10052 src/window.vala:10111
 #: src/message-reader.vala:1289
 msgid "Mark as Unread"
-msgstr "Segna come non letta"
+msgstr "Επισήμανση ως μη αναγνωσμένο"
 
 #: src/window.vala:6768
 msgid "Update in progress…"
-msgstr "Aggiornamento in corso…"
+msgstr "Ενημέρωση σε εξέλιξη…"
 
 #: src/window.vala:6769
 msgid "Aligning mail cache…"
-msgstr "Allineamento cache in corso…"
+msgstr "Ευθυγράμμιση κρυφής μνήμης αλληλογραφίας…"
 
 #: src/window.vala:6799
 msgid "Loading message…"
-msgstr "Caricamento messaggio…"
+msgstr "Φόρτωση μηνύματος…"
 
 #: src/window.vala:6874
 #, c-format
 msgid "%d unread"
 msgid_plural "%d unread"
-msgstr[0] "%d non letto"
-msgstr[1] "%d non letti"
+msgstr[0] "%d μη αναγνωσμένο"
+msgstr[1] "%d μη αναγνωσμένα"
 
 #: src/window.vala:6875
 #, c-format
 msgid "%d message"
 msgid_plural "%d messages"
-msgstr[0] "%d messaggio"
-msgstr[1] "%d messaggi"
+msgstr[0] "%d μήνυμα"
+msgstr[1] "%d μηνύματα"
 
 #: src/window.vala:6917
 msgid "Aligning local cache"
-msgstr "Allineamento della cache locale"
+msgstr "Ευθυγράμμιση τοπικής κρυφής μνήμης"
 
 #: src/window.vala:6918
 #, c-format
 msgid ""
-"Loading “%s” to match the server. This can take a while on large mailboxes — "
-"please wait until the sync finishes."
+"Loading “%s” to match the server. This can take a while on large mailboxes —"
+" please wait until the sync finishes."
 msgstr ""
-"Caricamento di “%s” per allinearlo al server. Su caselle grandi può "
-"richiedere del tempo: attendi il completamento della sincronizzazione."
+"Φόρτωση του “%s” για συγχρονισμό με τον διακομιστή. Αυτό μπορεί να πάρει "
+"αρκετή ώρα σε μεγάλα γραμματοκιβώτια — περιμένετε μέχρι να ολοκληρωθεί ο "
+"συγχρονισμός."
 
 #: src/window.vala:6950 src/window.blp:344
 msgid "Select a Message"
-msgstr "Seleziona un messaggio"
+msgstr "Επιλέξτε μήνυμα"
 
 #: src/window.vala:6951 src/window.blp:345
 msgid "Choose a message from the list to read it."
-msgstr "Scegli un messaggio dall'elenco per leggerlo."
+msgstr "Επιλέξτε ένα μήνυμα από τη λίστα για να το διαβάσετε."
 
 #: src/window.vala:7277 src/window.vala:7300
 msgid "Evolution Data Server is unavailable."
-msgstr "Evolution Data Server non è disponibile."
+msgstr "Ο Evolution Data Server δεν είναι διαθέσιμος."
 
 #: src/window.vala:7288 src/window.vala:7311
 msgid "No account is configured to send mail."
-msgstr "Nessun account è configurato per inviare posta."
+msgstr "Δεν έχει ρυθμιστεί λογαριασμός για αποστολή αλληλογραφίας."
 
 #: src/window.vala:7569 src/message-window.vala:209
 msgid "No Important folder was found for this account."
-msgstr "Nessuna cartella Importanti è stata trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Σημαντικά για αυτόν τον λογαριασμό."
 
 #: src/window.vala:7811
 msgid "No Junk folder was found for this account."
-msgstr ""
-"Nessuna cartella Posta indesiderata è stata trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Ανεπιθύμητα για αυτόν τον λογαριασμό."
 
 #: src/window.vala:7822
 msgid "No Inbox folder was found for this account."
-msgstr "Nessuna cartella Posta in arrivo è stata trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Εισερχόμενα για αυτόν τον λογαριασμό."
 
 #: src/window.vala:7847
 msgid "Could not save this message."
-msgstr "Impossibile salvare questo messaggio."
+msgstr "Δεν ήταν δυνατή η αποθήκευση αυτού του μηνύματος."
 
 #: src/window.vala:7864
 msgid "Message saved."
-msgstr "Messaggio salvato."
+msgstr "Το μήνυμα αποθηκεύτηκε."
 
 #: src/window.vala:7938 src/window.vala:8020 src/message-window.vala:371
 msgid "No Archive folder was found for this account."
-msgstr "Nessuna cartella Archivio trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Αρχείο για αυτόν τον λογαριασμό."
 
 #: src/window.vala:7958
 msgid "Removed from Outbox"
-msgstr "Rimosso dalla posta in uscita"
+msgstr "Αφαιρέθηκε από τα Εξερχόμενα"
 
 #: src/window.vala:8115 src/message-window.vala:391
 msgid "Delete permanently?"
-msgstr "Eliminare definitivamente?"
+msgstr "Οριστική διαγραφή;"
 
 #: src/window.vala:8116 src/message-window.vala:392
 msgid "This message will be permanently deleted. This cannot be undone."
 msgstr ""
-"Questo messaggio verrà eliminato definitivamente. L’operazione non può "
-"essere annullata."
+"Αυτό το μήνυμα θα διαγραφεί οριστικά. Η ενέργεια δεν μπορεί να αναιρεθεί."
 
 #: src/window.vala:8118
 #, c-format
 msgid "Delete %u messages permanently?"
-msgstr "Eliminare definitivamente %u messaggi?"
+msgstr "Οριστική διαγραφή %u μηνυμάτων;"
 
 #: src/window.vala:8119
 msgid "These messages will be permanently deleted. This cannot be undone."
 msgstr ""
-"Questi messaggi verranno eliminati definitivamente. L’operazione non può "
-"essere annullata."
+"Αυτά τα μηνύματα θα διαγραφούν οριστικά. Η ενέργεια δεν μπορεί να αναιρεθεί."
 
 #: src/window.vala:8122 src/window.vala:8929 src/window.vala:9463
 #: src/window.vala:9871 src/window.vala:9892 src/window.vala:10205
@@ -691,358 +669,371 @@ msgstr ""
 #: src/compose-dialog.vala:1614 src/preferences-dialog.vala:496
 #: src/signature-editor.vala:263 src/message-window.vala:394
 msgid "Cancel"
-msgstr "Annulla"
+msgstr "Ακύρωση"
 
 #: src/window.vala:8409
 msgid "Message moved to Trash"
 msgid_plural "Messages moved to Trash"
-msgstr[0] "Messaggio spostato nel Cestino"
-msgstr[1] "Messaggi spostati nel Cestino"
+msgstr[0] "Το μήνυμα μετακινήθηκε στα Απορρίμματα"
+msgstr[1] "Τα μηνύματα μετακινήθηκαν στα Απορρίμματα"
 
 #: src/window.vala:8416
 msgid "Message marked as Junk"
 msgid_plural "Messages marked as Junk"
-msgstr[0] "Messaggio segnato come posta indesiderata"
-msgstr[1] "Messaggi segnati come posta indesiderata"
+msgstr[0] "Το μήνυμα επισημάνθηκε ως ανεπιθύμητο"
+msgstr[1] "Τα μηνύματα επισημάνθηκαν ως ανεπιθύμητα"
 
 #: src/window.vala:8425
 msgid "Message archived"
 msgid_plural "Messages archived"
-msgstr[0] "Messaggio archiviato"
-msgstr[1] "Messaggi archiviati"
+msgstr[0] "Το μήνυμα αρχειοθετήθηκε"
+msgstr[1] "Τα μηνύματα αρχειοθετήθηκαν"
 
 #: src/window.vala:8431
 #, c-format
 msgid "Message moved to “%s”"
 msgid_plural "Messages moved to “%s”"
-msgstr[0] "Messaggio spostato in «%s»"
-msgstr[1] "Messaggi spostati in «%s»"
+msgstr[0] "Το μήνυμα μετακινήθηκε στο “%s”"
+msgstr[1] "Τα μηνύματα μετακινήθηκαν στο “%s”"
 
 #: src/window.vala:8923
 msgid "Choose where to move the selected messages."
-msgstr "Scegli dove spostare i messaggi selezionati."
+msgstr "Επιλέξτε πού θα μετακινηθούν τα επιλεγμένα μηνύματα."
 
 #: src/window.vala:8924
 msgid "Choose where to move this message."
-msgstr "Scegli dove spostare questo messaggio."
+msgstr "Επιλέξτε πού θα μετακινηθεί αυτό το μήνυμα."
 
 #: src/window.vala:8925
 msgid "Move to Folder"
-msgstr "Sposta nella cartella"
+msgstr "Μετακίνηση σε φάκελο"
 
 #: src/window.vala:8993 src/mail-session.vala:5711 src/mail-session.vala:5739
 #: src/mail-session.vala:5844 src/compose-dialog.vala:661
 #: src/message-window.vala:344
 msgid "This account has no sending identity."
-msgstr "Questo account non ha un'identità di invio."
+msgstr "Αυτός ο λογαριασμός δεν έχει ταυτότητα αποστολής."
 
 #: src/window.vala:9408
 msgid "New Subfolder…"
-msgstr "Nuova sottocartella…"
+msgstr "Νέος υποφάκελος…"
 
 #: src/window.vala:9410
 msgid "Rename…"
-msgstr "Rinomina…"
+msgstr "Μετονομασία…"
 
 #: src/window.vala:9416 src/account-row.vala:117
 msgid "Expand"
-msgstr "Espandi"
+msgstr "Ανάπτυξη"
 
 #: src/window.vala:9416 src/account-row.vala:117
 msgid "Collapse"
-msgstr "Comprimi"
+msgstr "Σύμπτυξη"
 
 #: src/window.vala:9423
 msgid "Mark All as Read"
-msgstr "Segna tutte come lette"
+msgstr "Επισήμανση όλων ως αναγνωσμένων"
 
 #: src/window.vala:9424
 msgid "Mark All as Unread"
-msgstr "Segna tutte come non lette"
+msgstr "Επισήμανση όλων ως μη αναγνωσμένων"
 
 #: src/window.vala:9426 src/window.vala:9464
 msgid "Update Folder"
-msgstr "Aggiorna cartella"
+msgstr "Ενημέρωση φακέλου"
 
 #: src/window.vala:9431 src/window.vala:9893
 msgid "Empty"
-msgstr "Svuota"
+msgstr "Εκκαθάριση"
 
 #: src/window.vala:9433
 msgid "Restore"
-msgstr "Ripristina"
+msgstr "Επαναφορά"
 
 #: src/window.vala:9434 src/window.vala:10488
 msgid "Delete Permanently"
-msgstr "Elimina definitivamente"
+msgstr "Οριστική διαγραφή"
 
 #: src/window.vala:9436 src/window.vala:10432
 msgid "Move to Trash"
-msgstr "Sposta nel cestino"
+msgstr "Μετακίνηση στα Απορρίμματα"
 
 #: src/window.vala:9455
 msgid "A folder update is already in progress."
-msgstr "È già in corso un aggiornamento di una cartella."
+msgstr "Μια ενημέρωση φακέλου βρίσκεται ήδη σε εξέλιξη."
 
 #: src/window.vala:9460
 #, c-format
 msgid "Update “%s” from server?"
-msgstr "Aggiornare “%s” dal server?"
+msgstr "Ενημέρωση του “%s” από τον διακομιστή;"
 
-#: src/window.vala:8566
-msgid "Letter asks the server for this folder’s headers and merges them into its local index. Sending waits until that download finishes."
-msgstr "Letter chiede al server le intestazioni di questa cartella e le unisce al proprio indice locale. L’invio attende la fine di quel download."
+#: src/window.vala:9461
+msgid ""
+"Letter asks the server for new message headers and merges them into its "
+"local index. Large folders run in timed slices; sending waits until the "
+"current slice finishes (the sync is not interrupted). Between slices Letter "
+"handles new mail and queued moves."
+msgstr ""
+"Το Letter ζητά από τον διακομιστή τις κεφαλίδες των νέων μηνυμάτων και τις "
+"συγχωνεύει στο τοπικό ευρετήριό του. Οι μεγάλοι φάκελοι εκτελούνται σε "
+"χρονομετρημένα τμήματα· η αποστολή περιμένει μέχρι να ολοκληρωθεί το τρέχον "
+"τμήμα (ο συγχρονισμός δεν διακόπτεται). Ανάμεσα στα τμήματα, το Letter "
+"χειρίζεται τη νέα αλληλογραφία και τις μετακινήσεις που βρίσκονται σε ουρά."
 
 #: src/window.vala:9840 src/window.vala:9872
 msgid "Remove All Bookmarks"
-msgstr "Rimuovi tutti i segnalibri"
+msgstr "Αφαίρεση όλων των σελιδοδεικτών"
 
 #: src/window.vala:9851
 msgid "Retrying Outbox…"
-msgstr "Nuovo tentativo dalla posta in uscita…"
+msgstr "Επανάληψη προσπάθειας για τα Εξερχόμενα…"
 
 #: src/window.vala:9857
 msgid "Send All Now"
-msgstr "Invia tutto ora"
+msgstr "Αποστολή όλων τώρα"
 
 #: src/window.vala:9868
 msgid "Remove all bookmarks?"
-msgstr "Rimuovere tutti i segnalibri?"
+msgstr "Αφαίρεση όλων των σελιδοδεικτών;"
 
 #: src/window.vala:9869
 msgid ""
 "Every bookmarked message in this account will lose its bookmark. The "
 "messages themselves will not be deleted."
 msgstr ""
-"Tutti i messaggi con segnalibro di questo account perderanno il "
-"contrassegno. I messaggi non verranno eliminati."
+"Κάθε μήνυμα με σελιδοδείκτη σε αυτόν τον λογαριασμό θα χάσει τον "
+"σελιδοδείκτη του. Τα ίδια τα μηνύματα δεν θα διαγραφούν."
 
 #: src/window.vala:9889
 #, c-format
 msgid "Empty “%s”?"
-msgstr "Svuotare «%s»?"
+msgstr "Εκκαθάριση του “%s”;"
 
 #: src/window.vala:9890
 msgid ""
 "All messages in this folder will be permanently deleted. This cannot be "
 "undone."
 msgstr ""
-"Tutti i messaggi in questa cartella verranno eliminati in modo permanente. "
-"Questa azione non può essere annullata."
+"Όλα τα μηνύματα αυτού του φακέλου θα διαγραφούν οριστικά. Η ενέργεια δεν "
+"μπορεί να αναιρεθεί."
 
 #: src/window.vala:10020 src/preferences-dialog.vala:428
 #: src/signature-editor.vala:212
 msgid "Edit"
-msgstr "Modifica"
+msgstr "Επεξεργασία"
 
 #: src/window.vala:10021
 msgid "Send Now"
-msgstr "Invia ora"
+msgstr "Αποστολή τώρα"
 
 #: src/window.vala:10023 src/message-reader.vala:1266
 #: src/compose-dialog.vala:77
 msgid "Edit Draft"
-msgstr "Modifica bozza"
+msgstr "Επεξεργασία πρόχειρου"
 
 #: src/window.vala:10025 src/message-reader.vala:1272
 msgid "Send Again"
-msgstr "Invia di nuovo"
+msgstr "Αποστολή ξανά"
 
 #: src/window.vala:10040
 msgid "Not Spam"
-msgstr "Non è spam"
+msgstr "Όχι ανεπιθύμητο"
 
 #: src/window.vala:10042
 msgid "Mark as Spam"
-msgstr "Segna come spam"
+msgstr "Επισήμανση ως ανεπιθύμητο"
 
 #: src/window.vala:10054 src/message-reader.vala:1305
 msgid "Remove Bookmark"
-msgstr "Rimuovi segnalibro"
+msgstr "Αφαίρεση σελιδοδείκτη"
 
 #: src/window.vala:10057 src/message-reader.vala:1319
 msgid "Not Important"
-msgstr "Non importante"
+msgstr "Όχι σημαντικό"
 
 #: src/window.vala:10057 src/message-reader.vala:1239
 #: src/message-reader.vala:1320
 msgid "Mark as Important"
-msgstr "Segna come importante"
+msgstr "Επισήμανση ως σημαντικό"
 
 #: src/window.vala:10060
 msgid "Save as EML…"
-msgstr "Salva come EML…"
+msgstr "Αποθήκευση ως EML…"
 
 #: src/window.vala:10066
 msgid "Cancel Send"
-msgstr "Annulla invio"
+msgstr "Ακύρωση αποστολής"
 
 #: src/window.vala:10202
 msgid "New Subfolder"
-msgstr "Nuova sottocartella"
+msgstr "Νέος υποφάκελος"
 
 #: src/window.vala:10203
 #, c-format
 msgid "The folder will be created under “%s”."
-msgstr "La cartella verrà creata in «%s»."
+msgstr "Ο φάκελος θα δημιουργηθεί κάτω από το “%s”."
 
 #: src/window.vala:10206
 msgid "Create"
-msgstr "Crea"
+msgstr "Δημιουργία"
 
 #: src/window.vala:10213 src/window.vala:10250 src/signature-editor.vala:30
 msgid "Name"
-msgstr "Nome"
+msgstr "Όνομα"
 
 #: src/window.vala:10240
 msgid "Rename Folder"
-msgstr "Rinomina cartella"
+msgstr "Μετονομασία φακέλου"
 
 #: src/window.vala:10241
 #, c-format
 msgid "Choose a new name for “%s”."
-msgstr "Scegli un nuovo nome per «%s»."
+msgstr "Επιλέξτε ένα νέο όνομα για το “%s”."
 
 #: src/window.vala:10244
 msgid "Rename"
-msgstr "Rinomina"
+msgstr "Μετονομασία"
 
 #: src/window.vala:10278
 #, c-format
 msgid "A folder named “%s” already exists."
-msgstr "Esiste già una cartella chiamata «%s»."
+msgstr "Υπάρχει ήδη φάκελος με όνομα “%s”."
 
 #: src/window.vala:10426
 #, c-format
 msgid "Move “%s” to Trash?"
-msgstr "Spostare «%s» nel cestino?"
+msgstr "Μετακίνηση του “%s” στα Απορρίμματα;"
 
 #: src/window.vala:10428
 msgid ""
 "The folder and its subfolders will be moved to Trash. You can restore them "
 "from there."
 msgstr ""
-"La cartella e le sue sottocartelle verranno spostate nel cestino. Potrai "
-"ripristinarle da lì."
+"Ο φάκελος και οι υποφάκελοί του θα μετακινηθούν στα Απορρίμματα. Μπορείτε να"
+" τους επαναφέρετε από εκεί."
 
 #: src/window.vala:10429
 msgid "The folder will be moved to Trash. You can restore it from there."
-msgstr "La cartella verrà spostata nel cestino. Potrai ripristinarla da lì."
+msgstr ""
+"Ο φάκελος θα μετακινηθεί στα Απορρίμματα. Μπορείτε να τον επαναφέρετε από "
+"εκεί."
 
 #: src/window.vala:10484
 #, c-format
 msgid "Delete “%s” permanently?"
-msgstr "Eliminare definitivamente «%s»?"
+msgstr "Οριστική διαγραφή του “%s”;"
 
 #: src/window.vala:10485
 msgid "This cannot be undone."
-msgstr "Questa azione non può essere annullata."
+msgstr "Η ενέργεια δεν μπορεί να αναιρεθεί."
 
 #: src/window.blp:5 src/window.blp:294 src/message-reader.vala:569
 #: src/utils.vala:5
 msgid "Letter"
-msgstr "Lettera"
+msgstr "Letter"
 
 #: src/window.blp:79 src/preferences-dialog.vala:238
 msgid "Add Account"
-msgstr "Aggiungi account"
+msgstr "Προσθήκη λογαριασμού"
 
 #: src/window.blp:123 src/window.blp:135 src/welcome-tour.vala:34
 msgid "Online Accounts"
-msgstr "Account online"
+msgstr "Online Accounts"
 
 #: src/window.blp:130
 msgid "No Mail Accounts"
-msgstr "Nessun account di posta"
+msgstr "Κανένας λογαριασμός αλληλογραφίας"
 
 #: src/window.blp:131
 msgid ""
 "Add Google, Microsoft 365, or IMAP in GNOME Settings. Letter uses the same "
 "accounts as Calendar and Contacts."
 msgstr ""
-"Aggiungi Google, Microsoft 365 o IMAP in Impostazioni. Lettera usa gli "
-"stessi account di Calendario e Contatti."
+"Προσθέστε Google, Microsoft 365 ή IMAP στις Ρυθμίσεις του GNOME. Το Letter "
+"χρησιμοποιεί τους ίδιους λογαριασμούς με το Ημερολόγιο και τις Επαφές."
 
 #: src/window.blp:161
 msgid ""
 "This pane shows only the accounts and services enabled in GNOME Online "
 "Accounts. Add or change mail accounts there."
 msgstr ""
-"In questo riquadro sono visualizzati solo gli account e i servizi abilitati "
-"in Account online delle impostazioni GNOME. Solo da lì è possibile "
-"modificare o aggiungere account di posta elettronica."
+"Αυτό το πλαίσιο εμφανίζει μόνο τους λογαριασμούς και τις υπηρεσίες που είναι"
+" ενεργοποιημένες στο GNOME Online Accounts. Προσθέστε ή αλλάξτε εκεί τους "
+"λογαριασμούς αλληλογραφίας."
 
 #: src/window.blp:187
 msgid "Toggle Sidebar"
-msgstr "Mostra o nascondi la barra laterale"
+msgstr "Εναλλαγή πλευρικής στήλης"
 
 #: src/window.blp:191
 msgid "Folders"
-msgstr "Cartelle"
+msgstr "Φάκελοι"
 
 #: src/window.blp:198
 msgid "Select an Account"
-msgstr "Seleziona un account"
+msgstr "Επιλέξτε λογαριασμό"
 
 #: src/window.blp:199
 msgid "Choose an account in the sidebar to load its folders."
-msgstr "Scegli un account nella barra laterale per caricarne le cartelle."
+msgstr ""
+"Επιλέξτε έναν λογαριασμό στην πλευρική στήλη για να φορτωθούν οι φάκελοί "
+"του."
 
 #: src/window.blp:260
 msgid "New"
-msgstr "Nuova"
+msgstr "Νέο"
 
 #: src/window.blp:300
 msgid "Main Menu"
-msgstr "Menu principale"
+msgstr "Κύριο μενού"
 
 #: src/window.blp:308
 msgid "Updating…"
-msgstr "Aggiornamento…"
+msgstr "Ενημέρωση…"
 
 #: src/window.blp:380
 msgid "_Refresh"
-msgstr "A_ggiorna"
+msgstr "_Ανανέωση"
 
 #: src/window.blp:385
 msgid "_New Message"
-msgstr "_Nuovo messaggio"
+msgstr "_Νέο μήνυμα"
 
 #: src/window.blp:392
 msgid "_Print"
-msgstr "_Stampa"
+msgstr "Ε_κτύπωση"
 
 #: src/window.blp:397
 msgid "_Fullscreen"
-msgstr "_Schermo intero"
+msgstr "Πλήρης _οθόνη"
 
 #: src/window.blp:404
 msgid "_Online Accounts…"
-msgstr "_Account online…"
+msgstr "Online A_ccounts…"
 
 #: src/window.blp:409
 msgid "_Calendar"
-msgstr "_Calendario"
+msgstr "_Ημερολόγιο"
 
 #: src/window.blp:414
 msgid "C_ontacts"
-msgstr "C_ontatti"
+msgstr "Ε_παφές"
 
 #: src/window.blp:421
 msgid "_Preferences"
-msgstr "Preferen_ze"
+msgstr "Προ_τιμήσεις"
 
 #: src/window.blp:426
 msgid "_Welcome"
-msgstr "_Benvenuto"
+msgstr "_Καλωσόρισμα"
 
 #: src/window.blp:431
 msgid "_Keyboard Shortcuts"
-msgstr "_Scorciatoie da tastiera"
+msgstr "Σ_υντομεύσεις πληκτρολογίου"
 
 #: src/window.blp:436
 msgid "_About Letter"
-msgstr "I_nformazioni su Lettera"
+msgstr "Σχετικά με το _Letter"
 
 #: src/account.vala:12
 msgid "IMAP"
@@ -1062,35 +1053,35 @@ msgstr "Exchange"
 
 #: src/account.vala:20
 msgid "On this computer"
-msgstr "Su questo computer"
+msgstr "Σε αυτόν τον υπολογιστή"
 
 #: src/account.vala:22
 msgid "Other"
-msgstr "Altro"
+msgstr "Άλλο"
 
 #: src/account-row.vala:17
 msgid "Email enabled"
-msgstr "Email abilitate"
+msgstr "Η αλληλογραφία είναι ενεργοποιημένη"
 
 #: src/account-row.vala:19
 msgid "Calendar enabled"
-msgstr "Calendario abilitato"
+msgstr "Το ημερολόγιο είναι ενεργοποιημένο"
 
 #: src/account-row.vala:21
 msgid "Address book enabled"
-msgstr "Rubrica abilitata"
+msgstr "Το βιβλίο διευθύνσεων είναι ενεργοποιημένο"
 
 #: src/account-row.vala:227 src/conversation.vala:790
 msgid "Bookmarked"
-msgstr "Con segnalibro"
+msgstr "Με σελιδοδείκτη"
 
 #: src/account-row.vala:234 src/conversation.vala:795
 msgid "Important"
-msgstr "Importanti"
+msgstr "Σημαντικό"
 
 #: src/account-row.vala:336 src/preferences-dialog.vala:83
 msgid "Mark as read"
-msgstr "Segna come letta"
+msgstr "Επισήμανση ως αναγνωσμένο"
 
 #: src/conversation.vala:210
 #, c-format
@@ -1100,173 +1091,173 @@ msgstr "%s, %s +%u"
 #: src/conversation.vala:785 src/mail-session.vala:6950
 #: src/message-reader.vala:539
 msgid "Attachment"
-msgstr "Allegato"
+msgstr "Συνημμένο"
 
 #: src/conversation.vala:821
 msgid "From me"
-msgstr "Da me"
+msgstr "Από εμένα"
 
 #: src/conversation.vala:833
 msgid "Forwarded"
-msgstr "Inoltrata"
+msgstr "Προωθημένο"
 
 #: src/conversation.vala:836
 msgid "Sent"
-msgstr "Inviata"
+msgstr "Απεσταλμένο"
 
 #: src/conversation.vala:839
 msgid "Received"
-msgstr "Ricevuta"
+msgstr "Ληφθέν"
 
 #: src/mail-session.vala:156 src/mail-session.vala:228
 #, c-format
 msgid "No data source found for UID “%s”"
-msgstr "Nessuna origine dati trovata per l'UID «%s»"
+msgstr "Δεν βρέθηκε πηγή δεδομένων για το UID “%s”"
 
 #: src/mail-session.vala:202
 #, c-format
 msgid "%s authentication failed"
-msgstr "Autenticazione %s non riuscita"
+msgstr "Η ταυτοποίηση %s απέτυχε"
 
 #: src/mail-session.vala:290
 msgid ""
 "Password prompts are not implemented yet. Add the account in GNOME Online "
 "Accounts."
 msgstr ""
-"La richiesta della password non è ancora implementata. Aggiungi l'account in "
-"Account online."
+"Οι προτροπές κωδικού πρόσβασης δεν έχουν υλοποιηθεί ακόμη. Προσθέστε τον "
+"λογαριασμό στο GNOME Online Accounts."
 
 #: src/mail-session.vala:297
 msgid "This built-in local account is not used. Choose an online account."
-msgstr "Questo account locale non viene usato. Scegli un account online."
+msgstr ""
+"Αυτός ο ενσωματωμένος τοπικός λογαριασμός δεν χρησιμοποιείται. Επιλέξτε έναν"
+" διαδικτυακό λογαριασμό."
 
 #: src/mail-session.vala:303
 msgid "This account is not yet available to Evolution Data Server."
-msgstr "Questo account non è ancora disponibile in Evolution Data Server."
+msgstr ""
+"Αυτός ο λογαριασμός δεν είναι ακόμη διαθέσιμος στον Evolution Data Server."
 
 #: src/mail-session.vala:309 src/mail-session.vala:6291
 #: src/mail-session.vala:6319
 #, c-format
 msgid "Mail source “%s” was not found."
-msgstr "L'origine di posta «%s» non è stata trovata."
+msgstr "Η πηγή αλληλογραφίας “%s” δεν βρέθηκε."
 
 #: src/mail-session.vala:314 src/mail-session.vala:6324
 msgid "The account has no mail backend."
-msgstr "L'account non ha un backend di posta."
+msgstr "Ο λογαριασμός δεν έχει backend αλληλογραφίας."
 
 #: src/mail-session.vala:469
 msgctxt "Mail folder"
 msgid "Inbox"
-msgstr "Posta in arrivo"
+msgstr "Εισερχόμενα"
 
 #: src/mail-session.vala:473
 msgctxt "Mail folder"
 msgid "Drafts"
-msgstr "Bozze"
+msgstr "Πρόχειρα"
 
 #: src/mail-session.vala:476
 msgctxt "Mail folder"
 msgid "Sent"
-msgstr "Posta inviata"
+msgstr "Απεσταλμένα"
 
 #: src/mail-session.vala:479
 msgctxt "Mail folder"
 msgid "Trash"
-msgstr "Cestino"
+msgstr "Απορρίμματα"
 
 #: src/mail-session.vala:482
 msgctxt "Mail folder"
 msgid "Junk"
-msgstr "Spam"
+msgstr "Ανεπιθύμητα"
 
 #: src/mail-session.vala:485
 msgctxt "Mail folder"
 msgid "All Mail"
-msgstr "Tutti i messaggi"
+msgstr "Όλη η αλληλογραφία"
 
 #: src/mail-session.vala:488
 msgctxt "Mail folder"
 msgid "Starred"
-msgstr "Speciali"
+msgstr "Με αστέρι"
 
 #: src/mail-session.vala:491
 msgctxt "Mail folder"
 msgid "Important"
-msgstr "Importanti"
+msgstr "Σημαντικά"
 
 #: src/mail-session.vala:494
 msgctxt "Mail folder"
 msgid "Archive"
-msgstr "Archivio"
+msgstr "Αρχείο"
 
 #: src/mail-session.vala:497
 msgctxt "Mail folder"
 msgid "Outbox"
-msgstr "Posta in uscita"
+msgstr "Εξερχόμενα"
 
 #: src/mail-session.vala:2252 src/mail-session.vala:2289
 msgid "This message is still syncing with the server. Try again in a moment."
 msgstr ""
-"Questo messaggio è ancora in sincronizzazione con il server. Riprova tra un "
-"momento."
-
-msgid "This copy is no longer on the server."
-msgstr "Questa copia non è più sul server."
+"Αυτό το μήνυμα εξακολουθεί να συγχρονίζεται με τον διακομιστή. Δοκιμάστε "
+"ξανά σε λίγο."
 
 #: src/mail-session.vala:2261 src/mail-session.vala:2298
 msgid "Message could not be opened."
-msgstr "Il messaggio non può essere aperto."
+msgstr "Δεν ήταν δυνατό το άνοιγμα του μηνύματος."
 
 #: src/mail-session.vala:3875
 msgid "Could not locate Trash folder"
-msgstr "Impossibile trovare la cartella Cestino"
+msgstr "Δεν βρέθηκε ο φάκελος Απορρίμματα"
 
 #: src/mail-session.vala:3956
 msgid "Messages moved to Trash."
-msgstr "Elementi spostati nel cestino"
+msgstr "Τα μηνύματα μετακινήθηκαν στα Απορρίμματα."
 
 #: src/mail-session.vala:5370
 msgid "Enter a folder name."
-msgstr "Inserisci un nome per la cartella."
+msgstr "Εισαγάγετε ένα όνομα φακέλου."
 
 #: src/mail-session.vala:5373
 msgid "Folder names cannot contain slashes."
-msgstr "I nomi delle cartelle non possono contenere barre."
+msgstr "Τα ονόματα φακέλων δεν μπορούν να περιέχουν κάθετους."
 
 #: src/mail-session.vala:5468
 #, c-format
 msgid "“%s” is a local view, not a mail folder."
-msgstr "«%s» è una vista locale, non una cartella di posta."
+msgstr "Το “%s” είναι τοπική προβολή, όχι φάκελος αλληλογραφίας."
 
 #: src/mail-session.vala:5481
 #, c-format
 msgid "Folder “%s” was not found."
-msgstr "La cartella «%s» non è stata trovata."
+msgstr "Ο φάκελος “%s” δεν βρέθηκε."
 
 #: src/mail-session.vala:5528
 msgid "This account has no local mail library."
-msgstr "Questo account non ha una libreria di posta locale."
+msgstr "Αυτός ο λογαριασμός δεν έχει τοπική βιβλιοθήκη αλληλογραφίας."
 
 #: src/mail-session.vala:5646
 msgid "Refusing to delete files outside Letter’s library."
-msgstr "Rifiuto di eliminare file fuori dalla libreria di Lettera."
+msgstr "Άρνηση διαγραφής αρχείων εκτός της βιβλιοθήκης του Letter."
 
 #: src/mail-session.vala:5715
 msgid "Add at least one recipient."
-msgstr "Aggiungi almeno un destinatario."
+msgstr "Προσθέστε τουλάχιστον έναν παραλήπτη."
 
 #: src/mail-session.vala:6305 src/mail-session.vala:6313
 #, c-format
 msgid "No outgoing server is configured for “%s”."
-msgstr "Nessun server in uscita è configurato per «%s»."
+msgstr "Δεν έχει ρυθμιστεί διακομιστής εξερχομένων για το “%s”."
 
 #: src/mail-session.vala:6404
 msgid "No Drafts folder was found for this account."
-msgstr "Nessuna cartella Bozze trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Πρόχειρα για αυτόν τον λογαριασμό."
 
 #: src/mail-session.vala:6405
 msgid "No Sent folder was found for this account."
-msgstr "Nessuna cartella Posta inviata trovata per questo account."
+msgstr "Δεν βρέθηκε φάκελος Απεσταλμένα για αυτόν τον λογαριασμό."
 
 #: src/mail-session.vala:6596
 #, c-format
@@ -1274,116 +1265,107 @@ msgid ""
 "“%s” is not a valid email address. Group and personal names need a full "
 "address like name@example.com."
 msgstr ""
-"«%s» non è un indirizzo email valido. Nomi di gruppo o persone richiedono un "
-"indirizzo completo come nome@esempio.com."
+"Το “%s” δεν είναι έγκυρη διεύθυνση email. Τα ονόματα ομάδων και ατόμων "
+"χρειάζονται πλήρη διεύθυνση, όπως name@example.com."
 
 #: src/mail-session.vala:6597
 msgid "recipient"
-msgstr "destinatario"
+msgstr "παραλήπτης"
 
 #: src/mail-session.vala:6752 src/utils.vala:1044 src/utils.vala:1610
 msgid "Unknown sender"
-msgstr "Mittente sconosciuto"
+msgstr "Άγνωστος αποστολέας"
 
 #: src/mail-session.vala:6805
 msgid "This message has no readable content."
-msgstr "Questo messaggio non ha contenuto leggibile."
+msgstr "Αυτό το μήνυμα δεν έχει αναγνώσιμο περιεχόμενο."
 
 #: src/mail-session.vala:6950
 msgid "Forwarded message"
-msgstr "Messaggio inoltrato"
+msgstr "Προωθημένο μήνυμα"
 
 #: src/notifier.vala:103 src/notifier.vala:109
 msgid "Open"
-msgstr "Apri"
+msgstr "Άνοιγμα"
 
 #: src/message-reader.vala:63
 msgid "Important message"
-msgstr "Messaggio importante"
+msgstr "Σημαντικό μήνυμα"
 
 #: src/message-reader.vala:120 src/utils.vala:1657
 msgid "To:"
-msgstr "A:"
+msgstr "Προς:"
 
 #: src/message-reader.vala:123 src/utils.vala:1665
 msgid "Cc:"
-msgstr "Cc:"
+msgstr "Κοιν.:"
 
 #: src/message-reader.vala:140
 msgid "Remote images are blocked until you trust this sender."
 msgstr ""
-"Le immagini remote sono bloccate finché non consideri attendibile il "
-"mittente."
+"Οι απομακρυσμένες εικόνες αποκλείονται μέχρι να εμπιστευτείτε αυτόν τον "
+"αποστολέα."
 
 #: src/message-reader.vala:141
 msgid "Trust Sender"
-msgstr "Mittente attendibile"
+msgstr "Εμπιστοσύνη αποστολέα"
 
 #: src/message-reader.vala:367
 msgid "Could Not Open Message"
-msgstr "Impossibile aprire il messaggio"
+msgstr "Δεν ήταν δυνατή η φόρτωση του μηνύματος"
 
 #: src/message-reader.vala:528 src/compose-dialog.vala:995
 #: src/compose-dialog.vala:1012
 msgid "From"
-msgstr "Da"
+msgstr "Από"
 
 #: src/message-reader.vala:529
 msgid "Date"
-msgstr "Data"
+msgstr "Ημερομηνία"
 
 #: src/message-reader.vala:531 src/compose-dialog.vala:135
 msgid "To"
-msgstr "A"
+msgstr "Προς"
 
 #: src/message-reader.vala:533 src/compose-dialog.vala:136
 msgid "Cc"
-msgstr "Cc"
+msgstr "Κοιν."
 
 #: src/message-reader.vala:541
 msgid "Attachments"
-msgstr "Allegati"
+msgstr "Συνημμένα"
 
 #: src/message-reader.vala:666
 msgid "Download All"
-msgstr "Scarica tutti"
+msgstr "Λήψη όλων"
 
 #: src/message-reader.vala:673
 msgid "Save all attachments"
-msgstr "Salva tutti gli allegati"
+msgstr "Αποθήκευση όλων των συνημμένων"
 
 #: src/message-reader.vala:766
 msgid "View Image"
-msgstr "Visualizza immagine"
-
-msgid "Save Image As…"
-msgstr "Salva immagine come…"
-
-msgid "Forward Image"
-msgstr "Inoltra immagine"
-
-msgid "Save Image"
-msgstr "Salva immagine"
+msgstr "Προβολή εικόνας"
 
 #: src/message-reader.vala:935
 msgid "Write to"
-msgstr "Scrivi a"
+msgstr "Αποστολή μηνύματος σε"
 
 #: src/message-reader.vala:936
 msgid "Copy Email"
-msgstr "Copia e-mail"
+msgstr "Αντιγραφή email"
 
 #: src/message-reader.vala:996
 msgid "Address copied"
-msgstr "Indirizzo copiato"
+msgstr "Η διεύθυνση αντιγράφηκε"
 
 #: src/message-reader.vala:1141
 msgid "Show less"
-msgstr "Mostra meno"
+msgstr "Λιγότερα"
 
 #: src/message-reader.vala:1142
 msgid "Show fewer recipients"
-msgstr "Mostra meno destinatari"
+msgstr "Εμφάνιση λιγότερων παραληπτών"
 
 #: src/message-reader.vala:1144 src/message-reader.vala:1186
 #, c-format
@@ -1394,268 +1376,268 @@ msgstr "+ %u"
 #, c-format
 msgid "%u more recipient"
 msgid_plural "%u more recipients"
-msgstr[0] "%u altro destinatario"
-msgstr[1] "%u altri destinatari"
+msgstr[0] "%u επιπλέον παραλήπτης"
+msgstr[1] "%u επιπλέον παραλήπτες"
 
 #: src/attachment-chip.vala:51
 msgid "Preview"
-msgstr "Anteprima"
+msgstr "Προεπισκόπηση"
 
 #: src/attachment-chip.vala:57 src/signature-editor.vala:19 src/utils.vala:419
 msgid "Save"
-msgstr "Salva"
+msgstr "Αποθήκευση"
 
 #: src/attachment-chip.vala:89
 #, c-format
 msgid "Preview or save “%s”"
-msgstr "Anteprima o salvataggio di «%s»"
+msgstr "Προεπισκόπηση ή αποθήκευση του “%s”"
 
 #: src/attachment-chip.vala:99
 #, c-format
 msgid "Remove “%s”"
-msgstr "Rimuovi «%s»"
+msgstr "Αφαίρεση του “%s”"
 
 #: src/compose-dialog.vala:104
 msgid "Send"
-msgstr "Invia"
+msgstr "Αποστολή"
 
 #: src/compose-dialog.vala:113 src/compose-dialog.vala:610
 msgid "Save Draft"
-msgstr "Salva bozza"
+msgstr "Αποθήκευση πρόχειρου"
 
 #: src/compose-dialog.vala:137 src/compose-dialog.vala:964
 msgid "Bcc"
-msgstr "Ccn"
+msgstr "Κρυφή κοιν."
 
 #: src/compose-dialog.vala:146
 msgid "Subject"
-msgstr "Oggetto"
+msgstr "Θέμα"
 
 #: src/compose-dialog.vala:162 src/compose-dialog.vala:1035
 msgid "Signature"
-msgstr "Firma"
+msgstr "Υπογραφή"
 
 #: src/compose-dialog.vala:495
 msgid "Include original attachments?"
-msgstr "Includere gli allegati originali?"
+msgstr "Συμπερίληψη των αρχικών συνημμένων;"
 
 #: src/compose-dialog.vala:497
 msgid ""
 "You added someone who did not receive the original message. Attach the file "
 "from that message?"
 msgid_plural ""
-"You added someone who did not receive the original message. Attach the files "
-"from that message?"
+"You added someone who did not receive the original message. Attach the files"
+" from that message?"
 msgstr[0] ""
-"Hai aggiunto qualcuno che non ha ricevuto il messaggio originale. Vuoi "
-"allegare il file di quel messaggio?"
+"Προσθέσατε κάποιον που δεν έλαβε το αρχικό μήνυμα. Να επισυναφθεί το αρχείο "
+"από εκείνο το μήνυμα;"
 msgstr[1] ""
-"Hai aggiunto qualcuno che non ha ricevuto il messaggio originale. Vuoi "
-"allegare i file di quel messaggio?"
+"Προσθέσατε κάποιον που δεν έλαβε το αρχικό μήνυμα. Να επισυναφθούν τα αρχεία"
+" από εκείνο το μήνυμα;"
 
 #: src/compose-dialog.vala:502
 msgid "Don't Attach"
-msgstr "Non allegare"
+msgstr "Χωρίς επισύναψη"
 
 #: src/compose-dialog.vala:503 src/compose-dialog.vala:1615
 msgid "Attach"
-msgstr "Allega"
+msgstr "Επισύναψη"
 
 #: src/compose-dialog.vala:603
 msgid "Save changes to draft?"
-msgstr "Salvare le modifiche alla bozza?"
+msgstr "Αποθήκευση αλλαγών στο πρόχειρο;"
 
 #: src/compose-dialog.vala:603
 msgid "Save this message as a draft?"
-msgstr "Salvare questo messaggio come bozza?"
+msgstr "Αποθήκευση αυτού του μηνύματος ως πρόχειρο;"
 
 #: src/compose-dialog.vala:605
 msgid "Your latest edits will update the draft in Drafts."
-msgstr "Le ultime modifiche aggiorneranno la bozza in Bozze."
+msgstr "Οι τελευταίες αλλαγές σας θα ενημερώσουν το πρόχειρο στα Πρόχειρα."
 
 #: src/compose-dialog.vala:606
 msgid "It will be stored in Drafts so you can finish it later."
-msgstr "Verrà salvato in Bozze per poterlo completare più tardi."
+msgstr "Θα αποθηκευτεί στα Πρόχειρα ώστε να το ολοκληρώσετε αργότερα."
 
 #: src/compose-dialog.vala:608
 msgid "Discard"
-msgstr "Scarta"
+msgstr "Απόρριψη"
 
 #: src/compose-dialog.vala:609
 msgid "Keep Editing"
-msgstr "Continua a modificare"
+msgstr "Συνέχεια επεξεργασίας"
 
 #: src/compose-dialog.vala:610
 msgid "Save Changes"
-msgstr "Salva modifiche"
+msgstr "Αποθήκευση αλλαγών"
 
 #: src/compose-dialog.vala:716
 msgid "Saved to Drafts"
-msgstr "Salvata in Bozze"
+msgstr "Αποθηκεύτηκε στα Πρόχειρα"
 
 #: src/compose-dialog.vala:782
 msgid "Mail is not ready to send yet."
-msgstr "La posta non è ancora pronta per l’invio."
+msgstr "Η αλληλογραφία δεν είναι ακόμη έτοιμη για αποστολή."
 
 #: src/compose-dialog.vala:821
 msgid "Queued in Outbox"
-msgstr "In coda nella posta in uscita"
+msgstr "Προστέθηκε στα Εξερχόμενα"
 
 #: src/compose-dialog.vala:871 src/format-toolbar.vala:25
 msgid "Font"
-msgstr "Carattere"
+msgstr "Γραμματοσειρά"
 
 #: src/compose-dialog.vala:882 src/compose-dialog.vala:2239
 #: src/compose-dialog.vala:2413 src/format-toolbar.vala:36
 msgid "Small"
-msgstr "Piccolo"
+msgstr "Μικρό"
 
 #: src/compose-dialog.vala:883 src/format-toolbar.vala:37
 msgid "Normal"
-msgstr "Normale"
+msgstr "Κανονικό"
 
 #: src/compose-dialog.vala:884 src/format-toolbar.vala:38
 msgid "Large"
-msgstr "Grande"
+msgstr "Μεγάλο"
 
 #: src/compose-dialog.vala:885 src/format-toolbar.vala:39
 msgid "Huge"
-msgstr "Grandissimo"
+msgstr "Τεράστιο"
 
 #: src/compose-dialog.vala:891 src/format-toolbar.vala:44
 msgid "Font size"
-msgstr "Dimensione"
+msgstr "Μέγεθος γραμματοσειράς"
 
 #: src/compose-dialog.vala:911 src/format-toolbar.vala:66
 msgid "Bold"
-msgstr "Grassetto"
+msgstr "Έντονα"
 
 #: src/compose-dialog.vala:912 src/format-toolbar.vala:67
 msgid "Italic"
-msgstr "Corsivo"
+msgstr "Πλάγια"
 
 #: src/compose-dialog.vala:913 src/format-toolbar.vala:68
 msgid "Underline"
-msgstr "Sottolineato"
+msgstr "Υπογράμμιση"
 
 #: src/compose-dialog.vala:914 src/format-toolbar.vala:69
 msgid "Strikethrough"
-msgstr "Barrato"
+msgstr "Διαγράμμιση"
 
 #: src/compose-dialog.vala:923
 msgid "Bullet list (Tab indents, Shift+Tab outdents)"
-msgstr "Elenco puntato (Tab rientra, Maiusc+Tab riduce il rientro)"
+msgstr "Λίστα με κουκκίδες (Tab για εσοχή, Shift+Tab για μείωση εσοχής)"
 
 #: src/compose-dialog.vala:928
 msgid "Numbered list (Tab indents, Shift+Tab outdents)"
-msgstr "Elenco numerato (Tab rientra, Maiusc+Tab riduce il rientro)"
+msgstr "Αριθμημένη λίστα (Tab για εσοχή, Shift+Tab για μείωση εσοχής)"
 
 #: src/compose-dialog.vala:931
 msgid "Decrease Indent"
-msgstr "Riduci rientro"
+msgstr "Μείωση εσοχής"
 
 #: src/compose-dialog.vala:932
 msgid "Increase Indent"
-msgstr "Aumenta rientro"
+msgstr "Αύξηση εσοχής"
 
 #: src/compose-dialog.vala:934 src/compose-dialog.vala:4083
 #: src/format-toolbar.vala:76
 msgid "Insert Image"
-msgstr "Inserisci immagine"
+msgstr "Εισαγωγή εικόνας"
 
 #: src/compose-dialog.vala:940
 msgid "Attach file"
-msgstr "Allega file"
+msgstr "Επισύναψη αρχείου"
 
 #: src/compose-dialog.vala:949 src/compose-dialog.vala:957
 msgid "High priority"
-msgstr "Priorità alta"
+msgstr "Υψηλή προτεραιότητα"
 
 #: src/compose-dialog.vala:956 src/compose-dialog.vala:960
 msgid "High priority (on)"
-msgstr "Priorità alta (attiva)"
+msgstr "Υψηλή προτεραιότητα (ενεργό)"
 
 #: src/compose-dialog.vala:966
 msgid "Show Bcc"
-msgstr "Mostra Ccn"
+msgstr "Εμφάνιση κρυφής κοιν."
 
 #: src/compose-dialog.vala:1130 src/compose-dialog.vala:2493
 #: src/format-toolbar.vala:150
 msgid "Insert Emoji"
-msgstr "Inserisci emoji"
+msgstr "Εισαγωγή emoji"
 
 #: src/compose-dialog.vala:1148 src/compose-dialog.vala:1264
 msgid "Highlight"
-msgstr "Evidenziazione"
+msgstr "Επισήμανση"
 
 #: src/compose-dialog.vala:1148 src/compose-dialog.vala:1264
 #: src/format-toolbar.vala:168
 msgid "Text Color"
-msgstr "Colore del testo"
+msgstr "Χρώμα κειμένου"
 
 #: src/compose-dialog.vala:1179
 msgid "No Highlight"
-msgstr "Nessuna evidenziazione"
+msgstr "Χωρίς επισήμανση"
 
 #: src/compose-dialog.vala:1179 src/format-toolbar.vala:191
 msgid "Default Color"
-msgstr "Colore predefinito"
+msgstr "Προεπιλεγμένο χρώμα"
 
 #: src/compose-dialog.vala:1195
 msgid "Yellow"
-msgstr "Giallo"
+msgstr "Κίτρινο"
 
 #: src/compose-dialog.vala:1195 src/compose-dialog.vala:1203
 #: src/format-toolbar.vala:209
 msgid "Green"
-msgstr "Verde"
+msgstr "Πράσινο"
 
 #: src/compose-dialog.vala:1195 src/compose-dialog.vala:1203
 #: src/format-toolbar.vala:209
 msgid "Blue"
-msgstr "Blu"
+msgstr "Μπλε"
 
 #: src/compose-dialog.vala:1195
 msgid "Pink"
-msgstr "Rosa"
+msgstr "Ροζ"
 
 #: src/compose-dialog.vala:1195 src/compose-dialog.vala:1202
 #: src/format-toolbar.vala:208
 msgid "Orange"
-msgstr "Arancione"
+msgstr "Πορτοκαλί"
 
 #: src/compose-dialog.vala:1195 src/compose-dialog.vala:1203
 #: src/format-toolbar.vala:209
 msgid "White"
-msgstr "Bianco"
+msgstr "Λευκό"
 
 #: src/compose-dialog.vala:1202 src/format-toolbar.vala:208
 msgid "Black"
-msgstr "Nero"
+msgstr "Μαύρο"
 
 #: src/compose-dialog.vala:1202 src/format-toolbar.vala:208
 msgid "Gray"
-msgstr "Grigio"
+msgstr "Γκρι"
 
 #: src/compose-dialog.vala:1202 src/format-toolbar.vala:208
 msgid "Red"
-msgstr "Rosso"
+msgstr "Κόκκινο"
 
 #: src/compose-dialog.vala:1202 src/format-toolbar.vala:208
 msgid "Gold"
-msgstr "Oro"
+msgstr "Χρυσό"
 
 #: src/compose-dialog.vala:1203 src/format-toolbar.vala:209
 msgid "Purple"
-msgstr "Viola"
+msgstr "Μωβ"
 
 #: src/compose-dialog.vala:1214
 msgid "Custom Color…"
-msgstr "Colore personalizzato…"
+msgstr "Προσαρμοσμένο χρώμα…"
 
 #: src/compose-dialog.vala:1290 src/format-toolbar.vala:233
 msgid "Sans Serif"
-msgstr "Sans serif"
+msgstr "Sans Serif"
 
 #: src/compose-dialog.vala:1291 src/format-toolbar.vala:235
 msgid "Serif"
@@ -1667,42 +1649,43 @@ msgstr "Monospace"
 
 #: src/compose-dialog.vala:1404
 msgid "None"
-msgstr "Nessuna"
+msgstr "Κανένα"
 
 #: src/compose-dialog.vala:1468
 msgid "Attach Files"
-msgstr "Allega file"
+msgstr "Επισύναψη αρχείων"
 
 #: src/compose-dialog.vala:1499 src/compose-dialog.vala:1591
 msgid "Folders cannot be attached."
-msgstr "Non è possibile allegare le cartelle."
+msgstr "Οι φάκελοι δεν μπορούν να επισυναφθούν."
 
 #: src/compose-dialog.vala:1529
 #, c-format
 msgid "Could not attach “%s”."
-msgstr "Impossibile allegare «%s»."
+msgstr "Δεν ήταν δυνατή η επισύναψη του “%s”."
 
 #: src/compose-dialog.vala:1611
 msgid "Attach or insert this image?"
-msgstr "Allegare o inserire questa immagine?"
+msgstr "Επισύναψη ή εισαγωγή αυτής της εικόνας;"
 
 #: src/compose-dialog.vala:1612
 #, c-format
 msgid "“%s” can be attached to the message or placed in the body."
-msgstr "«%s» può essere allegata al messaggio o inserita nel corpo."
+msgstr ""
+"Το “%s” μπορεί να επισυναφθεί στο μήνυμα ή να τοποθετηθεί στο σώμα του."
 
 #: src/compose-dialog.vala:1616
 msgid "Insert"
-msgstr "Inserisci"
+msgstr "Εισαγωγή"
 
 #: src/compose-dialog.vala:1652
 msgid "The image was resized to stay under 2 MB."
-msgstr "L'immagine è stata ridimensionata per restare sotto i 2 MB."
+msgstr "Το μέγεθος της εικόνας άλλαξε ώστε να παραμείνει κάτω από 2 MB."
 
 #: src/compose-dialog.vala:1655
 #, c-format
 msgid "Could not insert “%s”."
-msgstr "Impossibile inserire «%s»."
+msgstr "Δεν ήταν δυνατή η εισαγωγή του “%s”."
 
 #: src/compose-dialog.vala:1685
 #, c-format
@@ -1710,8 +1693,8 @@ msgid ""
 "“%s” is too large to attach. Use a file transfer service and send the link "
 "instead."
 msgstr ""
-"«%s» è troppo grande e non può essere allegato. Usa un servizio di "
-"trasferimento file e invia il collegamento."
+"Το “%s” είναι πολύ μεγάλο για επισύναψη. Χρησιμοποιήστε μια υπηρεσία "
+"μεταφοράς αρχείων και στείλτε τον σύνδεσμο."
 
 #: src/compose-dialog.vala:1689
 #, c-format
@@ -1719,287 +1702,248 @@ msgid ""
 "%u files are too large to attach. Use a file transfer service and send the "
 "links instead."
 msgstr ""
-"%u file sono troppo grandi e non possono essere allegati. Usa un servizio di "
-"trasferimento file e invia i collegamenti."
+"Τα %u αρχεία είναι πολύ μεγάλα για επισύναψη. Χρησιμοποιήστε μια υπηρεσία "
+"μεταφοράς αρχείων και στείλτε τους συνδέσμους."
 
 #: src/compose-dialog.vala:2026
 msgid "Pasted image"
-msgstr "Immagine incollata"
+msgstr "Επικολλημένη εικόνα"
 
 #: src/compose-dialog.vala:2240 src/compose-dialog.vala:2414
 msgid "Medium"
-msgstr "Medio"
+msgstr "Μεσαίο"
 
 #: src/compose-dialog.vala:2241 src/compose-dialog.vala:2415
 msgid "Original"
-msgstr "Originale"
+msgstr "Αρχικό"
 
 #: src/compose-dialog.vala:2248
 msgid "Image size"
-msgstr "Dimensione immagine"
+msgstr "Μέγεθος εικόνας"
 
 #: src/compose-dialog.vala:2352 src/compose-dialog.vala:2381
 msgid "Paste and Match Style"
-msgstr "Incolla associando lo stile"
+msgstr "Επικόλληση και προσαρμογή στυλ"
 
 #: src/compose-dialog.vala:2400 src/compose-dialog.vala:2495
 msgid "Add to Dictionary"
-msgstr "Aggiungi al dizionario"
+msgstr "Προσθήκη στο λεξικό"
 
 #: src/compose-dialog.vala:2408
 msgid "Remove Link"
-msgstr "Elimina collegamento"
+msgstr "Αφαίρεση συνδέσμου"
 
 #: src/compose-dialog.vala:2418
 msgid "Image Size"
-msgstr "Dimensione immagine"
+msgstr "Μέγεθος εικόνας"
 
 #: src/compose-dialog.vala:2497
 msgid "Ignore Spelling"
-msgstr "Ignora ortografia"
+msgstr "Παράβλεψη ελέγχου ορθογραφίας"
 
 #: src/compose-dialog.vala:4086
 msgid "Images"
-msgstr "Immagini"
+msgstr "Εικόνες"
 
 #: src/recipient-editor.vala:51 src/recipient-editor.vala:180
 #: src/search-field.vala:114 src/contact-picker.vala:115
 msgid "Address book"
-msgstr "Rubrica"
+msgstr "Βιβλίο διευθύνσεων"
 
 #: src/recipient-editor.vala:51 src/search-field.vala:114
 #: src/contact-picker.vala:115 src/contact-picker.vala:127
 msgid "Recent recipient"
-msgstr "Destinatario recente"
+msgstr "Πρόσφατος παραλήπτης"
 
 #: src/recipient-editor.vala:192
 msgid "Searching"
-msgstr "Ricerca in corso"
+msgstr "Αναζήτηση"
 
 #: src/search-query.vala:99 src/search-query.vala:110
 #, c-format
 msgid "From: %s"
-msgstr "Da: %s"
+msgstr "Από: %s"
 
 #: src/search-query.vala:101 src/search-query.vala:112
 #, c-format
 msgid "To: %s"
-msgstr "A: %s"
+msgstr "Προς: %s"
 
 #: src/search-query.vala:103 src/search-query.vala:114
 #, c-format
 msgid "Contains: %s"
-msgstr "Contiene: %s"
+msgstr "Περιέχει: %s"
 
 #: src/search-query.vala:139
 #, c-format
 msgid "Search all folders. Filter with %s, %s and %s"
-msgstr "Cerca in tutte le cartelle. Filtra con %s, %s e %s"
+msgstr "Αναζήτηση σε όλους τους φακέλους. Φιλτράρετε με %s, %s και %s"
 
 #: src/search-query.vala:140 src/search-query.vala:285
 msgctxt "Search filter"
 msgid "contains:"
-msgstr "contiene:"
+msgstr "περιέχει:"
 
 #: src/search-query.vala:141 src/search-query.vala:287
 msgctxt "Search filter"
 msgid "from:"
-msgstr "da:"
+msgstr "από:"
 
 #: src/search-query.vala:142 src/search-query.vala:289
 msgctxt "Search filter"
 msgid "to:"
-msgstr "a:"
+msgstr "προς:"
 
 #: src/search-field.vala:92
 msgid "Search sender"
-msgstr "Cerca mittente"
+msgstr "Αναζήτηση αποστολέα"
 
 #: src/search-field.vala:96
 msgid "Search recipients"
-msgstr "Cerca destinatari"
+msgstr "Αναζήτηση παραληπτών"
 
 #: src/search-field.vala:100
 msgid "Search everywhere"
-msgstr "Cerca ovunque"
+msgstr "Αναζήτηση παντού"
 
 #: src/search-field.vala:235
 msgid "Clear search"
-msgstr "Cancella ricerca"
+msgstr "Εκκαθάριση αναζήτησης"
 
 #: src/search-field.vala:434
 msgid "Remove"
-msgstr "Rimuovi"
+msgstr "Αφαίρεση"
 
 #: src/preferences-dialog.vala:44 src/preferences-dialog.vala:270
 msgid "GNOME integration"
-msgstr "Integrazione GNOME"
+msgstr "Ενσωμάτωση με το GNOME"
 
 #: src/preferences-dialog.vala:45
 msgid ""
 "Letter reads the same Evolution Data Server used by Calendar and Contacts, "
 "and the same GNOME Online Accounts for Google, Microsoft 365, and IMAP."
 msgstr ""
-"Lettera usa lo stesso Evolution Data Server di Calendario e Contatti, e gli "
-"stessi account online GNOME per Google, Microsoft 365 e IMAP."
+"Το Letter διαβάζει τον ίδιο Evolution Data Server που χρησιμοποιούν το "
+"Ημερολόγιο και οι Επαφές, και τα ίδια GNOME Online Accounts για Google, "
+"Microsoft 365 και IMAP."
 
 #: src/preferences-dialog.vala:48
 msgid "Mail accounts"
-msgstr "Account di posta"
+msgstr "Λογαριασμοί αλληλογραφίας"
 
 #: src/preferences-dialog.vala:49
 msgid "Calendars"
-msgstr "Calendari"
+msgstr "Ημερολόγια"
 
 #: src/preferences-dialog.vala:50
 msgid "Address books"
-msgstr "Rubriche"
+msgstr "Βιβλία διευθύνσεων"
 
 #: src/preferences-dialog.vala:53 src/preferences-dialog.vala:271
 msgid "Reading"
-msgstr "Lettura"
+msgstr "Ανάγνωση"
 
 #: src/preferences-dialog.vala:56
 msgid "Reading pane"
-msgstr "Riquadro di lettura"
+msgstr "Πλαίσιο ανάγνωσης"
 
 #: src/preferences-dialog.vala:57
 msgid "Beside the list, below it, or hidden."
-msgstr "A fianco dell'elenco, sotto, oppure nascosto."
+msgstr "Δίπλα στη λίστα, κάτω από αυτήν ή κρυφό."
 
 #: src/preferences-dialog.vala:60
 msgid "On the right"
-msgstr "A destra"
+msgstr "Στα δεξιά"
 
 #: src/preferences-dialog.vala:61
 msgid "Below the list"
-msgstr "Sotto l'elenco"
+msgstr "Κάτω από τη λίστα"
 
 #: src/preferences-dialog.vala:62
 msgid "Hidden"
-msgstr "Nascosto"
+msgstr "Κρυφό"
 
 #: src/preferences-dialog.vala:84
 msgid "When an open message is marked as read."
-msgstr "Quando un messaggio aperto viene segnato come letto."
+msgstr "Πότε επισημαίνεται ως αναγνωσμένο ένα ανοιχτό μήνυμα."
 
 #: src/preferences-dialog.vala:87
 msgid "On selection"
-msgstr "Alla selezione"
+msgstr "Κατά την επιλογή"
 
 #: src/preferences-dialog.vala:88
 msgid "After 5 seconds"
-msgstr "Dopo 5 secondi"
+msgstr "Μετά από 5 δευτερόλεπτα"
 
 #: src/preferences-dialog.vala:89
 msgid "Never"
-msgstr "Mai"
+msgstr "Ποτέ"
 
 #: src/preferences-dialog.vala:110
 msgid "Conversations"
-msgstr "Conversazioni"
+msgstr "Συνομιλίες"
 
 #: src/preferences-dialog.vala:111
 msgid "Group related messages into threads."
-msgstr "Raggruppa i messaggi correlati in conversazioni."
-
-msgid "Appearance"
-msgstr "Aspetto"
-
-msgid "Application theme"
-msgstr "Tema applicazione"
-
-msgid "Choose your personal experience."
-msgstr "Scegli la tua esperienza personale."
-
-msgid "Light"
-msgstr "Chiaro"
-
-msgid "Dark"
-msgstr "Scuro"
-
-msgid "Reading mode"
-msgstr "Modalità di lettura"
-
-msgid "Choose the background colour of the message body."
-msgstr "Scegli il colore di sfondo del corpo dei messaggi."
-
-msgid "Always light"
-msgstr "Sempre chiara"
-
-msgid "Follow system"
-msgstr "Segui sistema"
-
-msgid "Accounts rail"
-msgstr "Barra account"
-
-msgid "Customise the account sidebar."
-msgstr "Personalizza la barra laterale degli account."
-
-msgid "Theme colour"
-msgstr "Colore tema"
-
-msgid "Hide"
-msgstr "Nascondi"
+msgstr "Ομαδοποίηση σχετικών μηνυμάτων σε νήματα."
 
 #: src/preferences-dialog.vala:120 src/preferences-dialog.vala:123
 #: src/preferences-dialog.vala:272
 msgid "Notifications"
-msgstr "Notifiche"
+msgstr "Ειδοποιήσεις"
 
 #: src/preferences-dialog.vala:124
 msgid "Desktop alerts for new mail."
-msgstr "Avvisi desktop per la posta nuova."
+msgstr "Ειδοποιήσεις στην επιφάνεια εργασίας για νέα αλληλογραφία."
 
 #: src/preferences-dialog.vala:135
 msgid "Notification sound"
-msgstr "Suono di notifica"
+msgstr "Ήχος ειδοποίησης"
 
 #: src/preferences-dialog.vala:138
 msgid "Default"
-msgstr "Predefinito"
+msgstr "Προεπιλογή"
 
 #: src/preferences-dialog.vala:139 src/utils.vala:373 src/utils.vala:382
 #: src/eml-viewer.vala:19 src/eml-viewer.vala:35
 msgid "Message"
-msgstr "Messaggio"
+msgstr "Μήνυμα"
 
 #: src/preferences-dialog.vala:140
 msgid "Complete"
-msgstr "Completato"
+msgstr "Ολοκλήρωση"
 
 #: src/preferences-dialog.vala:141
 msgid "Bell"
-msgstr "Campanello"
+msgstr "Καμπάνα"
 
 #: src/preferences-dialog.vala:142 src/preferences-dialog.vala:572
 msgid "Custom file…"
-msgstr "File personalizzato…"
+msgstr "Προσαρμοσμένο αρχείο…"
 
 #: src/preferences-dialog.vala:143
 msgid "Silent"
-msgstr "Nessuno"
+msgstr "Σίγαση"
 
 #: src/preferences-dialog.vala:149
 msgid "Play the selected sound"
-msgstr "Riproduci il suono selezionato"
+msgstr "Αναπαραγωγή του επιλεγμένου ήχου"
 
 #: src/preferences-dialog.vala:162
 msgid "Aggregate sound"
-msgstr "Suono aggregato"
+msgstr "Συγκεντρωτικός ήχος"
 
 #: src/preferences-dialog.vala:163
 msgid ""
 "On: one sound for all new mail in a check cycle. Off: a sound for every new "
 "message."
 msgstr ""
-"Attiva per ricevere una notifica sonora unica per tutta la nuova posta in "
-"arrivo in un ciclo di controllo. Disattiva per ricevere un suono per ogni "
-"nuova e-mail."
+"Ενεργό: ένας ήχος για όλη τη νέα αλληλογραφία σε έναν κύκλο ελέγχου. "
+"Ανενεργό: ένας ήχος για κάθε νέο μήνυμα."
 
 #: src/preferences-dialog.vala:173 src/preferences-dialog.vala:273
 msgid "Synchronization"
-msgstr "Sincronizzazione"
+msgstr "Συγχρονισμός"
 
 #: src/preferences-dialog.vala:174
 msgid ""
@@ -2007,57 +1951,58 @@ msgid ""
 "for the period you choose. The first sync can take a while; after that, "
 "folders stay up to date."
 msgstr ""
-"Le intestazioni restano in locale per ogni cartella. Corpi e allegati solo "
-"per il periodo scelto. La prima sincronizzazione può richiedere tempo; poi "
-"le cartelle restano aggiornate."
+"Οι κεφαλίδες παραμένουν τοπικά για κάθε φάκελο. Τα σώματα μηνυμάτων και τα "
+"συνημμένα διατηρούνται μόνο για την περίοδο που επιλέγετε. Ο πρώτος "
+"συγχρονισμός μπορεί να πάρει αρκετή ώρα· μετά, οι φάκελοι παραμένουν "
+"ενημερωμένοι."
 
 #: src/preferences-dialog.vala:178
 msgid "Check for new mail"
-msgstr "Controlla la posta nuova"
+msgstr "Έλεγχος για νέα αλληλογραφία"
 
 #: src/preferences-dialog.vala:181
 msgid "Every minute"
-msgstr "Ogni minuto"
+msgstr "Κάθε λεπτό"
 
 #: src/preferences-dialog.vala:182
 msgid "Every 5 minutes"
-msgstr "Ogni 5 minuti"
+msgstr "Κάθε 5 λεπτά"
 
 #: src/preferences-dialog.vala:183
 msgid "Every 15 minutes"
-msgstr "Ogni 15 minuti"
+msgstr "Κάθε 15 λεπτά"
 
 #: src/preferences-dialog.vala:184
 msgid "Every 30 minutes"
-msgstr "Ogni 30 minuti"
+msgstr "Κάθε 30 λεπτά"
 
 #: src/preferences-dialog.vala:185
 msgid "Manually (F5)"
-msgstr "Manualmente (F5)"
+msgstr "Χειροκίνητα (F5)"
 
 #: src/preferences-dialog.vala:200
 msgid "Download message bodies"
-msgstr "Scarica il corpo dei messaggi"
+msgstr "Λήψη σωμάτων μηνυμάτων"
 
 #: src/preferences-dialog.vala:203
 msgid "Last 2 months"
-msgstr "Ultimi 2 mesi"
+msgstr "Τελευταίοι 2 μήνες"
 
 #: src/preferences-dialog.vala:204
 msgid "Last 6 months"
-msgstr "Ultimi 6 mesi"
+msgstr "Τελευταίοι 6 μήνες"
 
 #: src/preferences-dialog.vala:205
 msgid "Last year"
-msgstr "Ultimo anno"
+msgstr "Τελευταίο έτος"
 
 #: src/preferences-dialog.vala:206
 msgid "Download all"
-msgstr "Scarica tutto"
+msgstr "Λήψη όλων"
 
 #: src/preferences-dialog.vala:221 src/preferences-dialog.vala:274
 msgid "Local library"
-msgstr "Libreria locale"
+msgstr "Τοπική βιβλιοθήκη"
 
 #: src/preferences-dialog.vala:222
 msgid ""
@@ -2065,25 +2010,26 @@ msgid ""
 "folder in the window below. First fill can take hours; Inbox checks and "
 "sending stay responsive. Progress resumes after restart."
 msgstr ""
-"Letter memorizza intestazioni e messaggi completi (corpi e allegati) per "
-"ogni cartella nella finestra sotto. Il primo riempimento può richiedere ore; "
-"i controlli della Posta in arrivo e l’invio restano reattivi. L’avanzamento "
-"riprende dopo un riavvio."
+"Το Letter αποθηκεύει στην κρυφή μνήμη κεφαλίδες και πλήρη μηνύματα (σώματα "
+"και συνημμένα) για κάθε φάκελο μέσα στο παρακάτω παράθυρο. Η πρώτη πλήρωση "
+"μπορεί να πάρει ώρες· ο έλεγχος των Εισερχομένων και η αποστολή παραμένουν "
+"ανταποκρινόμενα. Η πρόοδος συνεχίζεται μετά την επανεκκίνηση."
 
 #: src/preferences-dialog.vala:225
 msgid "Disk used"
-msgstr "Spazio su disco"
+msgstr "Χρήση δίσκου"
 
 #: src/preferences-dialog.vala:232 src/preferences-dialog.vala:275
 msgid "Accounts"
-msgstr "Account"
+msgstr "Λογαριασμοί"
 
 #: src/preferences-dialog.vala:233
 msgid ""
-"Add or remove providers in GNOME Settings. Changes appear here automatically."
+"Add or remove providers in GNOME Settings. Changes appear here "
+"automatically."
 msgstr ""
-"Aggiungi o rimuovi i provider in Impostazioni. Le modifiche compaiono qui "
-"automaticamente."
+"Προσθέστε ή αφαιρέστε παρόχους στις Ρυθμίσεις του GNOME. Οι αλλαγές "
+"εμφανίζονται εδώ αυτόματα."
 
 #: src/preferences-dialog.vala:239
 msgid "Google, Microsoft 365, Exchange, IMAP"
@@ -2091,57 +2037,62 @@ msgstr "Google, Microsoft 365, Exchange, IMAP"
 
 #: src/preferences-dialog.vala:251
 msgid "Dependencies and recommended packages"
-msgstr "Dipendenze e pacchetti consigliati"
+msgstr "Εξαρτήσεις και προτεινόμενα πακέτα"
 
 #: src/preferences-dialog.vala:252
 msgid "Check the software requirements for Letter to work correctly."
-msgstr "Verifica i requisiti software per il corretto funzionamento di Lettera"
+msgstr "Ελέγξτε τις απαιτήσεις λογισμικού για τη σωστή λειτουργία του Letter."
 
 #: src/preferences-dialog.vala:276 src/dependency-page.vala:26
 msgid "Dependencies"
-msgstr "Dipendenze"
+msgstr "Εξαρτήσεις"
 
 #: src/preferences-dialog.vala:381
 msgid "How often to refresh mail while Letter is open."
-msgstr "Ogni quanto aggiornare la posta mentre Lettera è aperta."
+msgstr "Πόσο συχνά θα ανανεώνεται η αλληλογραφία ενώ το Letter είναι ανοιχτό."
 
 #: src/preferences-dialog.vala:385
 msgid "Very frequent checks may hit server rate limits."
-msgstr "Controlli troppo frequenti possono urtare i limiti del server."
+msgstr ""
+"Πολύ συχνοί έλεγχοι ενδέχεται να προσκρούσουν στα όρια ρυθμού του "
+"διακομιστή."
 
 #: src/preferences-dialog.vala:395
 msgid ""
 "Applies to all folders (Inbox, Archive, Sent, Trash, custom, …). Older "
 "bodies are trimmed at startup; headers stay for the message list."
 msgstr ""
-"Vale per tutte le cartelle (Posta in arrivo, Archivio, Inviate, Cestino, "
-"personalizzate, …). I corpi più vecchi si eliminano all’avvio; le "
-"intestazioni restano nell’elenco messaggi."
+"Ισχύει για όλους τους φακέλους (Εισερχόμενα, Αρχείο, Απεσταλμένα, "
+"Απορρίμματα, προσαρμοσμένους, …). Τα παλαιότερα σώματα μηνυμάτων "
+"περικόπτονται κατά την εκκίνηση· οι κεφαλίδες παραμένουν για τη λίστα "
+"μηνυμάτων."
 
 #: src/preferences-dialog.vala:399
 msgid "Downloading everything can take time and fill the disk."
-msgstr "Scaricare tutto può richiedere tempo e riempire il disco."
+msgstr "Η λήψη των πάντων μπορεί να πάρει χρόνο και να γεμίσει τον δίσκο."
 
 #: src/preferences-dialog.vala:430
 msgid "Open this account in GNOME Settings"
-msgstr "Apri questo account in Impostazioni"
+msgstr "Άνοιγμα αυτού του λογαριασμού στις Ρυθμίσεις του GNOME"
 
 #: src/preferences-dialog.vala:441 src/signature-editor.vala:136
 msgid "Signatures"
-msgstr "Firme"
+msgstr "Υπογραφές"
 
 #: src/preferences-dialog.vala:467
 msgid "Reset"
-msgstr "Ripristina"
+msgstr "Επαναφορά"
 
 #: src/preferences-dialog.vala:471
 msgid "Delete Letter’s local copy and rebuild it from the server"
-msgstr "Elimina la copia locale di Lettera e ricostruiscila dal server"
+msgstr ""
+"Διαγραφή του τοπικού αντιγράφου του Letter και επαναδημιουργία του από τον "
+"διακομιστή"
 
 #: src/preferences-dialog.vala:493
 #, c-format
 msgid "Reset “%s”?"
-msgstr "Ripristinare «%s»?"
+msgstr "Μηδενισμός του “%s”;"
 
 #: src/preferences-dialog.vala:494
 #, c-format
@@ -2150,189 +2101,197 @@ msgid ""
 "the server. The next sync rebuilds headers and recent bodies from scratch. "
 "Use this if the account is damaged or stuck."
 msgstr ""
-"Elimina la libreria locale di Lettera per questo account (%s). I messaggi "
-"restano sul server. La sincronizzazione successiva ricostruisce da zero "
-"intestazioni e corpi recenti. Usalo se l’account è danneggiato o bloccato."
+"Αυτό διαγράφει την τοπική βιβλιοθήκη του Letter για αυτόν τον λογαριασμό "
+"(%s). Τα μηνύματα παραμένουν στον διακομιστή. Ο επόμενος συγχρονισμός θα "
+"ξαναχτίσει από την αρχή τις κεφαλίδες και τα πρόσφατα σώματα μηνυμάτων. "
+"Χρησιμοποιήστε το αν ο λογαριασμός έχει καταστραφεί ή έχει κολλήσει."
 
 #: src/preferences-dialog.vala:497
 msgid "Reset Local Library"
-msgstr "Ripristina la libreria locale"
+msgstr "Μηδενισμός τοπικής βιβλιοθήκης"
 
 #: src/preferences-dialog.vala:508
 msgid "Open a Letter window first, then try again."
-msgstr "Apri prima una finestra di Lettera, poi riprova."
+msgstr "Ανοίξτε πρώτα ένα παράθυρο του Letter και δοκιμάστε ξανά."
 
 #: src/preferences-dialog.vala:520
 #, c-format
 msgid "Local library cleared. Letter is rebuilding “%s”."
-msgstr "Libreria locale svuotata. Lettera sta ricostruendo «%s»."
+msgstr "Η τοπική βιβλιοθήκη εκκαθαρίστηκε. Το Letter ξαναχτίζει το “%s”."
 
 #: src/preferences-dialog.vala:574
 msgid "No notification sound."
-msgstr "Nessun suono di notifica."
+msgstr "Χωρίς ήχο ειδοποίησης."
 
 #: src/preferences-dialog.vala:576
 msgid "Played with new-mail alerts."
-msgstr "Riprodotto con gli avvisi di posta nuova."
+msgstr "Αναπαράγεται με τις ειδοποιήσεις νέας αλληλογραφίας."
 
 #: src/preferences-dialog.vala:609
 msgid "Audio files"
-msgstr "File audio"
+msgstr "Αρχεία ήχου"
 
 #: src/preferences-dialog.vala:626
 msgid "All files"
-msgstr "Tutti i file"
+msgstr "Όλα τα αρχεία"
 
 #: src/preferences-dialog.vala:635
 msgid "Choose a sound"
-msgstr "Scegli un suono"
+msgstr "Επιλέξτε έναν ήχο"
 
 #: src/signature-editor.vala:16
 msgid "New Signature"
-msgstr "Nuova firma"
+msgstr "Νέα υπογραφή"
 
 #: src/signature-editor.vala:16
 msgid "Edit Signature"
-msgstr "Modifica firma"
+msgstr "Επεξεργασία υπογραφής"
 
 #: src/signature-editor.vala:62
 msgid ""
 "The signature is added after two blank lines and a -- mark, before any "
 "quoted reply."
 msgstr ""
-"La firma viene aggiunta dopo due righe vuote e il segno --, prima di "
-"un’eventuale citazione."
+"Η υπογραφή προστίθεται μετά από δύο κενές γραμμές και ένα σημάδι --, πριν "
+"από οποιαδήποτε παρατιθέμενη απάντηση."
 
 #: src/signature-editor.vala:142
 msgid "Add Signature"
-msgstr "Aggiungi firma"
+msgstr "Προσθήκη υπογραφής"
 
 #: src/signature-editor.vala:150
 msgid ""
 "Each account has its own signatures. Star the one that should be added to "
 "new messages. You can still pick another signature while writing."
 msgstr ""
-"Ogni account ha le proprie firme. La stellina indica quella usata nei nuovi "
-"messaggi. In scrittura puoi comunque sceglierne un’altra."
+"Κάθε λογαριασμός έχει τις δικές του υπογραφές. Βάλτε αστέρι σε αυτήν που θα "
+"προστίθεται στα νέα μηνύματα. Μπορείτε και πάλι να διαλέξετε άλλη υπογραφή "
+"κατά τη σύνταξη."
 
 #: src/signature-editor.vala:179
 msgid "No signatures yet"
-msgstr "Ancora nessuna firma"
+msgstr "Δεν υπάρχουν υπογραφές ακόμη"
 
 #: src/signature-editor.vala:180
 msgid "Add a signature to use it when writing messages from this account."
-msgstr "Aggiungi una firma da usare quando scrivi messaggi da questo account."
+msgstr ""
+"Προσθέστε μια υπογραφή για να τη χρησιμοποιείτε όταν γράφετε μηνύματα από "
+"αυτόν τον λογαριασμό."
 
 #: src/signature-editor.vala:200
 msgid "Default for new messages. Click to stop using it automatically."
 msgstr ""
-"Predefinita per i nuovi messaggi. Clicca per non usarla più automaticamente."
+"Προεπιλογή για νέα μηνύματα. Κάντε κλικ για να σταματήσει η αυτόματη χρήση "
+"της."
 
 #: src/signature-editor.vala:201
 msgid "Use as the default for new messages from this account"
-msgstr "Usa come predefinita per i nuovi messaggi di questo account"
+msgstr "Χρήση ως προεπιλογή για νέα μηνύματα από αυτόν τον λογαριασμό"
 
 #: src/signature-editor.vala:260
 #, c-format
 msgid "Delete “%s”?"
-msgstr "Eliminare «%s»?"
+msgstr "Διαγραφή του “%s”;"
 
 #: src/signature-editor.vala:261
 msgid ""
 "This signature will no longer be available when writing messages from this "
 "account."
 msgstr ""
-"Questa firma non sarà più disponibile quando scrivi messaggi da questo "
-"account."
+"Αυτή η υπογραφή δεν θα είναι πλέον διαθέσιμη κατά τη σύνταξη μηνυμάτων από "
+"αυτόν τον λογαριασμό."
 
 #: src/utils.vala:4
 msgid "Letter (Development)"
-msgstr "Lettera (Sviluppo)"
+msgstr "Letter (Ανάπτυξη)"
 
 #: src/utils.vala:314
 #, c-format
 msgid "The attachment “%s” is empty."
-msgstr "L'allegato «%s» è vuoto."
+msgstr "Το συνημμένο “%s” είναι κενό."
 
 #: src/utils.vala:361
 msgid "Save Attachment"
-msgstr "Salva allegato"
+msgstr "Αποθήκευση συνημμένου"
 
 #: src/utils.vala:390
 msgid "Save as EML"
-msgstr "Salva come EML"
+msgstr "Αποθήκευση ως EML"
 
 #: src/utils.vala:396
 msgid "Email Message"
-msgstr "Messaggio di posta"
+msgstr "Μήνυμα email"
 
 #: src/utils.vala:418
 msgid "Save Attachments"
-msgstr "Salva allegati"
+msgstr "Αποθήκευση συνημμένων"
 
 #: src/utils.vala:487 src/utils.vala:492 src/utils.vala:498 src/utils.vala:519
 msgid "The image could not be opened."
-msgstr "Impossibile aprire l’immagine."
+msgstr "Δεν ήταν δυνατή η φόρτωση της εικόνας."
 
 #: src/utils.vala:1653
 #, c-format
 msgid "On %s, %s wrote"
-msgstr "Il %s, %s ha scritto"
+msgstr "Στις %s, ο/η %s έγραψε"
 
 #: src/utils.vala:2353
 #, c-format
 msgid "“%s” is not a valid email address."
-msgstr "«%s» non è un indirizzo email valido."
+msgstr "Το “%s” δεν είναι έγκυρη διεύθυνση email."
 
 #: src/utils.vala:2354
 msgid "Check the recipients. At least one address is not valid."
-msgstr "Controlla i destinatari. Almeno un indirizzo non è valido."
+msgstr "Ελέγξτε τους παραλήπτες. Τουλάχιστον μία διεύθυνση δεν είναι έγκυρη."
 
 #: src/utils.vala:2358
 msgid "You do not have permission to send this message."
-msgstr "Non hai i permessi per inviare questo messaggio."
+msgstr "Δεν έχετε άδεια αποστολής αυτού του μηνύματος."
 
 #: src/utils.vala:2361
 msgid "The mailbox is full. The message could not be sent."
-msgstr "La casella è piena. Il messaggio non è stato inviato."
+msgstr "Το γραμματοκιβώτιο είναι γεμάτο. Το μήνυμα δεν στάλθηκε."
 
 #: src/utils.vala:2364
 msgid "The server took too long to respond. Try again."
-msgstr "Il server ha impiegato troppo tempo a rispondere. Riprova."
+msgstr "Ο διακομιστής άργησε πολύ να απαντήσει. Δοκιμάστε ξανά."
 
 #: src/utils.vala:2367
 msgid "Could not reach the mail server. Check your connection."
-msgstr "Impossibile raggiungere il server di posta. Controlla la connessione."
+msgstr ""
+"Δεν ήταν δυνατή η επικοινωνία με τον διακομιστή αλληλογραφίας. Ελέγξτε τη "
+"σύνδεσή σας."
 
 #: src/utils.vala:2370
 msgid "The message was not sent."
-msgstr "Il messaggio non è stato inviato."
+msgstr "Το μήνυμα δεν στάλθηκε."
 
 #: src/utils.vala:2372
 msgid "The message could not be sent."
-msgstr "Il messaggio non può essere inviato."
+msgstr "Δεν ήταν δυνατή η αποστολή του μηνύματος."
 
 #: src/welcome-dialog.vala:21
 msgid "Welcome"
-msgstr "Benvenuto"
+msgstr "Καλωσόρισμα"
 
 #: src/welcome-tour.vala:21
 msgid "Welcome to Letter"
-msgstr "Benvenuto in Lettera"
+msgstr "Καλώς ήρθατε στο Letter"
 
 #: src/welcome-tour.vala:22
 msgid ""
 "Letter is the email application designed for the GNOME desktop and "
-"integrates with Calendar and Contacts. It uses the same accounts you already "
-"have: Google, Microsoft 365, Exchange, IMAP."
+"integrates with Calendar and Contacts. It uses the same accounts you already"
+" have: Google, Microsoft 365, Exchange, IMAP."
 msgstr ""
-"Lettera è l’applicazione di posta elettronica studiata appositamente per "
-"l’ambiente desktop GNOME e si integra con Calendario e Contatti. Usa gli "
-"stessi account che hai già: Google, Microsoft 365, Exchange, IMAP."
+"Το Letter είναι η εφαρμογή ηλεκτρονικού ταχυδρομείου που σχεδιάστηκε για την"
+" επιφάνεια εργασίας GNOME και ενσωματώνεται με το Ημερολόγιο και τις Επαφές."
+" Χρησιμοποιεί τους ίδιους λογαριασμούς που ήδη έχετε: Google, Microsoft 365,"
+" Exchange, IMAP."
 
 #: src/welcome-tour.vala:26
 msgid "One experience, one interface"
-msgstr "Esperienza e interfaccia unica"
+msgstr "Μία εμπειρία, μία διεπαφή"
 
 #: src/welcome-tour.vala:27
 msgid ""
@@ -2340,14 +2299,14 @@ msgid ""
 "handles the mail flow. Letter uses the GTK 4 and libadwaita libraries, so "
 "GNOME 50 or later is required for it to work correctly."
 msgstr ""
-"Gli accessi restano in Account online delle Impostazioni di Sistema GNOME. "
-"Evolution Data Server gestisce il flusso di posta elettronica. Lettera "
-"sfrutta le librerie GTK 4 e libadwaita, motivo per cui per un corretto "
-"funzionamento è richiesto GNOME a partire dalla versione 50 e successive."
+"Η σύνδεση παραμένει στο Online Accounts των Ρυθμίσεων του GNOME. Ο Evolution"
+" Data Server χειρίζεται τη ροή της αλληλογραφίας. Το Letter χρησιμοποιεί τις"
+" βιβλιοθήκες GTK 4 και libadwaita, γι’ αυτό απαιτείται GNOME 50 ή νεότερο "
+"για σωστή λειτουργία."
 
 #: src/welcome-tour.vala:31
 msgid "What Letter needs"
-msgstr "Cosa serve a Lettera"
+msgstr "Τι χρειάζεται το Letter"
 
 #: src/welcome-tour.vala:32
 msgid ""
@@ -2355,130 +2314,131 @@ msgid ""
 "there too. Microsoft 365 also needs the evolution-ews package. Without "
 "Online Accounts, Letter has nothing to show — by design."
 msgstr ""
-"Aggiungi almeno un account di posta in Impostazioni → Account online. Anche "
-"IMAP si aggiunge lì. Microsoft 365 richiede anche il pacchetto evolution-"
-"ews. Senza Account online, Lettera non ha nulla da mostrare: è voluto."
+"Προσθέστε τουλάχιστον έναν λογαριασμό αλληλογραφίας στις Ρυθμίσεις → Online "
+"Accounts. Και το IMAP προστίθεται εκεί. Το Microsoft 365 χρειάζεται επίσης "
+"το πακέτο evolution-ews. Χωρίς το Online Accounts, το Letter δεν έχει τίποτα"
+" να εμφανίσει — εσκεμμένα."
 
 #: src/welcome-tour.vala:48
 msgid "Back"
-msgstr "Indietro"
+msgstr "Πίσω"
 
 #: src/welcome-tour.vala:54 src/welcome-tour.vala:100
 msgid "Next"
-msgstr "Avanti"
+msgstr "Επόμενο"
 
 #: src/welcome-tour.vala:100
 msgid "Get Started"
-msgstr "Inizia"
+msgstr "Ας ξεκινήσουμε"
 
 #: src/outbox-store.vala:246
 msgid "Sending failed"
-msgstr "Invio non riuscito"
+msgstr "Η αποστολή απέτυχε"
 
 #: src/outbox-store.vala:274
 msgid "The sending account is unavailable."
-msgstr "L’account di invio non è disponibile."
+msgstr "Ο λογαριασμός αποστολής δεν είναι διαθέσιμος."
 
 #: src/theme-selector.vala:10
 msgid "Follow the system appearance"
-msgstr "Segui l’aspetto del sistema"
+msgstr "Ακολουθία της εμφάνισης του συστήματος"
 
 #: src/theme-selector.vala:11
 msgid "Light appearance"
-msgstr "Aspetto chiaro"
+msgstr "Φωτεινή εμφάνιση"
 
 #: src/theme-selector.vala:12
 msgid "Dark appearance"
-msgstr "Aspetto scuro"
+msgstr "Σκοτεινή εμφάνιση"
 
 #: src/invitation-bar.vala:19 src/invitation-bar.vala:137
 msgid "Meeting Invitation"
-msgstr "Invito a una riunione"
+msgstr "Πρόσκληση σε συνάντηση"
 
 #: src/invitation-bar.vala:40 src/invitation-bar.vala:104
 msgid "This event is waiting for your reply."
-msgstr "Questo evento è in attesa di una risposta."
+msgstr "Αυτό το συμβάν αναμένει την απάντησή σας."
 
 #: src/invitation-bar.vala:48
 msgid "Accept"
-msgstr "Accetta"
+msgstr "Αποδοχή"
 
 #: src/invitation-bar.vala:53
 msgid "Tentative"
-msgstr "Provvisorio"
+msgstr "Ίσως"
 
 #: src/invitation-bar.vala:57
 msgid "Decline"
-msgstr "Rifiuta"
+msgstr "Απόρριψη"
 
 #: src/invitation-bar.vala:100 src/calendar-store.vala:31
 msgid "This meeting was cancelled."
-msgstr "Questa riunione è stata annullata."
+msgstr "Αυτή η συνάντηση ακυρώθηκε."
 
 #: src/invitation-bar.vala:133
 msgid "Meeting Cancelled"
-msgstr "Riunione annullata"
+msgstr "Η συνάντηση ακυρώθηκε"
 
 #: src/invitation-bar.vala:135
 msgid "Meeting Response"
-msgstr "Risposta alla riunione"
+msgstr "Απάντηση σε συνάντηση"
 
 #: src/invitation-bar.vala:145
 msgid "Accepted. The organizer will be notified."
-msgstr "Accettato. L’organizzatore verrà avvisato."
+msgstr "Έγινε αποδοχή. Ο διοργανωτής θα ειδοποιηθεί."
 
 #: src/invitation-bar.vala:146 src/calendar-store.vala:37
 msgid "This meeting was accepted."
-msgstr "Questa riunione è stata accettata."
+msgstr "Αυτή η συνάντηση έγινε αποδεκτή."
 
 #: src/invitation-bar.vala:149
 msgid "Marked as tentative. The organizer will be notified."
-msgstr "Segnato come provvisorio. L’organizzatore verrà avvisato."
+msgstr "Επισημάνθηκε ως «Ίσως». Ο διοργανωτής θα ειδοποιηθεί."
 
 #: src/invitation-bar.vala:150 src/calendar-store.vala:39
 msgid "This meeting was marked as tentative."
-msgstr "Questa riunione è stata segnata come provvisoria."
+msgstr "Αυτή η συνάντηση επισημάνθηκε ως «Ίσως»."
 
 #: src/invitation-bar.vala:153
 msgid "Declined. The organizer will be notified."
-msgstr "Rifiutato. L’organizzatore verrà avvisato."
+msgstr "Έγινε απόρριψη. Ο διοργανωτής θα ειδοποιηθεί."
 
 #: src/invitation-bar.vala:154 src/calendar-store.vala:41
 msgid "This meeting was declined."
-msgstr "Questa riunione è stata rifiutata."
+msgstr "Αυτή η συνάντηση απορρίφθηκε."
 
 #: src/invitation-bar.vala:156 src/calendar-store.vala:34
 #: src/calendar-store.vala:43
 msgid "This is a meeting response."
-msgstr "Questo messaggio è una risposta a una riunione."
+msgstr "Αυτή είναι μια απάντηση σε συνάντηση."
 
 #: src/calendar-store.vala:45
 msgid "This message is a meeting invitation."
-msgstr "Questo messaggio è un invito a una riunione."
+msgstr "Αυτό το μήνυμα είναι πρόσκληση σε συνάντηση."
 
 #: src/calendar-store.vala:77
 msgid "This invitation could not be read."
-msgstr "Impossibile leggere questo invito."
+msgstr "Δεν ήταν δυνατή η ανάγνωση αυτής της πρόσκλησης."
 
 #: src/calendar-store.vala:115
 msgid "Meeting"
-msgstr "Riunione"
+msgstr "Συνάντηση"
 
 #: src/calendar-store.vala:191 src/calendar-store.vala:195
 msgid "No calendar is available for this account."
-msgstr "Nessun calendario è disponibile per questo account."
+msgstr "Δεν υπάρχει διαθέσιμο ημερολόγιο για αυτόν τον λογαριασμό."
 
 #: src/calendar-store.vala:205
 msgid "Could not open the calendar."
-msgstr "Impossibile aprire il calendario."
+msgstr "Δεν ήταν δυνατό το άνοιγμα του ημερολογίου."
 
 #: src/eml-viewer.vala:63
 msgid "This file is empty."
-msgstr "Questo file è vuoto."
+msgstr "Αυτό το αρχείο είναι κενό."
 
 #: src/eml-viewer.vala:68
 msgid "Could not read this message file."
-msgstr "Impossibile leggere questo file messaggio."
+msgstr "Δεν ήταν δυνατή η ανάγνωση αυτού του αρχείου μηνύματος."
 
 #: src/dependency-page.vala:14 src/dependency-page.vala:159
 msgid "Debian / Ubuntu"
@@ -2499,35 +2459,35 @@ msgid ""
 "already includes everything needed to make it work. Check the essential "
 "packages below, and the optional ones only if you need them."
 msgstr ""
-"Lettera è pensata per l’ambiente GNOME dalla versione 50 in poi e sfrutta in "
-"modo completo le librerie GTK 4 e Libadwaita. Una normale installazione di "
-"GNOME include già tutto il necessario per farla funzionare. Controlla di "
-"seguito i pacchetti indispensabili e quelli facoltativi da installare solo "
-"se ti servono."
+"Το Letter φτιάχτηκε για την επιφάνεια εργασίας GNOME από την έκδοση 50 και "
+"μετά και αξιοποιεί πλήρως τις βιβλιοθήκες GTK 4 και libadwaita. Μια κανονική"
+" εγκατάσταση GNOME περιλαμβάνει ήδη ό,τι χρειάζεται για να λειτουργήσει. "
+"Ελέγξτε τα απαραίτητα πακέτα παρακάτω και τα προαιρετικά μόνο αν τα "
+"χρειάζεστε."
 
 #: src/dependency-page.vala:32
 msgid ""
-"You are running the Flatpak build. Recommended packages are installed on the "
-"host system (outside the sandbox); Letter checks the host for them."
+"You are running the Flatpak build. Recommended packages are installed on the"
+" host system (outside the sandbox); Letter checks the host for them."
 msgstr ""
-"Stai usando la build Flatpak. I pacchetti consigliati vanno installati sul "
-"sistema host (fuori dalla sandbox); Lettera li verifica lì."
+"Εκτελείτε την έκδοση Flatpak. Τα προτεινόμενα πακέτα είναι εγκατεστημένα στο"
+" σύστημα (εκτός του sandbox)· το Letter ελέγχει το σύστημα για αυτά."
 
 #: src/dependency-page.vala:42
 msgid "Essential"
-msgstr "Indispensabili"
+msgstr "Απαραίτητα"
 
 #: src/dependency-page.vala:49
 msgid "Recommended"
-msgstr "Consigliate"
+msgstr "Προτεινόμενα"
 
 #: src/dependency-page.vala:94
 msgid "GNOME Online Accounts"
-msgstr "Account online GNOME"
+msgstr "GNOME Online Accounts"
 
 #: src/dependency-page.vala:95
 msgid "Account sign-in for Google, Microsoft 365, Exchange, and IMAP"
-msgstr "Accesso account per Google, Microsoft 365, Exchange e IMAP"
+msgstr "Σύνδεση λογαριασμών για Google, Microsoft 365, Exchange και IMAP"
 
 #: src/dependency-page.vala:102
 msgid "Evolution Data Server"
@@ -2535,23 +2495,25 @@ msgstr "Evolution Data Server"
 
 #: src/dependency-page.vala:103
 msgid "Mail, calendar, and contacts backend used by Letter"
-msgstr "Backend di posta, calendario e contatti usato da Lettera"
+msgstr ""
+"Backend αλληλογραφίας, ημερολογίου και επαφών που χρησιμοποιεί το Letter"
 
 #: src/dependency-page.vala:116
 msgid "Microsoft Graph backends"
-msgstr "Backend Microsoft Graph"
+msgstr "Backends Microsoft Graph"
 
 #: src/dependency-page.vala:118
 msgid ""
 "Graph mail is bundled in this Flatpak. Install evolution-ews on the host if "
 "you also want Microsoft 365 calendar and contacts via the desktop."
 msgstr ""
-"La posta Graph è inclusa in questo Flatpak. Installa evolution-ews sull’host "
-"se vuoi anche calendario e contatti Microsoft 365 sul desktop."
+"Η αλληλογραφία Graph περιλαμβάνεται σε αυτό το Flatpak. Εγκαταστήστε το "
+"evolution-ews στο σύστημα υποδοχής αν θέλετε επίσης ημερολόγιο και επαφές "
+"Microsoft 365 μέσω της επιφάνειας εργασίας."
 
 #: src/dependency-page.vala:119
 msgid "evolution-ews for Microsoft 365 mail, calendar, and contacts"
-msgstr "evolution-ews per posta, calendario e contatti Microsoft 365"
+msgstr "evolution-ews για αλληλογραφία, ημερολόγιο και επαφές Microsoft 365"
 
 #: src/dependency-page.vala:129
 msgid "Hunspell"
@@ -2562,16 +2524,16 @@ msgid ""
 "Spell checking in the compose editor. Install Hunspell and a dictionary for "
 "your language on the host."
 msgstr ""
-"Controllo ortografico nell’editor. Installa Hunspell e un dizionario per la "
-"tua lingua sull’host."
+"Ορθογραφικός έλεγχος στον επεξεργαστή σύνταξης. Εγκαταστήστε το Hunspell και"
+" ένα λεξικό για τη γλώσσα σας στο σύστημα υποδοχής."
 
 #: src/dependency-page.vala:132
 msgid ""
-"Spell checking in the compose editor. Install Hunspell plus a dictionary for "
-"your language."
+"Spell checking in the compose editor. Install Hunspell plus a dictionary for"
+" your language."
 msgstr ""
-"Controllo ortografico nell’editor. Installa Hunspell e un dizionario per la "
-"tua lingua."
+"Ορθογραφικός έλεγχος στον επεξεργαστή σύνταξης. Εγκαταστήστε το Hunspell "
+"μαζί με ένα λεξικό για τη γλώσσα σας."
 
 #: src/dependency-page.vala:142
 msgid "Sushi"
@@ -2582,365 +2544,72 @@ msgid ""
 "Quick attachment preview via the host Sushi / Nautilus Previewer. Without "
 "it, Letter opens the file in the default application."
 msgstr ""
-"Anteprima rapida degli allegati tramite Sushi / Nautilus Previewer "
-"sull’host. Se manca, Lettera apre il file con l’applicazione predefinita."
+"Γρήγορη προεπισκόπηση συνημμένων μέσω του Sushi / Nautilus Previewer του "
+"συστήματος. Χωρίς αυτό, το Letter ανοίγει το αρχείο στην "
+"προεπιλεγμένη εφαρμογή."
 
 #: src/dependency-page.vala:145
 msgid ""
 "Quick attachment preview. Without it, Letter opens the file in the default "
 "application."
 msgstr ""
-"Anteprima rapida degli allegati. Se manca, Lettera apre il file con "
-"l’applicazione predefinita."
+"Γρήγορη προεπισκόπηση συνημμένων. Χωρίς αυτήν, το Letter ανοίγει το αρχείο "
+"στην προεπιλεγμένη εφαρμογή."
 
 #: src/dependency-page.vala:156
 msgid ""
 "Install Hunspell and the dictionary for your language. Enchant is pulled in "
 "automatically."
 msgstr ""
-"Installa Hunspell e il dizionario per la tua lingua. Enchant arriva da solo "
-"come dipendenza."
+"Εγκαταστήστε το Hunspell και το λεξικό για τη γλώσσα σας. Το Enchant "
+"εγκαθίσταται αυτόματα."
 
 #: src/dependency-page.vala:157
 msgid ""
 "Search your package manager for hunspell- followed by the language code."
-msgstr "Cerca nel gestore pacchetti hunspell- seguito dal codice della lingua."
+msgstr ""
+"Αναζητήστε στον διαχειριστή πακέτων σας το hunspell- ακολουθούμενο από τον "
+"κωδικό γλώσσας."
 
 #: src/dependency-page.vala:158
 msgid "Examples: hunspell-it, hunspell-en-us, hunspell-fr, hunspell-de-de."
-msgstr "Esempi: hunspell-it, hunspell-en-us, hunspell-fr, hunspell-de-de."
+msgstr ""
+"Παραδείγματα: hunspell-it, hunspell-en-us, hunspell-fr, hunspell-de-de."
 
 #: src/dependency-page.vala:162
 msgid "The compose editor uses the same language as the desktop."
-msgstr "L’editor usa la stessa lingua del desktop."
+msgstr ""
+"Ο επεξεργαστής σύνταξης χρησιμοποιεί την ίδια γλώσσα με την επιφάνεια εργασίας."
 
 #: src/dependency-page.vala:213
 msgid "Installed"
-msgstr "Installato"
+msgstr "Εγκατεστημένο"
 
 #: src/dependency-page.vala:213
 msgid "Missing"
-msgstr "Mancante"
+msgstr "Λείπει"
 
 #: src/contact-picker.vala:14
 msgid "Address Book"
-msgstr "Rubrica"
+msgstr "Βιβλίο διευθύνσεων"
 
 #: src/contact-picker.vala:22
 msgid "Search contacts"
-msgstr "Cerca contatti"
+msgstr "Αναζήτηση επαφών"
 
 #: src/contact-picker.vala:45 src/contact-picker.vala:88
 msgid "No Contacts"
-msgstr "Nessun contatto"
+msgstr "Καμία επαφή"
 
 #: src/contact-picker.vala:46 src/contact-picker.vala:91
 msgid "Type a name or email to search the address book."
-msgstr "Digita un nome o un’email per cercare in rubrica."
+msgstr ""
+"Πληκτρολογήστε ένα όνομα ή email για αναζήτηση στο βιβλίο διευθύνσεων."
 
 #: src/contact-picker.vala:88
 msgid "No Matching Contacts"
-msgstr "Nessun contatto corrispondente"
+msgstr "Καμία αντίστοιχη επαφή"
 
 #: src/contact-picker.vala:90
 msgid "Try a different name or email address."
-msgstr "Prova un nome o un indirizzo email diverso."
-
-#~ msgid "Looking in every folder…"
-#~ msgstr "Controllo di tutte le cartelle…"
-
-#~ msgid "Searching remaining folders…"
-#~ msgstr "Ricerca nelle cartelle rimanenti…"
-
-#~ msgid "No messages in any folder match the search."
-#~ msgstr "Nessun messaggio corrisponde alla ricerca."
-
-#~ msgid ""
-#~ "Results are limited to messages already in the local cache (headers "
-#~ "downloaded so far, and bodies kept within the Preferences download "
-#~ "window)."
-#~ msgstr ""
-#~ "I risultati includono solo i messaggi già in cache locale (intestazioni "
-#~ "scaricate finora e corpi nella finestra di download delle Preferenze)."
-
-#~ msgid ""
-#~ "No cached messages match the search. Download more of the mailbox (or "
-#~ "widen the body window in Preferences) and try again."
-#~ msgstr ""
-#~ "Nessun messaggio in cache corrisponde alla ricerca. Scarica altra posta "
-#~ "(o amplia la finestra dei corpi in Preferenze) e riprova."
-
-#~ msgid "Reading mailbox…"
-#~ msgstr "Lettura della casella…"
-
-#~ msgid "Archive, move, delete, or mark as read or unread."
-#~ msgstr "Archivia, sposta, elimina o segna come lette o non lette."
-
-#, c-format
-#~ msgid "Synchronizing with the server (%u)…"
-#~ msgstr "Sincronizzazione con il server (%u)…"
-
-#~ msgid "Synchronizing with the server…"
-#~ msgstr "Sincronizzazione con il server…"
-
-#~ msgid "The message was saved to Drafts."
-#~ msgstr "Il messaggio è stato salvato in Bozze."
-
-#~ msgid ""
-#~ "Letter stores headers and recent bodies itself. At startup it trims "
-#~ "bodies outside your download window. Clearing an account removes only "
-#~ "that local copy; mail stays on the server."
-#~ msgstr ""
-#~ "Lettera conserva intestazioni e corpi recenti. All’avvio elimina i corpi "
-#~ "fuori dalla finestra di scaricamento. Svuotare un account cancella solo "
-#~ "la copia locale; la posta resta sul server."
-
-#~ msgid "Search all folders. Filter with contains:, from: and to:"
-#~ msgstr ""
-#~ "Cerca in tutte le cartelle. Filtra con contains:, from: e to: (contiene:, "
-#~ "da: e a:)"
-
-#~ msgid "_Refresh Accounts"
-#~ msgstr "A_ggiorna account"
-
-#~ msgid "Add a mail account"
-#~ msgstr "Aggiungi un account di posta"
-
-#~ msgid ""
-#~ "Letter uses the same accounts as Calendar and Contacts. Add Google, "
-#~ "Microsoft 365, or IMAP in Settings → Online Accounts, then return here."
-#~ msgstr ""
-#~ "Lettera usa gli stessi account di Calendario e Contatti. Aggiungi Google, "
-#~ "Microsoft 365 o IMAP in Impostazioni → Account online, poi torna qui."
-
-#~ msgid "Letter stays closed until at least one mail account is available."
-#~ msgstr ""
-#~ "Lettera resta chiusa finché non è disponibile almeno un account di posta."
-
-#~ msgid "Shares a calendar with Calendar"
-#~ msgstr "Condivide un calendario con Calendario"
-
-#~ msgid "Shares an address book with Contacts"
-#~ msgstr "Condivide una rubrica con Contatti"
-
-#~ msgid "Letter is disabled in Online Accounts"
-#~ msgstr "Lettera è disabilitata negli Account online"
-
-#~ msgid "Open Calendar"
-#~ msgstr "Apri Calendario"
-
-#~ msgid "Open Contacts"
-#~ msgstr "Apri Contatti"
-
-#~ msgid "Message contents will appear here once fetching is implemented."
-#~ msgstr ""
-#~ "Il contenuto dei messaggi comparirà qui quando il recupero sarà "
-#~ "implementato."
-
-#~ msgid "Refresh accounts"
-#~ msgstr "Aggiorna account"
-
-#~ msgid ""
-#~ "Calendar, contacts, and Graph mail need the evolution-ews backends. The "
-#~ "Evolution window is not required and should stay closed."
-#~ msgstr ""
-#~ "Calendario, contatti e posta Graph richiedono i backend di evolution-ews. "
-#~ "La finestra di Evolution non serve e va lasciata chiusa."
-
-#~ msgid "Graph backends"
-#~ msgstr "Backend Graph"
-
-#~ msgid "Installed (evolution-ews)"
-#~ msgstr "Installati (evolution-ews)"
-
-#~ msgid "Missing — install evolution-ews"
-#~ msgstr "Mancanti: installa evolution-ews"
-
-#~ msgid "All checked packages are installed on this system"
-#~ msgstr "Tutti i pacchetti controllati sono installati su questo sistema"
-
-#~ msgid "%u package is missing on this system"
-#~ msgid_plural "%u packages are missing on this system"
-#~ msgstr[0] "%u pacchetto manca su questo sistema"
-#~ msgstr[1] "%u pacchetti mancano su questo sistema"
-
-#~ msgid "Required"
-#~ msgstr "Indispensabili"
-
-#~ msgid "GTK 4"
-#~ msgstr "GTK 4"
-
-#~ msgid "libadwaita"
-#~ msgstr "libadwaita"
-
-#~ msgid ""
-#~ "Libraries Letter is built against. They are present if the application is "
-#~ "running."
-#~ msgstr ""
-#~ "Librerie con cui Lettera è compilata. Sono presenti se l’applicazione è "
-#~ "in esecuzione."
-
-#~ msgid "Application toolkit"
-#~ msgstr "Toolkit dell’interfaccia"
-
-#~ msgid "GNOME interface library"
-#~ msgstr "Libreria di interfaccia GNOME"
-
-#~ msgid "WebKitGTK"
-#~ msgstr "WebKitGTK"
-
-#~ msgid "Message and compose HTML engine"
-#~ msgstr "Motore HTML per lettura e scrittura"
-
-#~ msgid "Accounts, calendars, and address books"
-#~ msgstr "Account, calendari e rubriche"
-
-#~ msgid "Install evolution-data-server"
-#~ msgstr "Installa evolution-data-server"
-
-#~ msgid "Camel"
-#~ msgstr "Camel"
-
-#~ msgid "Mail protocol library"
-#~ msgstr "Libreria dei protocolli di posta"
-
-#~ msgid "Google, Microsoft 365, and IMAP logins"
-#~ msgstr "Accessi Google, Microsoft 365 e IMAP"
-
-#~ msgid "Install gnome-online-accounts"
-#~ msgstr "Installa gnome-online-accounts"
-
-#~ msgid "GSound"
-#~ msgstr "GSound"
-
-#~ msgid "Notification sounds"
-#~ msgstr "Suoni delle notifiche"
-
-#~ msgid "Install gsound"
-#~ msgstr "Installa gsound"
-
-#~ msgid ""
-#~ "Optional packages for Microsoft 365, spell checking while writing, and "
-#~ "attachment preview. The Evolution window is not required and should stay "
-#~ "closed."
-#~ msgstr ""
-#~ "Pacchetti opzionali per Microsoft 365, il controllo ortografico in "
-#~ "scrittura e l’anteprima degli allegati. La finestra di Evolution non "
-#~ "serve e va lasciata chiusa."
-
-#~ msgid "The Evolution window is not required and should stay closed."
-#~ msgstr "La finestra di Evolution non serve e va lasciata chiusa."
-
-#~ msgid "Install evolution-ews"
-#~ msgstr "Installa evolution-ews"
-
-#~ msgid "Enchant"
-#~ msgstr "Enchant"
-
-#~ msgid "Spell-checking broker used by the compose editor"
-#~ msgstr "Broker del controllo ortografico usato nell’editor"
-
-#~ msgid "Install enchant"
-#~ msgstr "Installa enchant"
-
-#~ msgid "Enchant Hunspell plugin"
-#~ msgstr "Plugin Hunspell di Enchant"
-
-#~ msgid "Connects Enchant to Hunspell dictionaries"
-#~ msgstr "Collega Enchant ai dizionari Hunspell"
-
-#~ msgid "Spell-checking engine"
-#~ msgstr "Motore di controllo ortografico"
-
-#~ msgid "Install hunspell"
-#~ msgstr "Installa hunspell"
-
-#~ msgid "Hunspell dictionary"
-#~ msgstr "Dizionario Hunspell"
-
-#~ msgid "Dictionary for the desktop language"
-#~ msgstr "Dizionario per la lingua del desktop"
-
-#~ msgid "Install %s"
-#~ msgstr "Installa %s"
-
-#~ msgid "Attachment preview"
-#~ msgstr "Anteprima degli allegati"
-
-#~ msgid "Install sushi"
-#~ msgstr "Installa sushi"
-
-#~ msgid "Could Not Load Messages"
-#~ msgstr "Impossibile caricare i messaggi"
-
-#~ msgid ""
-#~ "Contacts from Online Accounts and recent recipients will appear here."
-#~ msgstr ""
-#~ "Qui compariranno i contatti degli account online e i destinatari recenti."
-
-#~ msgid "Search this folder"
-#~ msgstr "Cerca in questa cartella"
-
-#~ msgid "Search all folders"
-#~ msgstr "Cerca in tutte le cartelle"
-
-#~ msgid "No messages in this folder match the search."
-#~ msgstr "Nessun messaggio in questa cartella corrisponde alla ricerca."
-
-#~ msgid "Preview “%s”"
-#~ msgstr "Anteprima di «%s»"
-
-#~ msgid "New signature…"
-#~ msgstr "Nuova firma…"
-
-#~ msgid "This text is added at the end of messages you send."
-#~ msgstr "Questo testo viene aggiunto in fondo ai messaggi che invii."
-
-#~ msgid ""
-#~ "You added someone who did not receive the original message. Attach the "
-#~ "files from that message?"
-#~ msgstr ""
-#~ "Hai aggiunto qualcuno che non ha ricevuto il messaggio originale. Vuoi "
-#~ "allegare i file di quel messaggio?"
-
-#~ msgid "Reading “%s”…"
-#~ msgstr "Lettura di «%s»…"
-
-#~ msgid "Updating mailbox…"
-#~ msgstr "Aggiornamento della casella…"
-
-#~ msgid "Syncing mailbox…"
-#~ msgstr "Sincronizzazione della casella…"
-
-#~ msgid "Updating folders…"
-#~ msgstr "Aggiornamento cartelle…"
-
-#~ msgid "Downloading recent messages…"
-#~ msgstr "Download dei messaggi recenti…"
-
-#~ msgid "Updating headers for “%s”…"
-#~ msgstr "Aggiornamento intestazioni di «%s»…"
-
-#~ msgid "Checking “%s”…"
-#~ msgstr "Verifica di «%s»…"
-
-#~ msgid "Checking for new mail…"
-#~ msgstr "Controllo della posta nuova…"
-
-#~ msgid ""
-#~ "Letter keeps a local copy of headers and of recent messages, then checks "
-#~ "the server in the background."
-#~ msgstr ""
-#~ "Lettera tiene una copia locale delle intestazioni e dei messaggi recenti, "
-#~ "poi controlla il server in background."
-
-#~ msgid "Every 30 seconds"
-#~ msgstr "Ogni 30 secondi"
-
-#~ msgid "Every 2 minutes"
-#~ msgstr "Ogni 2 minuti"
-
-#: src/window.vala
-msgid "Folder align stopped after a server error. Try Update Folder again when the network is stable."
-msgstr "Allineamento cartella interrotto per un errore del server. Riprova Aggiorna cartella quando la rete è stabile."
-
+msgstr "Δοκιμάστε διαφορετικό όνομα ή διεύθυνση email."
