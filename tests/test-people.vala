@@ -30,6 +30,7 @@ void main () {
     assert_people (index.counterparts (old_mario), { "name:mario nardiello" }, "a shared name maps to no address");
 
     check_names ();
+    check_groups (account);
     check_people_model ();
     check_unbound_row_is_freed ();
 }
@@ -218,6 +219,43 @@ void check_unbound_row_is_freed () {
     row = null;
     if (!watch.finalized)
         error ("an unbound person row is never freed");
+}
+
+/* A thread you wrote in with two or more others is a group of everyone
+ * but you; a thread you only received, or wrote with one other, is not. */
+void check_groups (Mail.Account account) {
+    var index = new Mail.PeopleIndex (account);
+    var messages = new GenericArray<Mail.Message> ();
+    /* Ada writes to you with Bob on Cc, you answer all. */
+    var ada = message ("Ada", "ada@example.org", "Me", "me@example.org,bob@example.org", false);
+    ada.msgid_hash = 1;
+    messages.add (ada);
+    var reply = message ("Me", "me@example.org", "Ada, Bob", "ada@example.org,bob@example.org", true);
+    reply.msgid_hash = 2;
+    reply.msgid_refs = { 1 };
+    messages.add (reply);
+    /* Grace writes to you and Bob; you never answer. */
+    var grace = message ("Grace", "grace@example.org", "Me", "me@example.org,bob@example.org", false);
+    grace.msgid_hash = 3;
+    messages.add (grace);
+    /* You and Ada alone. */
+    var alone = message ("Me", "me@example.org", "Ada", "ada@example.org", true);
+    alone.msgid_hash = 4;
+    messages.add (alone);
+
+    var keys = index.group_keys (messages, Mail.Conversation.thread_roots (messages));
+    assert (keys[0] == "group:ada@example.org,bob@example.org");
+    assert (keys[1] == keys[0]);
+    assert (keys[2] == null);
+    assert (keys[3] == null);
+
+    var group = new Mail.Person (keys[0], new Mail.Folder ());
+    assert (group.is_group && !group.has_email);
+    assert (group.addresses.length == 2 && group.addresses[1] == "bob@example.org");
+    assert (group.matches ("bob@"));
+
+    assert (Mail.PeopleIndex.group_name ({ "Ada", "Bob" }) == "Ada, Bob");
+    assert (Mail.PeopleIndex.group_name ({ "A", "B", "C", "D", "E" }) == "A, B, C and 2 others");
 }
 
 Mail.Message message (string from, string? from_address, string to, string? recipients, bool outgoing) {

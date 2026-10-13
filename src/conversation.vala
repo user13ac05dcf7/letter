@@ -265,24 +265,7 @@ public class Mail.Conversation : Object {
         }
 
         var n = all.length;
-        var sets = new ThreadUnion ((int) n);
-        var hash_owner = new HashTable<string, int> (str_hash, str_equal);
-        var key_owner = new HashTable<string, int> (str_hash, str_equal);
-
-        for (int i = 0; i < (int) n; i++) {
-            var message = all[i];
-            // Every link (Message-ID, References, Conversation-ID, Thread-Index)
-            // is gated by normalized subject. "Reply all" + changed subject starts
-            // a new conversation; later replies to that mail stay with the new one.
-            var subject = normalize_subject (message.subject);
-            touch_hash (sets, hash_owner, message.msgid_hash, subject, i);
-            var refs = message.msgid_refs;
-            if (refs != null) {
-                for (uint r = 0; r < refs.length; r++)
-                    touch_hash (sets, hash_owner, refs[r], subject, i);
-            }
-            touch_key (sets, key_owner, conversation_subject_key (message), i);
-        }
+        var sets = link_threads (all);
 
         for (int i = 0; i < (int) n; i++) {
             if (!all[i].is_placeholder)
@@ -514,6 +497,38 @@ public class Mail.Conversation : Object {
                 return true;
         }
         return false;
+    }
+
+    /* Which thread each message is in, by the links group () follows: the
+     * index of one message of its thread, the same for all of them. */
+    public static int[] thread_roots (GenericArray<Message> messages) {
+        var sets = link_threads (messages);
+        var roots = new int[messages.length];
+        for (int i = 0; i < roots.length; i++)
+            roots[i] = sets.find (i);
+        return roots;
+    }
+
+    private static ThreadUnion link_threads (GenericArray<Message> all) {
+        var sets = new ThreadUnion ((int) all.length);
+        var hash_owner = new HashTable<string, int> (str_hash, str_equal);
+        var key_owner = new HashTable<string, int> (str_hash, str_equal);
+
+        for (int i = 0; i < (int) all.length; i++) {
+            var message = all[i];
+            // Every link (Message-ID, References, Conversation-ID, Thread-Index)
+            // is gated by normalized subject. "Reply all" + changed subject starts
+            // a new conversation; later replies to that mail stay with the new one.
+            var subject = normalize_subject (message.subject);
+            touch_hash (sets, hash_owner, message.msgid_hash, subject, i);
+            var refs = message.msgid_refs;
+            if (refs != null) {
+                for (uint r = 0; r < refs.length; r++)
+                    touch_hash (sets, hash_owner, refs[r], subject, i);
+            }
+            touch_key (sets, key_owner, conversation_subject_key (message), i);
+        }
+        return sets;
     }
 
     private static string? conversation_subject_key (Message message) {

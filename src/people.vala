@@ -1,7 +1,11 @@
 /* People view: mail grouped by the people it was exchanged with, across all
  * folders of an account. Incoming mail belongs to its sender, mail you sent
  * belongs to each of its recipients. Being on Cc of someone else's mail does
- * not put it in your contact's view. */
+ * not put it in your contact's view.
+ *
+ * A thread you wrote in with two or more other people also forms a group,
+ * like a group chat: everyone on its From, To and Cc but you. The group
+ * holds the whole thread; each person keeps their share as well. */
 
 public class Mail.Person : Object {
     public Folder folder { get; construct; }
@@ -48,9 +52,25 @@ public class Mail.Person : Object {
         Object (address: "", folder: folder, is_all: true);
     }
 
+    /* A group's address is its members' addresses after a prefix. */
+    public bool is_group {
+        get {
+            return this.address.has_prefix (PeopleIndex.GROUP_PREFIX);
+        }
+    }
+
     public bool has_email {
         get {
-            return this.address.contains ("@");
+            return !this.is_group && this.address.contains ("@");
+        }
+    }
+
+    /* The addresses of a group, or the person's own. */
+    public string[] addresses {
+        owned get {
+            if (!this.is_group)
+                return { this.address };
+            return this.address.substring (PeopleIndex.GROUP_PREFIX.length).split (",");
         }
     }
 
@@ -58,7 +78,9 @@ public class Mail.Person : Object {
         owned get {
             if (this.is_all)
                 return this.folder.name;
-            return this.name.length > 0 ? this.name : this.address;
+            if (this.name.length > 0)
+                return this.name;
+            return this.is_group ? string.joinv (", ", this.addresses) : this.address;
         }
     }
 
@@ -349,6 +371,7 @@ public class Mail.PeopleIndex : Object {
     /* Mail without stored addresses (header caches that are not written
      * again yet) is keyed by display name. */
     private const string NAME_PREFIX = "name:";
+    public const string GROUP_PREFIX = "group:";
 
     private HashTable<string, uint8> own = new HashTable<string, uint8> (str_hash, str_equal);
     /* The one address each sender name was seen with; "" once it was seen
@@ -406,6 +429,62 @@ public class Mail.PeopleIndex : Object {
         else if (message.from != null && message.from.length > 0)
             add_unique (result, key_for_name (message.from));
         return result;
+    }
+
+    /* The group each message's thread forms, or null: a thread counts when
+     * you wrote in it and at least two others took part. Requiring your own
+     * mail keeps mailing lists and newsletters out. Blind copies are not in
+     * the stored addresses, so the others never saw them and nor does the
+     * group. roots names each message's thread (Conversation.thread_roots). */
+    public string?[] group_keys (GenericArray<Message> messages, int[] roots) {
+        var keys = new string?[messages.length];
+        var members = new HashTable<int, GenericArray<string>> (direct_hash, direct_equal);
+        var wrote = new HashTable<int, uint8> (direct_hash, direct_equal);
+        for (uint i = 0; i < messages.length; i++) {
+            var message = messages[i];
+            var root = roots[i];
+            if (is_outgoing (message))
+                wrote.set (root, 1);
+            var list = members.get (root);
+            if (list == null) {
+                list = new GenericArray<string> ();
+                members.set (root, list);
+            }
+            add_member (list, message.from_address);
+            if (message.recipient_addresses != null) {
+                foreach (var address in message.recipient_addresses.split (","))
+                    add_member (list, address);
+            }
+        }
+
+        var thread_keys = new HashTable<int, string> (direct_hash, direct_equal);
+        foreach (var root in wrote.get_keys ()) {
+            var list = members.get (root);
+            if (list.length < 2)
+                continue;
+            list.sort (strcmp);
+            thread_keys.set (root, GROUP_PREFIX + string.joinv (",", list.data));
+        }
+        for (uint i = 0; i < messages.length; i++)
+            keys[i] = thread_keys.get (roots[i]);
+        return keys;
+    }
+
+    private void add_member (GenericArray<string> list, string? address) {
+        if (address != null && address.length > 0 && !this.own.contains (address))
+            add_unique (list, address);
+    }
+
+    /* A group is called by its members: up to four names, or three and how
+     * many more. */
+    public static string group_name (string[] names) {
+        if (names.length <= 4)
+            return string.joinv (", ", names);
+        var others = names.length - 3;
+        return ngettext ("%s and %d other", "%s and %d others", others).printf (
+            string.joinv (", ", names[0:3]),
+            others
+        );
     }
 
     private string key_for_name (string raw) {
@@ -546,6 +625,9 @@ public class Mail.PersonRow : Gtk.Box {
         this.icon.visible = person.is_all;
         if (person.is_all)
             this.icon.icon_name = person.folder.icon_name;
+        /* A group shows the people icon instead of initials. */
+        this.avatar.show_initials = !person.is_group;
+        this.avatar.icon_name = person.is_group ? "emoji-people-symbolic" : null;
         /* Methods, disconnected in unbind: a closure holding the row would
          * keep it alive as long as the person. */
         this.name_handler = person.notify["name"].connect (on_name_changed);
@@ -582,12 +664,20 @@ public class Mail.PersonRow : Gtk.Box {
         var name = this.person.display_name;
         this.name_label.label = name;
         /* The address under the name says which address the row is; a row
-         * without a name already shows it as the name. */
-        this.address_label.label = this.person.address;
-        this.address_label.visible = this.person.name.length > 0 && this.person.has_email;
+         * without a name already shows it as the name. A group says how
+         * many it is, since its name may list only some of them. */
+        if (this.person.is_group) {
+            var count = this.person.addresses.length;
+            this.address_label.label = ngettext ("%d person", "%d people", count).printf (count);
+            this.address_label.visible = true;
+            this.tooltip_text = string.joinv ("\n", this.person.addresses);
+        } else {
+            this.address_label.label = this.person.address;
+            this.address_label.visible = this.person.name.length > 0 && this.person.has_email;
+            this.tooltip_text = this.person.has_email ? this.person.address : null;
+        }
         if (!this.person.is_all)
             this.avatar.text = name;
-        this.tooltip_text = this.person.has_email ? this.person.address : null;
     }
 
     private void update_photo () {

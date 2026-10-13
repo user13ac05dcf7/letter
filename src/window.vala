@@ -4766,12 +4766,16 @@ public class Mail.Window : Adw.ApplicationWindow {
         for (uint i = 0; i < messages.length; i++)
             index.learn (messages[i]);
 
+        var groups = index.group_keys (messages, Conversation.thread_roots (messages));
         var present = new HashTable<string, Person> (str_hash, str_equal);
         var mail = new HashTable<string, GenericArray<Message>> (str_hash, str_equal);
         for (uint i = 0; i < messages.length; i++) {
             var message = messages[i];
             var outgoing = index.is_outgoing (message);
             var counterparts = index.counterparts (message);
+            /* The group of its thread lists it next to each person. */
+            if (groups[i] != null)
+                counterparts.add (groups[i]);
             for (uint j = 0; j < counterparts.length; j++) {
                 var address = counterparts[j];
                 var person = present.get (address);
@@ -4790,8 +4794,28 @@ public class Mail.Window : Adw.ApplicationWindow {
                     person.offer_name (name, message.date, !outgoing);
             }
         }
+        name_people_groups (present);
         this.people_mail = mail;
         this.people_model.update (present);
+    }
+
+    /* Groups are called by their members' names, as the members' own rows
+     * show them; a member with no row or no name by the address. */
+    private static void name_people_groups (HashTable<string, Person> present) {
+        foreach (var group in present.get_values ()) {
+            if (!group.is_group)
+                continue;
+            var names = new GenericArray<string> ();
+            foreach (var address in group.addresses) {
+                var member = present.get (address);
+                names.add (member != null && member.pending_name.length > 0 ? member.pending_name : address);
+            }
+            names.sort ((a, b) => a.collate (b));
+            string[] sorted = {};
+            foreach (unowned var name in names)
+                sorted += name;
+            group.pending_name = PeopleIndex.group_name (sorted);
+        }
     }
 
     private static void count_unread (Folder folder, GenericArray<Message> messages, PeopleIndex index) {
@@ -4962,12 +4986,16 @@ public class Mail.Window : Adw.ApplicationWindow {
 
     private void popup_person_menu (PersonRow row, double x, double y) {
         var person = row.person;
-        if (person == null || !person.has_email)
+        if (person == null || !(person.has_email || person.is_group))
             return;
 
         var group = new SimpleActionGroup ();
         var write = new SimpleAction ("write-to-person", null);
         write.activate.connect (() => {
+            if (person.is_group) {
+                compose_to_group (person);
+                return;
+            }
             on_compose_to (new Recipient () {
                 name = person.name,
                 email = person.address,
@@ -4976,8 +5004,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         group.add_action (write);
         var copy = new SimpleAction ("copy-person-address", null);
         copy.activate.connect (() => {
-            get_clipboard ().set_text (person.address);
-            show_toast (_("Address copied"));
+            get_clipboard ().set_text (string.joinv (", ", person.addresses));
+            show_toast (person.is_group ? _("Addresses copied") : _("Address copied"));
         });
         group.add_action (copy);
         var trash = new SimpleAction ("trash-person-mail", null);
@@ -4989,12 +5017,25 @@ public class Mail.Window : Adw.ApplicationWindow {
         var menu = new Menu ();
         var section = new Menu ();
         section.append (_("Write Email"), "ctx.write-to-person");
-        section.append (_("Copy Address"), "ctx.copy-person-address");
+        section.append (person.is_group ? _("Copy Addresses") : _("Copy Address"), "ctx.copy-person-address");
         menu.append_section (null, section);
         var delete_section = new Menu ();
         delete_section.append (_("Move All Messages to Trash"), "ctx.trash-person-mail");
         menu.append_section (null, delete_section);
         popup_context_menu (row, menu, group, x, y);
+    }
+
+    /* Writes to everyone in the group, by the names their rows show. */
+    private void compose_to_group (Person group) {
+        var recipients = new GenericArray<Recipient> ();
+        foreach (var address in group.addresses) {
+            var member = this.people_model.lookup (address);
+            recipients.add (new Recipient () {
+                name = member != null ? member.name : "",
+                email = address,
+            });
+        }
+        compose_to_addresses (Utils.format_recipient_list (recipients));
     }
 
     /* Everything the person's view lists: their mail and yours to them. */
@@ -6583,7 +6624,9 @@ public class Mail.Window : Adw.ApplicationWindow {
             return;
 
         row.list_position = item.position;
-        row.hide_sender = this.selected_folder != null && this.selected_folder.person_address != null;
+        /* One person's view need not say who wrote; a group's does. */
+        var person_address = this.selected_folder != null ? this.selected_folder.person_address : null;
+        row.hide_sender = person_address != null && !person_address.has_prefix (PeopleIndex.GROUP_PREFIX);
         row.bind (conversation, this.search_text.length > 0 ? this.search_tokens : null);
     }
 
@@ -7808,6 +7851,10 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void on_compose_to (Recipient recipient) {
+        compose_to_addresses (Utils.format_recipient (recipient));
+    }
+
+    private void compose_to_addresses (string to) {
         if (this.mail_session == null) {
             this.toast_overlay.add_toast (new Adw.Toast (_("Evolution Data Server is unavailable.")) {
                 timeout = 4,
@@ -7831,7 +7878,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.mail_session,
             app.accounts,
             this.selected_account,
-            Utils.format_recipient (recipient)
+            to
         );
         compose.present ();
     }

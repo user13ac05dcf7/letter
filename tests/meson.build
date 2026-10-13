@@ -38,7 +38,9 @@ test_people = executable(
   'test-people',
   [
     meson.project_source_root() / 'src' / 'account.vala',
+    meson.project_source_root() / 'src' / 'conversation.vala',
     meson.project_source_root() / 'src' / 'people.vala',
+    'test-threading-stubs.vala',
     'test-people.vala',
   ],
   dependencies: [
