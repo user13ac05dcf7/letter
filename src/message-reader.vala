@@ -977,6 +977,20 @@ html, body { margin: 0; height: 100%; background: %s; }
   };
   if (!document.body)
     return;
+  /* White and near-white grey blocks the markup rewrite missed (rgb()
+   * without commas, hsl(), 8-digit hex, a colour next to an image in
+   * the shorthand, …): the computed colour catches every spelling.
+   * Brand colours stay. Runs first so the text below sees the canvas. */
+  document.body.querySelectorAll('*').forEach((el) => {
+    if (el.closest && el.closest('.mail-print-header'))
+      return;
+    const bg = parse(getComputedStyle(el).backgroundColor);
+    if (!bg || lum(bg[0], bg[1], bg[2]) < 230)
+      return;
+    if (Math.max(bg[0], bg[1], bg[2]) - Math.min(bg[0], bg[1], bg[2]) >= 40)
+      return;
+    el.style.setProperty('background-color', '#1e1e1e', 'important');
+  });
   document.body.querySelectorAll('*').forEach((el) => {
     if (el.closest && el.closest('.mail-print-header'))
       return;
