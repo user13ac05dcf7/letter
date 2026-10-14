@@ -27,6 +27,11 @@
       <summary>Show people</summary>
       <description>Whether the folder pane lists the people you exchange mail with instead of folders.</description>
     </key>
+    <key name="people-groups" type="b">
+      <default>false</default>
+      <summary>Group conversations in People</summary>
+      <description>Whether threads you wrote in with two or more others also appear in People as a group.</description>
+    </key>
     <key name="folder-pane-width" type="i">
       <default>280</default>
       <summary>Folder pane width</summary>

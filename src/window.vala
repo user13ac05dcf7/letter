@@ -376,6 +376,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.message_reader = new MessageReader ();
         this.message_reader.set_contacts (app.contacts);
         app.contacts.contacts_changed.connect (on_contacts_changed);
+        /* No switch in Preferences yet: gsettings set ... people-groups true. */
+        this.settings.changed["people-groups"].connect (on_people_groups_changed);
         this.message_reader.invitation_respond.connect ((invitation, status) => {
             respond_invitation.begin (invitation, status);
         });
@@ -4452,6 +4454,10 @@ public class Mail.Window : Adw.ApplicationWindow {
         queue_people_refresh ();
     }
 
+    private void on_people_groups_changed (string key) {
+        on_contacts_changed ();
+    }
+
     private void clear_people () {
         if (this.people_refresh_source != 0) {
             Source.remove (this.people_refresh_source);
@@ -4819,7 +4825,9 @@ public class Mail.Window : Adw.ApplicationWindow {
         for (uint i = 0; i < messages.length; i++)
             index.learn (messages[i]);
 
-        var groups = index.group_keys (messages, Conversation.thread_roots (messages));
+        var groups = this.settings.get_boolean ("people-groups")
+            ? index.group_keys (messages, Conversation.thread_roots (messages))
+            : null;
         var present = new HashTable<string, Person> (str_hash, str_equal);
         var mail = new HashTable<string, GenericArray<Message>> (str_hash, str_equal);
         for (uint i = 0; i < messages.length; i++) {
@@ -4827,7 +4835,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             var outgoing = index.is_outgoing (message);
             var counterparts = index.counterparts (message);
             /* The group of its thread lists it next to each person. */
-            if (groups[i] != null)
+            if (groups != null && groups[i] != null)
                 counterparts.add (groups[i]);
             for (uint j = 0; j < counterparts.length; j++) {
                 var address = counterparts[j];

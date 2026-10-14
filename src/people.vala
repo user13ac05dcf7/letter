@@ -500,8 +500,8 @@ public class Mail.PeopleIndex : Object {
     }
 
     private void add_member (GenericArray<string> list, string? address) {
-        if (address != null && address.length > 0 && !this.own.contains (address))
-            add_unique (list, address);
+        if (address != null && address.length > 0 && !is_own (address))
+            add_unique (list, person_key (address));
     }
 
     /* A group is called by its members: up to four names, or three and how
