@@ -1,14 +1,22 @@
 /* When a header list may shrink.
  *
- * A large folder that "finished" with a tiny local summary must keep the
- * longer Letter list (Online Archive). Gmail Important is the exception:
- * it is a label, and a finished refresh is the set of messages that are
- * still important. Keeping the old rows leaves those messages marked
- * important in every other folder.
+ * Incomplete / skipped / local-only walks must not wipe a longer Letter
+ * index (Archive tip, budget cancel, REFRESH_INFO_SKIP).
  *
- * LARGE and SHRINK_SLOP are the same thresholds as MailSession
- * HEADER_LIST_LARGE and INCOMPLETE_REFRESH_SHRINK_MAX. DISK_GAP matches
- * the on-disk index refuse in Window.save_header_list_cache. */
+ * A *finished* server refresh may be authoritative (Empty Trash, another
+ * PC, phone) — but only when Camel’s UID summary was already roughly in
+ * line with Letter *before* that walk. On Camel/Graph, a tip that times
+ * out leaves a tiny local summary; the next “until-done” can return in
+ * under a second, mark the refresh finished, and still only know about
+ * those few UIDs. Trusting that as “server list” wiped Conoscenza
+ * (229 → 28) on a slow hotspot. Own-engine sync without Camel does not
+ * have this trap; here Camel must be caught up first.
+ *
+ * Gmail Important keeps an explicit reason string for logs/tests; the same
+ * finished + Camel-caught-up rule applies to every other folder.
+ *
+ * LARGE and SHRINK_SLOP match MailSession HEADER_LIST_LARGE /
+ * INCOMPLETE_REFRESH_SHRINK_MAX. DISK_GAP matches Window disk refuse. */
 public class Mail.HeaderListPolicy {
     public const uint LARGE = 500;
     public const uint SHRINK_SLOP = 100;
@@ -24,7 +32,15 @@ public class Mail.HeaderListPolicy {
             && folder_kind == FolderKind.IMPORTANT;
     }
 
-    /* Called only when incoming + SHRINK_SLOP < previous. */
+    /* Camel already held roughly as many UIDs as Letter before this walk.
+     * Applies to every catastrophic shrink (not only LARGE folders): Conoscenza
+     * sat at ~200 Letter headers with Camel still on ~26. */
+    public static bool camel_summary_caught_up (uint previous_length, uint camel_uids_before) {
+        return camel_uids_before + SHRINK_SLOP >= previous_length;
+    }
+
+    /* Called only when incoming + SHRINK_SLOP < previous.
+     * Returns true → keep Letter’s prior list. */
     public static bool keep_prior_on_shrink (
         AccountKind account_kind,
         FolderKind folder_kind,
@@ -33,24 +49,49 @@ public class Mail.HeaderListPolicy {
         bool refresh,
         bool refresh_completed,
         bool server_refresh_finished,
+        uint camel_uids_before,
         out string reason
     ) {
         if (refresh && !refresh_completed) {
             reason = "incomplete refresh";
             return true;
         }
-        if (incoming_length == 0 && refresh && refresh_completed) {
+
+        var camel_ok = camel_summary_caught_up (previous_length, camel_uids_before);
+
+        if (incoming_length == 0 && refresh && server_refresh_finished) {
+            if (!camel_ok) {
+                reason = "finished but Camel behind";
+                return true;
+            }
             reason = "complete empty";
             return false;
         }
         if (trust_gmail_important_refresh (account_kind, folder_kind, server_refresh_finished)) {
+            if (!camel_ok) {
+                reason = "finished but Camel behind";
+                return true;
+            }
             reason = "complete Important";
             return false;
         }
+        /* Finished server walk with Camel already caught up: trust the shorter
+         * list — other clients win. */
+        if (refresh && server_refresh_finished) {
+            if (!camel_ok) {
+                reason = "finished but Camel behind";
+                return true;
+            }
+            reason = "complete server list";
+            return false;
+        }
         if (previous_length >= LARGE) {
-            reason = refresh
-                ? (refresh_completed ? "large-folder refuse shrink" : "incomplete refresh")
-                : "large-folder local refuse shrink";
+            if (!refresh) {
+                reason = "large-folder local refuse shrink";
+                return true;
+            }
+            /* refresh_completed but no server walk (SKIP / pending flags). */
+            reason = "large-folder refuse shrink";
             return true;
         }
         reason = "small-folder trust shrink";

@@ -101,6 +101,7 @@ public class Mail.Window : Adw.ApplicationWindow {
     private bool clamping_split_mail;
 
     private Settings settings;
+    private AccountAvatars account_avatars = new AccountAvatars ();
     private Gtk.ListBox account_list;
     private Gtk.ListBox folder_list;
     private Gtk.Box people_box;
@@ -339,6 +340,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         if (this.folder_split.collapsed)
             on_folder_split_collapsed ();
         this.settings.changed["account-rail"].connect (apply_account_rail);
+        this.settings.changed["account-avatars"].connect (fill_account_rail);
         apply_account_rail ();
         this.content_split.position = this.settings.get_int ("folder-pane-width")
             .clamp (FOLDER_PANE_MIN, FOLDER_PANE_MAX);
@@ -1021,10 +1023,21 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* Always drop locally-hidden (archived/moved pending flush) so Camel
          * summaries and disk header caches cannot resurrect them. */
         var visible = visible_messages (account, folder, messages);
-        /* Scale-based shrink guard. accept_server_shrink is a finished Gmail
-         * Important refresh: that shorter list is the label, so it replaces
-         * the cache. Every other large folder still keeps the prior list. */
-        if (previous != null
+        /* Scale-based shrink guard. accept_empty is a finished server walk
+         * that returned no UIDs (Empty Trash / emptied elsewhere) — must
+         * replace the list, not merge the old index back. accept_server_shrink
+         * is a finished authoritative refresh (other client / Important). */
+        if (accept_empty
+            && previous != null
+            && previous.length > 0
+            && visible.length == 0) {
+            Utils.sync_log (
+                "header cache accept empty “%s” (cleared %u)".printf (
+                    folder.name,
+                    previous.length
+                )
+            );
+        } else if (previous != null
             && HeaderListPolicy.ram_cache_refuses_shrink (
                 previous.length,
                 visible.length,
@@ -1062,7 +1075,14 @@ public class Mail.Window : Adw.ApplicationWindow {
         sort_messages_by_date (visible);
         this.message_cache.set (key, visible);
         touch_message_cache_key (key);
-        note_header_high_water (account, folder, visible.length);
+        /* Authoritative shrink must lower the watermark or the next tip will
+         * still think Letter owns the pre-delete high-water. */
+        if (accept_server_shrink || accept_empty) {
+            clear_header_high_water (account, folder);
+            note_header_high_water (account, folder, visible.length);
+        } else {
+            note_header_high_water (account, folder, visible.length);
+        }
         int total;
         int unread;
         message_counts (visible, out total, out unread);
@@ -1091,9 +1111,9 @@ public class Mail.Window : Adw.ApplicationWindow {
              * click before the 1.5s timer, would put the old index back. */
             persist_empty_header_list_now (account, folder);
         } else if (retired_drop || (persist_disk && accept_server_shrink)) {
-            /* Retired move ids, and a finished Gmail Important refresh, are
-             * real removals. Write them now so the next open cannot put the
-             * old rows back. */
+            /* Retired moves, finished Important, and authoritative server
+             * shrinks (other client / Empty Trash) write now so the next
+             * open cannot resurrect the longer index. */
             persist_trusted_header_list_now (account, folder, visible);
         } else if (persist_disk) {
             /* Never overwrite a larger on-disk header list with a Camel/Graph
@@ -1481,19 +1501,19 @@ public class Mail.Window : Adw.ApplicationWindow {
                 ));
                 return;
             }
-            /* A finished walk that returns no UIDs is the server folder.
-             * Persist that empty list; a later open must not resurrect the
-             * previous disk index, and the click must not cover it with the
-             * aligning spinner. */
-            var accept_empty = messages.length == 0
-                && refresh_timeout_seconds != MailSession.REFRESH_INFO_SKIP
+            /* Finished + Camel caught up = source of truth (other clients win).
+             * A finished walk on a still-tiny Camel summary must not shrink. */
+            var accept_authoritative =
+                refresh_timeout_seconds != MailSession.REFRESH_INFO_SKIP
                 && !this.mail_session.last_list_refresh_incomplete
-                && !this.mail_session.last_list_refresh_failed;
+                && !this.mail_session.last_list_refresh_failed
+                && this.mail_session.last_list_refresh_authoritative;
+            var accept_empty = accept_authoritative && messages.length == 0;
             var accept_important = messages.length > 0
                 && HeaderListPolicy.trust_gmail_important_refresh (
                     account.kind,
                     folder.kind,
-                    this.mail_session.last_list_refresh_completed
+                    this.mail_session.last_list_refresh_authoritative
                 );
             store_folder_messages (
                 account,
@@ -1502,7 +1522,7 @@ public class Mail.Window : Adw.ApplicationWindow {
                 known,
                 true,
                 accept_empty,
-                accept_important
+                accept_authoritative || accept_important
             );
             Utils.sync_log ("align “%s” ok %s → %u headers".printf (
                 folder.name,
@@ -2912,6 +2932,8 @@ public class Mail.Window : Adw.ApplicationWindow {
                 group = button;
             button.set_data ("account", account);
             button.child = Utils.account_brand_image (account, 28);
+            if (this.settings.get_boolean ("account-avatars"))
+                show_account_avatar.begin (button, account);
             button.toggled.connect (() => {
                 if (!button.active || this.selecting_account)
                     return;
@@ -2937,6 +2959,15 @@ public class Mail.Window : Adw.ApplicationWindow {
         if (this.selected_account != null)
             sync_account_selection (this.selected_account);
         this.selecting_account = guard;
+    }
+
+    private async void show_account_avatar (Gtk.ToggleButton button, Account account) {
+        var goa = (get_application () as Application)?.accounts.goa;
+        if (goa == null)
+            return;
+        var picture = yield this.account_avatars.load (goa, account);
+        if (picture != null)
+            button.child = new Adw.Avatar (28, account.display_name, false) { custom_image = picture };
     }
 
     private void sync_account_row_sizes () {
