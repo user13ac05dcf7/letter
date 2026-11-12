@@ -5,6 +5,109 @@ namespace Mail.Utils {
         return _("Letter");
     }
 
+    public class GithubRelease {
+        public string version;
+        public string html_url;
+
+        public GithubRelease (string version, string html_url) {
+            this.version = version;
+            this.html_url = html_url;
+        }
+    }
+
+    public static string normalize_version (string? raw) {
+        if (raw == null)
+            return "";
+        var version = raw.strip ();
+        if (version.has_prefix ("v") || version.has_prefix ("V"))
+            version = version.substring (1).strip ();
+        var cut = version.index_of_char ('~');
+        if (cut < 0)
+            cut = version.index_of_char ('+');
+        if (cut > 0)
+            version = version.substring (0, cut);
+        return version;
+    }
+
+    /* Positive when a is newer than b. Ignores a leading "v" and Debian "~". */
+    public static int compare_versions (string a, string b) {
+        var left = split_version_parts (normalize_version (a));
+        var right = split_version_parts (normalize_version (b));
+        uint n = uint.max (left.length, right.length);
+        for (uint i = 0; i < n; i++) {
+            int ai = i < left.length ? left[i] : 0;
+            int bi = i < right.length ? right[i] : 0;
+            if (ai != bi)
+                return ai - bi;
+        }
+        return 0;
+    }
+
+    private static int[] split_version_parts (string version) {
+        var core = version;
+        var dash = core.index_of_char ('-');
+        if (dash >= 0)
+            core = core.substring (0, dash);
+        var pieces = core.split (".");
+        var parts = new int[pieces.length];
+        for (int i = 0; i < pieces.length; i++) {
+            var piece = pieces[i];
+            if (piece.length == 0) {
+                parts[i] = 0;
+                continue;
+            }
+            var digits = new StringBuilder ();
+            int index = 0;
+            unichar c;
+            while (piece.get_next_char (ref index, out c)) {
+                if (c.isdigit ())
+                    digits.append_unichar (c);
+                else
+                    break;
+            }
+            parts[i] = digits.len > 0 ? int.parse (digits.str) : 0;
+        }
+        return parts;
+    }
+
+    public static async GithubRelease fetch_latest_github_release (
+        string owner,
+        string repo
+    ) throws Error {
+        var url = "https://api.github.com/repos/%s/%s/releases/latest".printf (owner, repo);
+        var message = new Soup.Message ("GET", url);
+        message.request_headers.append (
+            "Accept",
+            "application/vnd.github+json"
+        );
+        message.request_headers.append (
+            "User-Agent",
+            "Letter/%s (+https://github.com/stalvatero/letter)".printf (Config.VERSION)
+        );
+        var session = (Soup.Session) Object.new (
+            typeof (Soup.Session),
+            "timeout", 20
+        );
+        var body = yield session.send_and_read_async (message, Priority.DEFAULT, null);
+        if (message.status_code != Soup.Status.OK)
+            throw new IOError.FAILED ("HTTP %u", message.status_code);
+
+        var parser = new Json.Parser ();
+        unowned uint8[] data = body.get_data ();
+        parser.load_from_data ((string) data, (ssize_t) data.length);
+        var root = parser.get_root ();
+        if (root == null || root.get_node_type () != Json.NodeType.OBJECT)
+            throw new IOError.INVALID_DATA ("Unexpected GitHub release payload");
+
+        var obj = root.get_object ();
+        var tag = obj.get_string_member_with_default ("tag_name", "");
+        var html_url = obj.get_string_member_with_default ("html_url", "");
+        var version = normalize_version (tag);
+        if (version.length == 0 || html_url.length == 0)
+            throw new IOError.INVALID_DATA ("GitHub release missing tag or URL");
+        return new GithubRelease (version, html_url);
+    }
+
     public static void migrate_legacy_app_dirs () {
         migrate_dir (
             Path.build_filename (Environment.get_user_data_dir (), "gnome-mail"),
@@ -325,6 +428,9 @@ namespace Mail.Utils {
         else
             cmd = { "gnome-control-center", "online-accounts" };
         if (spawn_host_or_local (cmd))
+            return;
+
+        if (spawn_host_or_local ({ "gnome-online-accounts-gtk" }))
             return;
 
         warning ("Could not open GNOME Settings → Online Accounts");
@@ -1310,15 +1416,17 @@ namespace Mail.Utils {
                 addr = addr.substring (1, addr.length - 2).strip ();
 
             /* Older Letter builds could glue bare emails into the display name
-             * before <addr> when quoting commas. Expand those back out. */
+             * before <addr> when quoting commas. Expand those back out.
+             * Only recurse when Camel actually splits into multiple addresses —
+             * semicolon lists often decode to one entry whose name still looks
+             * “merged”, which would recurse forever (Sent header crash). */
             if (looks_like_merged_address_name (display)) {
                 var rebuilt = addr.length > 0 && display.down () != addr.down ()
                     ? "%s <%s>".printf (display, addr)
                     : display;
-                var expanded = recipients_from_address (
-                    internet_address_from_header_raw (rebuilt)
-                );
-                if (expanded.length > 1) {
+                var parsed = internet_address_from_header_raw (rebuilt);
+                if (parsed.length () > 1) {
+                    var expanded = recipients_from_address (parsed);
                     for (uint e = 0; e < expanded.length; e++)
                         result.add (expanded[e]);
                     continue;
@@ -1340,13 +1448,36 @@ namespace Mail.Utils {
         return display.contains (",") || display.contains (";");
     }
 
+    /* Vala’s string.replace() builds a GRegex on every call and aborts via
+     * assert_not_reached() on RegexError — including invalid UTF-8 in mail
+     * previews/headers and awkward MIME cid/data-uri pairs. */
+    public static string replace_literal (string text, string old, string replacement) {
+        if (text.length == 0 || old.length == 0 || old == replacement)
+            return text;
+
+        int index = text.index_of (old);
+        if (index < 0)
+            return text;
+
+        var builder = new StringBuilder ();
+        int start = 0;
+        while (index >= 0) {
+            builder.append (text.substring (start, index - start));
+            builder.append (replacement);
+            start = index + old.length;
+            index = text.index_of (old, start);
+        }
+        builder.append (text.substring (start));
+        return builder.str;
+    }
+
     public static string sanitize_recipient_text (string? raw) {
         if (raw == null || raw.length == 0)
             return "";
 
-        var text = raw.replace ("\\\"", "\"").replace ("\\'", "'");
-        text = text.replace ("&quot;", "\"").replace ("&#39;", "'").replace ("&apos;", "'");
-        text = text.replace ("\u200b", "").replace ("\u00a0", " ");
+        var text = replace_literal (replace_literal (raw, "\\\"", "\""), "\\'", "'");
+        text = replace_literal (replace_literal (replace_literal (text, "&quot;", "\""), "&#39;", "'"), "&apos;", "'");
+        text = replace_literal (replace_literal (text, "\u200b", ""), "\u00a0", " ");
         text = text.strip ();
 
         while (text.length > 0) {
@@ -1375,6 +1506,56 @@ namespace Mail.Utils {
             text = text.substring (0, text.length - 1).strip ();
 
         return collapse_spaces (text);
+    }
+
+    /* Camel (and HTML→text) often put image alt text or filenames in the
+     * folder-summary preview: "[image: Google]", "[Firma.png]". Those clutter
+     * the message list and are useless when the body is mostly pictures. */
+    public static string? sanitize_message_preview (string? raw) {
+        if (raw == null || raw.length == 0)
+            return null;
+
+        /* Never use string.replace() here: Camel previews can be invalid UTF-8
+         * and Vala’s GRegex-backed replace aborts the process on RegexError. */
+        var text = replace_literal (replace_literal (replace_literal (raw, "\r\n", "\n"), "\r", "\n"), "\n", " ").strip ();
+        try {
+            var image_re = new Regex ("\\[\\s*image\\s*:[^\\]]*\\]", RegexCompileFlags.CASELESS);
+            text = image_re.replace (text, text.length, 0, "");
+            var cid_re = new Regex ("\\[\\s*cid:[^\\]]*\\]", RegexCompileFlags.CASELESS);
+            text = cid_re.replace (text, text.length, 0, "");
+            var file_re = new Regex (
+                "\\[[^\\]]+\\.(?:png|jpe?g|gif|webp|svg|bmp|tiff?|ico)\\s*\\]",
+                RegexCompileFlags.CASELESS
+            );
+            text = file_re.replace (text, text.length, 0, "");
+            var angle_re = new Regex (
+                "<[^<>]+\\.(?:png|jpe?g|gif|webp|svg|bmp|tiff?|ico)\\s*>",
+                RegexCompileFlags.CASELESS
+            );
+            text = angle_re.replace (text, text.length, 0, "");
+        } catch (Error e) {
+            /* Invalid UTF-8 or odd brackets: keep the newline-collapsed text. */
+        }
+
+        text = collapse_spaces (text).strip ();
+        if (text.length == 0)
+            return null;
+
+        /* After stripping images, only a signature separator may remain. */
+        if (text.has_prefix ("--")) {
+            var after = text.substring (2).strip ();
+            if (after.length == 0)
+                return null;
+            bool looks_like_prose = after.contains (".")
+                || after.contains ("!")
+                || after.contains ("?")
+                || after.contains (":")
+                || after.length > 72;
+            if (!looks_like_prose)
+                return null;
+        }
+
+        return text;
     }
 
     private static string unwrap_matching_quotes (string text) {

@@ -7,7 +7,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 How we maintain it:
 
-- During development, add bullets under **[Unreleased](https://github.com/stalvatero/letter/compare/v1.5.0...HEAD)**.
+- During development, add bullets under **[Unreleased](https://github.com/stalvatero/letter/compare/v1.7.1...HEAD)**.
 - On each release (rc or stable), rename that section to the version + date, and
 copy a short summary into `data/io.github.stalvatero.Letter.metainfo.xml.in.in`
 (`<releases>`, leave msgstr empty in po files — keep release notes in English)
@@ -17,12 +17,118 @@ refactors unless they affect behaviour.
 
 
 
-## [Unreleased](https://github.com/stalvatero/letter/compare/v1.5.0...HEAD)
+## [Unreleased](https://github.com/stalvatero/letter/compare/v1.7.1...HEAD)
+
+## [1.7.1](https://github.com/stalvatero/letter/compare/v1.7.0...v1.7.1) - 2026-10-23
 
 ### Added
 
-- Preferences → **Appearance** → **Account pictures** shows Google profile
-  pictures in the accounts rail. Off by default.
+- Main menu → Check for Updates… queries the latest GitHub release and shows
+  whether Letter is current, or offers to open the newer release page.
+- Compose: **Ctrl+Return** (and Ctrl+keypad Enter) sends the message.
+- Move to Folder: with a writable folder focused, **Return** (or double-click)
+  confirms the move.
+
+### Fixed
+
+- Message-list preview no longer shows Camel image placeholders such as
+  `[image: Google]` or `[Firma.png]`. Image-only snippets stay empty; real
+  text after a logo alt remains.
+- Do not abort when a Camel preview contains invalid UTF-8. Vala’s
+  `string.replace()` uses GRegex and hits `assert_not_reached` on those
+  snippets (crash on archive / startup while loading the header cache).
+
+## [1.7.0](https://github.com/stalvatero/letter/compare/v1.6.0...v1.7.0) - 2026-10-21
+
+### Added
+
+- Preferences → Accounts: drag the handle on an account row to set a custom
+  order (no longer alphabetical only). The same order is used in the account
+  rail and under Local library.
+- Compose suggestions: recent addresses show a close button to remove a bad or
+  unwanted entry from history (address-book contacts are unchanged).
+- Signature (and compose) formatting can insert and edit hyperlinks from the
+  toolbar (`insert-link-symbolic`) or the editor context menu, with Ctrl+K.
+  The link dialog offers clickable `https://` and `mailto:` chips instead of a
+  fixed placeholder. Bold / italic / underline / strikethrough sit in one
+  text-style popover so the compose toolbar stays compact.
+
+### Changed
+
+- Preferences → Appearance: **Enable account rail** (on by default) replaces
+  the old “Hide” colour option. **Account rail colour** offers Default
+  (system accent), Follow system, or Custom with GNOME accent presets and a
+  colour picker. Account pictures stay tied to the rail being enabled.
+- The Online Accounts list pane (between the rail and folders) is hidden for
+  now: switch accounts from the rail, add or edit them in Preferences. The
+  rail no longer has an add (+) button; icons start at the top with normal
+  GTK padding (easy to restore the pane if feedback asks for it).
+- Preferences row descriptions wrap within about two thirds of the row width so
+  dropdowns and switches on the right stay readable; ComboRow values are
+  right-aligned. “Download message bodies” copy explains on-disk cache for
+  browsing and search.
+- Preferences are split into four header pages (Accounts, Appearance, Behavior,
+  Integrations) instead of one long scrolling sheet with section chips.
+- Folder sidebar and Move dialog folder tree use the same padding and height
+  as Adwaita `.navigation-sidebar` (GNOME Files places), so both lists are as
+  compact as native GTK4 sidebars.
+- The Move dialog shows the account folder tree (indented, with expanders and
+  icons) instead of a flat name list, so nested folders stay clear. The account
+  header stays pinned while searching; non-writable nodes such as “[Gmail]”
+  are disabled; Move applies only from the dialog button. Search hits show the
+  parent path so identically named folders stay distinguishable ([#34](https://github.com/stalvatero/letter/issues/34)).
+- Updated Brazilian Portuguese translation by
+  [Thiago Haeitmann](https://github.com/ThiagoHaeitmann).
+- Important messages show an icon with a tooltip instead of a labelled pill;
+  the reader action row clips instead of raising the pane (and window) minimum
+  width, so menu / minimize / maximize / close stay reachable while resizing.
+- Folder and message panes resize more like GNOME native Gtk4 apps.
+- For greater visual consistency and an improved user experience, the search bar
+  has been removed from the reading pane. A search icon is now located in the
+  message list panel (which can also be triggered via the shortcut Ctrl+F);
+  clicking it activates the search bar within the appropriate pane.
+  Pressing the Escape key or clicking the search icon again will close the search bar.
+- Search chips scroll horizontally in one line instead of wrapping and growing
+  the toolbar.
+
+### Fixed
+
+- Compose address suggestions no longer show glued Sent “To” display names
+  (several people as one chip). Harvest now uses the raw header with addresses,
+  and corrupted collected-address entries are cleaned on load. The suggestion
+  popover left-aligns with the start of the typed text.
+- In the signature editor, Tab from the name field jumps straight into the
+  compose area instead of stepping through the formatting toolbar.
+- Recipient completion ranks people you write to often above cold address-book
+  near-matches, seeds suggestions from Sent (including mail sent in other
+  clients), remembers Bcc, and prefers the composing account’s address books
+  (honouring EDS Autocomplete IncludeMe so GAL / Organizational Users can
+  participate). Other accounts remain as fallback ([#33](https://github.com/stalvatero/letter/issues/33),
+  [#32](https://github.com/stalvatero/letter/issues/32)).
+- Moved messages appear in the destination folder immediately (cache-first),
+  without waiting for F5 or the sync timer. Gmail Inbox / All Mail twins with
+  the same Message-ID still count as one mail in a conversation.
+- Online Accounts opens again on desktops without GNOME Settings (for example
+  COSMIC) when `gnome-online-accounts-gtk` is installed.
+  Thanks to [Thiago Haeitmann](https://github.com/ThiagoHaeitmann).
+- Opening large folders is faster: cleaning addresses and saving the local
+  header index spend less time on the main thread.
+  Thanks to [Illya Yalovyy](https://github.com/IllyaYalovyy).
+
+
+## [1.6.0](https://github.com/stalvatero/letter/compare/v1.5.0...v1.6.0)
+
+### Added
+
+- Japanese translation by [Kansa_Fu](https://github.com/Kansa-fu).
+- Preferences → **Appearance** → **Account pictures** shows profile pictures
+  (Google and Microsoft 365) or initials in the accounts rail. Off by default.
+  Thanks to [Illya Yalovyy](https://github.com/IllyaYalovyy).
+- Drag messages from the list onto a folder to move them. Multi-select and
+  conversations only move mail that belongs to the open folder; the drag icon
+  shows how many.
+- Move mail window has now a live filter search for fast selecting a folder. Useful 
+  if you have a large number of custom folders.
 
 
 ### Fixed
@@ -31,6 +137,14 @@ refactors unless they affect behaviour.
   network. Remote stylesheets, fonts, audio, video, frames and page redirects
   were still loaded and could tell the sender the message was opened.
   Replies and forwards to such mail no longer load its remote images.
+  Thanks to [Illya Yalovyy](https://github.com/IllyaYalovyy).
+- FIX - Recover HTTPS images with missing intermediate certificates
+  HTTPS images fail when servers omit intermediate certificates. Trusting 
+  the sender does not repair the certificate chain. Add optional recovery
+  for trusted senders, off by default because some revocation checks are
+  unavailable. Check certificate trust, hostname, expiry, and key usage.
+  Prevent proxy bypass, limit downloads, and release recovered images when
+  switching messages. All 10 tests pass, and native rendering confirms image recovery.
   Thanks to [Illya Yalovyy](https://github.com/IllyaYalovyy).
 - After a finished server refresh, Letter trusts the shorter folder list when
   Camel’s local UID summary was already roughly in line with Letter — so
@@ -41,8 +155,8 @@ refactors unless they affect behaviour.
 
 ### Changed
 
-- Search clear control is a bit larger and shows a hover background, closer to
-  the system search-entry affordance.
+- The global search box now has a UI consistent with the system's search fields.
+- New mail and send buttons now has a border radius consitent with the rest of the app.
 
 
 ## [1.5.0](https://github.com/stalvatero/letter/compare/v1.0.0...v1.5.0) - 2026-10-08

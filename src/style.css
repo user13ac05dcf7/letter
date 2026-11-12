@@ -1,3 +1,39 @@
+/* Preferences: reserve ~1/3 of the row for actions (GTK CSS has no max-width).
+ * Title/subtitle then wrap in the remaining ~2/3. A leading spacer (Vala)
+ * packs switches/combos on the trailing edge; combo values are right-aligned. */
+.preferences row .suffixes {
+  min-width: 17em;
+}
+
+.preferences row .account-drag-handle {
+  margin-right: 6px;
+}
+
+.preferences row.account-row-dragging {
+  opacity: 0.45;
+}
+
+.preferences row.account-drop-above {
+  box-shadow: inset 0 2px 0 var(--accent-bg-color);
+}
+
+.preferences row.account-drop-below {
+  box-shadow: inset 0 -2px 0 var(--accent-bg-color);
+}
+
+/* Compact drag chip. Square corners on purpose: DragIcon is an opaque
+ * rectangle, so a rounded child always leaves a grey fringe at the corners. */
+.account-drag-preview {
+  padding: 8px 12px;
+  min-width: 160px;
+  border-radius: 0;
+  background-color: var(--card-bg-color);
+}
+
+.preferences row.combo listview.inline {
+  min-width: 10em;
+}
+
 .navigation-sidebar {
   background: var(--sidebar-bg-color);
 }
@@ -12,14 +48,20 @@
   border-right: 1px solid var(--border-color);
 }
 
-/* Split reading-pane right: keep a gap before the main menu. */
-.reader-header .mail-search-field {
-  margin-end: 8px;
+.folder-mail-pane {
+  background: var(--sidebar-bg-color);
+  border-right: 1px solid var(--border-color);
+}
+
+.folder-mail-pane > headerbar,
+.folder-mail-pane > .toolbar {
+  background: var(--sidebar-bg-color);
 }
 
 .account-rail {
   background: var(--accent-bg-color);
-  padding: 0 4px 8px 4px;
+  /* Match Adwaita toolbar / sidebar edge padding — icons start at the top. */
+  padding: 6px 4px 8px 4px;
 }
 
 /* Match Adw.HeaderBar inside flat ToolbarView (default): the bar is
@@ -29,15 +71,12 @@
   background: var(--window-bg-color);
 }
 
-.account-rail-add-slot {
-  padding: 0;
+/* Custom colour is applied via a CssProvider (--letter-rail-bg / --letter-rail-fg). */
+.account-rail.rail-custom {
+  background: var(--letter-rail-bg);
 }
 
 .account-rail-list {
-  padding: 6px 0 0 0;
-}
-
-.account-rail-slot {
   padding: 0;
 }
 
@@ -50,15 +89,15 @@
   color: var(--window-fg-color);
 }
 
+.account-rail.rail-custom button {
+  color: var(--letter-rail-fg);
+}
+
 .account-rail-icon {
   padding: 2px;
   border-radius: 10px;
   min-height: 32px;
   min-width: 32px;
-}
-
-.account-rail-add image {
-  -gtk-icon-size: 24px;
 }
 
 .account-rail button:hover,
@@ -71,17 +110,39 @@
   background: color-mix(in srgb, var(--window-fg-color) 12%, transparent);
 }
 
-.account-rail button:checked avatar {
-  outline: 2px solid var(--accent-fg-color);
-  outline-offset: 1px;
-}
-
-.account-rail.rail-theme button:checked avatar {
-  outline-color: var(--window-fg-color);
+.account-rail.rail-custom button:hover,
+.account-rail.rail-custom button:checked {
+  background: color-mix(in srgb, var(--letter-rail-fg) 22%, transparent);
 }
 
 .account-rail .account-offline {
   opacity: 0.45;
+}
+
+/* Preferences: GNOME-accent style circular swatches + picker. */
+.rail-swatch {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--window-fg-color) 18%, transparent);
+  background: var(--rail-swatch-color, var(--accent-bg-color));
+  color: white;
+}
+
+.rail-swatch:checked {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, white 85%, transparent);
+}
+
+.rail-swatch-picker {
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 999px;
+}
+
+.rail-swatch-picker image {
+  -gtk-icon-size: 16px;
 }
 
 .account-list {
@@ -128,19 +189,22 @@
   padding: 10px 16px 12px 16px;
 }
 
+/* Match Adwaita .navigation-sidebar / GtkPlacesSidebar (GNOME Files). */
 .folder-list {
-  padding: 6px 8px;
+  padding: 6px 0 4px 0;
 }
 
 .folder-list > row {
-  min-height: 32px;
+  border-radius: 9px;
+  min-height: 36px;
   padding: 0;
-  border-radius: 8px;
+  margin: 0 6px 2px;
 }
 
 .folder-list > row > box {
-  padding: 4px 8px;
-  min-height: 32px;
+  /* Places uses revealer padding: 0 14px — same horizontal inset. */
+  padding: 0 14px;
+  min-height: 0;
 }
 
 .folder-row .folder-expander {
@@ -165,6 +229,73 @@
   color: var(--accent-color);
 }
 
+.folder-list > row.folder-drop {
+  background: color-mix(in srgb, var(--accent-bg-color) 22%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+
+/* Move dialog — Outlook-style folder tree; account header stays pinned. */
+.folder-pick-frame {
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.folder-pick-tree {
+  background: var(--view-bg-color);
+}
+
+.folder-pick-account {
+  /* Align with list labels: row margin 6px + content pad 14px. */
+  padding: 0 20px;
+  min-height: 36px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--view-bg-color);
+}
+
+.folder-pick-account .folder-expander,
+.folder-pick-account .folder-icon,
+.folder-pick-list .folder-expander,
+.folder-pick-list .folder-icon {
+  -gtk-icon-size: 16px;
+}
+
+.folder-pick-account .folder-name {
+  font-weight: 600;
+}
+
+.folder-pick-list {
+  padding: 6px 0 4px 0;
+  background: var(--view-bg-color);
+}
+
+.folder-pick-list > row {
+  border-radius: 9px;
+  min-height: 36px;
+  padding: 0;
+  margin: 0 6px 2px;
+}
+
+.folder-pick-list > row > box {
+  padding: 0 14px;
+  min-height: 0;
+}
+
+.folder-pick-list .folder-name {
+  font-weight: 400;
+}
+
+.folder-pick-list .folder-pick-path {
+  font-size: 0.85em;
+}
+
+.folder-pick-list > row.folder-pick-disabled {
+  opacity: 0.55;
+}
+
+.folder-pick-list > row.folder-pick-disabled .folder-name {
+  font-weight: 500;
+}
+
 .message-list {
   background: var(--view-bg-color);
 }
@@ -176,6 +307,12 @@
 .message-reader .reader-action-row {
   padding: 0 12px;
   background: var(--view-bg-color);
+}
+
+/* Action row lives in a scrolled clip so the important pill cannot inflate
+ * the split reader minimum and shove window controls off the right edge. */
+.message-reader > scrolledwindow {
+  min-width: 0;
 }
 
 .message-action-bar.list-action-bar {
@@ -212,6 +349,7 @@ headerbar.letter-toolbar button.compose-button {
   min-height: 28px;
   min-width: 0;
   padding: 2px 10px;
+  border-radius: 8px;
 }
 
 headerbar.letter-toolbar button.compose-button image {
@@ -234,11 +372,13 @@ headerbar.letter-toolbar .mail-search-clear {
 headerbar button.compose-send {
   margin-left: 6px;
   min-height: 28px;
-  padding: 4px 12px;
+  padding: 2px 10px;
+  border-radius: 8px;
 }
 
 headerbar button.unread-filter:checked,
 headerbar button.conversation-toggle:checked,
+headerbar button.search-toggle:checked,
 headerbar button.people-toggle:checked {
   background: color-mix(in srgb, var(--accent-bg-color) 28%, transparent);
   color: var(--accent-color);
@@ -248,6 +388,25 @@ headerbar button.people-toggle:checked {
   padding: 8px 12px 8px 8px;
   border-bottom: 1px solid var(--border-color);
   min-height: 72px;
+}
+
+/* Kill GTK's list insertion line while dragging mail onto folders. */
+.message-list dndtarget,
+.message-list > dndtarget,
+.message-list-dragging dndtarget {
+  opacity: 0;
+  border: none;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.message-list > row:drop(active),
+.message-list-dragging > row:drop(active) {
+  box-shadow: none;
 }
 
 .message-row {
@@ -449,10 +608,8 @@ webview.message-body {
 
 .priority-badge {
   margin: 0;
-  padding: 2px 8px;
-  border-radius: 999px;
-  color: #b42318;
-  background: color-mix(in srgb, #b42318 12%, var(--view-bg-color));
+  padding: 2px;
+  background: transparent;
 }
 
 .priority-badge-icon {
@@ -562,6 +719,17 @@ popover.compose-suggest-popover > contents {
   padding: 8px 10px;
 }
 
+.compose-suggest-row .compose-suggest-forget {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  opacity: 0.55;
+}
+
+.compose-suggest-row .compose-suggest-forget:hover {
+  opacity: 1;
+}
+
 spinner.compose-suggest-spinner {
   min-width: 16px;
   min-height: 16px;
@@ -624,8 +792,35 @@ button.recipient-more label {
   padding: 4px;
 }
 
-.compose-toolbar togglebutton.compose-format-mixed {
+.compose-format-popover {
+  padding: 0;
+}
+
+.compose-format-actions togglebutton {
+  min-height: 28px;
+  min-width: 28px;
+  padding: 4px;
+}
+
+.compose-format-actions togglebutton.compose-format-mixed {
   opacity: 0.55;
+}
+
+/* Scheme chips under “Web address” in the Add/Edit Link dialog. */
+.compose-link-scheme {
+  min-height: 0;
+  padding: 2px 10px;
+  font-family: monospace;
+  font-size: 0.9em;
+  background: color-mix(in srgb, var(--window-fg-color) 10%, transparent);
+}
+
+.compose-link-scheme:hover {
+  background: color-mix(in srgb, var(--window-fg-color) 16%, transparent);
+}
+
+.compose-link-scheme:active {
+  background: color-mix(in srgb, var(--accent-color) 22%, transparent);
 }
 
 .compose-highlight-glyph {
@@ -746,28 +941,7 @@ button.recipient-more label {
   margin: 20px 20px 4px 4px;
 }
 
-.filter-nav row {
-  padding: 8px 12px;
-}
-
-.filter-chip {
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-weight: 400;
-  background: color-mix(in srgb, var(--view-fg-color) 8%, transparent);
-}
-
-.filter-chip:hover {
-  background: color-mix(in srgb, var(--view-fg-color) 12%, transparent);
-}
-
-.filter-chip:checked {
-  background: color-mix(in srgb, var(--accent-bg-color) 28%, transparent);
-  color: var(--accent-color);
-}
-
-/* Keep rest / focus / chips at the same 28px as toolbar buttons. */
-entry.mail-search-field,
+/* Search field inside SearchBar — same 28px chrome as toolbar buttons. */
 .mail-search-field {
   border-radius: 8px;
   background: color-mix(in srgb, var(--headerbar-fg-color) 8%, transparent);
@@ -776,20 +950,28 @@ entry.mail-search-field,
   min-height: 28px;
   border: none;
   outline: none;
+  transition: box-shadow 180ms ease-out;
 }
 
-entry.mail-search-field:focus,
-entry.mail-search-field:focus-within,
 .mail-search-field:focus-within {
-  box-shadow: inset 0 0 0 2px var(--accent-color);
-  padding: 2px 4px;
-  min-height: 28px;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent-color) 78%, transparent);
 }
 
 .mail-search-flow {
   min-height: 0;
   margin: 0;
   padding: 0;
+}
+
+.mail-search-flow-scroll {
+  min-height: 24px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.mail-search-flow-scroll scrollbar.horizontal {
+  min-height: 4px;
 }
 
 text.mail-search-input {
@@ -803,6 +985,10 @@ text.mail-search-input {
   border-radius: 0;
   box-shadow: none;
   outline: none;
+}
+
+text.mail-search-input placeholder {
+  color: color-mix(in srgb, currentColor 55%, transparent);
 }
 
 text.mail-search-input:focus,
@@ -822,14 +1008,22 @@ text.mail-search-input:focus-within {
 
 .mail-search-clear image {
   -gtk-icon-size: 16px;
+  opacity: 0.72;
+  transition: opacity 140ms ease-out;
 }
 
-.mail-search-clear:hover {
-  background: color-mix(in srgb, var(--headerbar-fg-color) 14%, transparent);
-}
-
+.mail-search-clear:hover,
 .mail-search-clear:active {
-  background: color-mix(in srgb, var(--headerbar-fg-color) 22%, transparent);
+  background: none;
+  box-shadow: none;
+}
+
+.mail-search-clear:hover image {
+  opacity: 1;
+}
+
+.mail-search-clear:active image {
+  opacity: 0.82;
 }
 
 /* Compact chip: air inside the field, minimal dismiss like compose attachments. */
@@ -839,6 +1033,11 @@ text.mail-search-input:focus-within {
   margin: 3px 0;
   border-radius: 999px;
   background: color-mix(in srgb, var(--headerbar-fg-color) 10%, transparent);
+}
+
+.search-chip.selected {
+  background: color-mix(in srgb, var(--accent-color) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-color) 55%, transparent);
 }
 
 .search-chip label {

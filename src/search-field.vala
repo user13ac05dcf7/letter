@@ -4,7 +4,8 @@ public class Mail.SearchField : Gtk.Widget {
     public signal void stopped ();
 
     private Gtk.Box bar;
-    private Adw.WrapBox flow;
+    private Gtk.Box flow;
+    private Gtk.ScrolledWindow flow_scrolled;
     private Gtk.Text input;
     private Gtk.Button clear_button;
     private Gtk.Popover? suggest_popover;
@@ -12,6 +13,8 @@ public class Mail.SearchField : Gtk.Widget {
     private Gtk.ListBox suggest_list;
     private ContactStore? contacts;
     private GenericArray<Chip> chips = new GenericArray<Chip> ();
+    /* -1 = typing in the input; otherwise the chip under keyboard focus. */
+    private int selected_chip_index = -1;
     private uint suggest_source;
     private string suggest_shown_key = "";
     private string placeholder = _("Search");
@@ -173,11 +176,7 @@ public class Mail.SearchField : Gtk.Widget {
         hexpand = false;
         vexpand = false;
         valign = Gtk.Align.CENTER;
-        /* Same height at rest and while typing — Adwaita entry metrics otherwise
-         * shrink the empty field below the toolbar buttons. */
-        height_request = 28;
         add_css_class ("search");
-        add_css_class ("mail-search-field");
 
         this.bar = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 4) {
             hexpand = true,
@@ -192,21 +191,34 @@ public class Mail.SearchField : Gtk.Widget {
         };
         icon.add_css_class ("dim-label");
 
-        this.flow = new Adw.WrapBox () {
-            hexpand = true,
+        this.flow = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 4) {
+            hexpand = false,
             vexpand = false,
             valign = Gtk.Align.CENTER,
-            halign = Gtk.Align.FILL,
-            child_spacing = 4,
-            line_spacing = 2,
-            justify = Adw.JustifyMode.NONE,
-            line_homogeneous = false,
-            wrap_policy = Adw.WrapPolicy.NATURAL,
         };
         this.flow.add_css_class ("mail-search-flow");
 
-        this.input = new Gtk.Text () {
+        this.flow_scrolled = new Gtk.ScrolledWindow () {
             hexpand = true,
+            vexpand = false,
+            height_request = 24,
+            min_content_width = 0,
+            min_content_height = 24,
+            max_content_height = 24,
+            /* AUTOMATIC so many chips stay reachable; overlay keeps chrome thin. */
+            hscrollbar_policy = Gtk.PolicyType.AUTOMATIC,
+            vscrollbar_policy = Gtk.PolicyType.NEVER,
+            overlay_scrolling = true,
+            propagate_natural_width = false,
+            propagate_natural_height = false,
+            child = this.flow,
+        };
+        this.flow_scrolled.add_css_class ("mail-search-flow-scroll");
+
+        /* Do not hexpand inside the chip row — that steals width from chips
+         * and ellipsizes them instead of scrolling the row. */
+        this.input = new Gtk.Text () {
+            hexpand = false,
             hexpand_set = true,
             vexpand = false,
             valign = Gtk.Align.CENTER,
@@ -246,7 +258,7 @@ public class Mail.SearchField : Gtk.Widget {
 
         this.flow.append (this.input);
         this.bar.append (icon);
-        this.bar.append (this.flow);
+        this.bar.append (this.flow_scrolled);
         this.bar.append (this.clear_button);
 
         var click = new Gtk.GestureClick ();
@@ -292,6 +304,7 @@ public class Mail.SearchField : Gtk.Widget {
     public void clear () {
         this.suppressing = true;
         hide_suggest ();
+        clear_chip_selection ();
         while (this.chips.length > 0)
             remove_chip_at (this.chips.length - 1, false);
         this.input.text = "";
@@ -325,6 +338,8 @@ public class Mail.SearchField : Gtk.Widget {
         if (this.suppressing)
             return;
 
+        clear_chip_selection ();
+
         if (ends_with_space (this.input.text))
             commit_operators (false);
 
@@ -338,6 +353,11 @@ public class Mail.SearchField : Gtk.Widget {
         if (keyval == Gdk.Key.Escape) {
             if (suggest_is_open ()) {
                 hide_suggest ();
+                return true;
+            }
+            if (this.selected_chip_index >= 0) {
+                clear_chip_selection ();
+                this.input.grab_focus ();
                 return true;
             }
             clear ();
@@ -365,12 +385,101 @@ public class Mail.SearchField : Gtk.Widget {
             apply_selected_suggest ();
             return true;
         }
+        if (keyval == Gdk.Key.Left || keyval == Gdk.Key.KP_Left) {
+            if (navigate_chips (-1))
+                return true;
+        }
+        if (keyval == Gdk.Key.Right || keyval == Gdk.Key.KP_Right) {
+            if (navigate_chips (1))
+                return true;
+        }
         if ((keyval == Gdk.Key.BackSpace || keyval == Gdk.Key.Delete || keyval == Gdk.Key.KP_Delete)
-            && this.input.text.length == 0 && this.chips.length > 0) {
-            remove_chip_at (this.chips.length - 1, true);
+            && this.chips.length > 0) {
+            if (this.selected_chip_index >= 0) {
+                remove_selected_chip ();
+                return true;
+            }
+            if (this.input.text.length == 0) {
+                remove_chip_at (this.chips.length - 1, true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private bool navigate_chips (int delta) {
+        if (this.chips.length == 0)
+            return false;
+
+        if (this.selected_chip_index >= 0) {
+            var next = this.selected_chip_index + delta;
+            if (next < 0)
+                return true;
+            if (next >= (int) this.chips.length) {
+                clear_chip_selection ();
+                this.input.grab_focus ();
+                ((Gtk.Editable) this.input).set_position (0);
+                return true;
+            }
+            select_chip_at ((uint) next);
+            return true;
+        }
+
+        /* From the input: Left at the caret start jumps onto the last chip. */
+        if (delta < 0 && ((Gtk.Editable) this.input).cursor_position == 0) {
+            select_chip_at (this.chips.length - 1);
             return true;
         }
         return false;
+    }
+
+    private void clear_chip_selection () {
+        if (this.selected_chip_index >= 0 && this.selected_chip_index < (int) this.chips.length)
+            this.chips[this.selected_chip_index].widget.remove_css_class ("selected");
+        this.selected_chip_index = -1;
+    }
+
+    private void select_chip_at (uint index) {
+        if (index >= this.chips.length)
+            return;
+        clear_chip_selection ();
+        this.selected_chip_index = (int) index;
+        this.chips[index].widget.add_css_class ("selected");
+        ensure_chip_visible (index);
+    }
+
+    private void ensure_chip_visible (uint index) {
+        if (index >= this.chips.length)
+            return;
+        var holder = this.chips[index].holder;
+        Graphene.Rect bounds;
+        if (!holder.compute_bounds (this.flow, out bounds))
+            return;
+        var adj = this.flow_scrolled.hadjustment;
+        var start = bounds.origin.x;
+        var end = start + bounds.size.width;
+        if (start < adj.value)
+            adj.value = start;
+        else if (end > adj.value + adj.page_size)
+            adj.value = end - adj.page_size;
+    }
+
+    private void remove_selected_chip () {
+        if (this.selected_chip_index < 0 || this.selected_chip_index >= (int) this.chips.length)
+            return;
+        var index = (uint) this.selected_chip_index;
+        var next = index;
+        clear_chip_selection ();
+        remove_chip_at (index, false);
+        if (this.chips.length == 0) {
+            this.input.grab_focus ();
+        } else if (next < this.chips.length) {
+            select_chip_at (next);
+        } else {
+            select_chip_at (this.chips.length - 1);
+        }
+        query_changed ();
+        emit_chip_search ();
     }
 
     private void commit_operators (bool force) {
@@ -415,6 +524,11 @@ public class Mail.SearchField : Gtk.Widget {
         Gtk.Widget? after = this.chips.length > 0 ? this.chips[this.chips.length - 1].holder : null;
         this.flow.insert_child_after (chip.holder, after);
         this.chips.add (chip);
+        Idle.add (() => {
+            var adjustment = this.flow_scrolled.hadjustment;
+            adjustment.value = adjustment.upper - adjustment.page_size;
+            return Source.REMOVE;
+        });
         if (notify)
             query_changed ();
         sync_chrome ();
@@ -429,12 +543,13 @@ public class Mail.SearchField : Gtk.Widget {
         };
         box.add_css_class ("search-chip");
 
+        /* Full text; the chip row scrolls horizontally when space is tight. */
         var label = new Gtk.Label (SearchQuery.chip_label (clause)) {
-            ellipsize = Pango.EllipsizeMode.END,
-            max_width_chars = 16,
+            ellipsize = Pango.EllipsizeMode.NONE,
             single_line_mode = true,
             use_markup = false,
             valign = Gtk.Align.CENTER,
+            hexpand = false,
         };
         var close = new Gtk.Button.from_icon_name ("window-close-symbolic") {
             valign = Gtk.Align.CENTER,
@@ -449,11 +564,26 @@ public class Mail.SearchField : Gtk.Widget {
         close.clicked.connect (() => {
             for (uint i = 0; i < this.chips.length; i++) {
                 if (this.chips[i].clause == clause || this.chips[i].widget == box) {
+                    if (this.selected_chip_index == (int) i)
+                        clear_chip_selection ();
+                    else if (this.selected_chip_index > (int) i)
+                        this.selected_chip_index--;
                     remove_chip_at (i, true);
                     break;
                 }
             }
         });
+        var click = new Gtk.GestureClick ();
+        click.pressed.connect (() => {
+            for (uint i = 0; i < this.chips.length; i++) {
+                if (this.chips[i].widget == box) {
+                    select_chip_at (i);
+                    this.input.grab_focus ();
+                    break;
+                }
+            }
+        });
+        box.add_controller (click);
         box.append (label);
         box.append (close);
         return box;
@@ -462,6 +592,10 @@ public class Mail.SearchField : Gtk.Widget {
     private void remove_chip_at (uint index, bool notify) {
         if (index >= this.chips.length)
             return;
+        if (this.selected_chip_index == (int) index)
+            this.selected_chip_index = -1;
+        else if (this.selected_chip_index > (int) index)
+            this.selected_chip_index--;
         var chip = this.chips[index];
         this.flow.remove (chip.holder);
         this.chips.remove_index (index);

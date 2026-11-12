@@ -60,6 +60,39 @@
     <category>Email</category>
   </categories>
   <releases>
+    <release version="1.7.1" type="stable" date="2026-10-23">
+      <description>
+        <p>
+          Fixes a crash when message previews contain invalid UTF-8. Adds Check
+          for Updates in the main menu, Ctrl+Return to send, and Enter to
+          confirm Move to Folder. Strips useless image placeholders from the
+          message-list preview line.
+        </p>
+      </description>
+    </release>
+    <release version="1.7.0" type="stable" date="2026-10-21">
+      <description>
+        <p>
+          Preferences polish: custom account order by drag-and-drop, clearer
+          account-rail enable and colour options, and four header pages.
+          Compose gains forgettable recent-address suggestions and hyperlink
+          editing. The Move dialog uses a real folder tree; search moves to the
+          message list. Brazilian Portuguese update and several sync and
+          suggestion fixes.
+        </p>
+      </description>
+    </release>
+    <release version="1.6.0" type="stable" date="2026-10-15">
+      <description>
+        <p>
+          Adds a Japanese translation, optional account pictures, drag-and-drop
+          message moves, and live folder search in the Move dialog. Improves
+          remote-content privacy and adds opt-in recovery for trusted HTTPS
+          images with incomplete certificate chains, alongside mail sync and
+          search refinements.
+        </p>
+      </description>
+    </release>
     <release version="1.5.0" type="stable" date="2026-10-08">
       <description>
         <p>

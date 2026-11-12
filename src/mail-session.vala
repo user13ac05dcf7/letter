@@ -2039,6 +2039,7 @@ public class Mail.MailSession : Camel.Session {
         var added = false;
         for (uint i = 0; i < previous.length; i++) {
             var message = previous[i];
+            /* local_only optimistic moves and local-sent/draft placeholders. */
             if (!message.is_placeholder)
                 continue;
             if (have_uid.contains (message.uid))
@@ -2140,9 +2141,7 @@ public class Mail.MailSession : Camel.Session {
         if (subject == null || subject.length == 0)
             subject = _("(No subject)");
 
-        var preview = info.get_preview ();
-        if (preview != null && preview.length == 0)
-            preview = null;
+        var preview = Utils.sanitize_message_preview (info.get_preview ());
 
         var from_raw = info.get_from ();
         var to_raw = info.get_to ();
@@ -2151,6 +2150,8 @@ public class Mail.MailSession : Camel.Session {
         var to = Utils.display_address_list (to_raw);
         var cc = Utils.display_address_list (cc_raw);
         var list_address = outgoing && to.length > 0 ? to : from;
+        var to_header = to_raw != null && to_raw.strip ().length > 0 ? to_raw.strip () : null;
+        var cc_header = cc_raw != null && cc_raw.strip ().length > 0 ? cc_raw.strip () : null;
         var blob = new StringBuilder ();
         Utils.append_search_part (blob, subject);
         Utils.append_search_part (blob, from_raw);
@@ -2181,6 +2182,8 @@ public class Mail.MailSession : Camel.Session {
             from = from,
             to = to,
             cc = cc,
+            to_header = to_header,
+            cc_header = cc_header,
             from_blob = from_blob.str,
             to_blob = to_blob.str,
             list_address = list_address,
@@ -2220,8 +2223,8 @@ public class Mail.MailSession : Camel.Session {
         var from = Utils.format_internet_address (mime.get_from ());
         var to = Utils.format_internet_address (mime.get_recipients (Camel.RECIPIENT_TYPE_TO));
         var cc = Utils.format_internet_address (mime.get_recipients (Camel.RECIPIENT_TYPE_CC));
-        var preview = body.strip ().replace ("\n", " ");
-        if (preview.length > 140)
+        var preview = Utils.sanitize_message_preview (body);
+        if (preview != null && preview.length > 140)
             preview = preview.substring (0, 140);
 
         var msgid = mime.get_message_id ();
@@ -2229,6 +2232,8 @@ public class Mail.MailSession : Camel.Session {
         var from_display = from.length > 0 ? Utils.display_address (from) : from;
         var to_display = Utils.display_address_list (to);
         var cc_display = Utils.display_address_list (cc);
+        var to_header = to.length > 0 ? to : null;
+        var cc_header = cc.length > 0 ? cc : null;
         var blob = new StringBuilder ();
         Utils.append_search_part (blob, subject);
         Utils.append_search_part (blob, from);
@@ -2249,6 +2254,8 @@ public class Mail.MailSession : Camel.Session {
             from = from_display,
             to = to_display,
             cc = cc_display,
+            to_header = to_header,
+            cc_header = cc_header,
             from_blob = from_blob.str,
             to_blob = to_blob.str,
             list_address = to_display,
@@ -2257,7 +2264,7 @@ public class Mail.MailSession : Camel.Session {
             date = date,
             seen = true,
             has_attachment = mime.has_attachment (),
-            preview = preview.length > 0 ? preview : null,
+            preview = preview,
             folder_name = folder.name,
             folder_full_name = folder.full_name,
             outgoing = true,
@@ -7575,8 +7582,8 @@ public class Mail.InlineImagePages {
         var set = new InlineImageSet ();
         for (uint i = 0; i < content.inline_images.length; i++)
             set.images.add (content.inline_images[i]);
-        pages.set (key, set);
         content.set_data ("letter-inline-pin", new InlineImagePin (key));
+        pages.set (key, set);
     }
 
     public static void drop (string? key) {
@@ -7689,8 +7696,8 @@ public class Mail.MessageContent : Object {
             var legacy = current.has_suffix ("/")
                 ? current.substring (0, current.length - 1)
                 : current;
-            result = replace_literal (result, current, data_uri);
-            result = replace_literal (result, legacy, data_uri);
+            result = Utils.replace_literal (result, current, data_uri);
+            result = Utils.replace_literal (result, legacy, data_uri);
         }
         return result;
     }
@@ -8134,37 +8141,15 @@ public class Mail.MessageContent : Object {
             done[best] = true;
             var uri = InlineImagePages.uri (token, best);
             var cid = images[best].cid;
-            result = replace_literal (result, "cid:" + cid, uri);
-            result = replace_literal (result, "CID:" + cid, uri);
+            result = Utils.replace_literal (result, "cid:" + cid, uri);
+            result = Utils.replace_literal (result, "CID:" + cid, uri);
             var unescaped = Uri.unescape_string (cid);
             if (unescaped != null && unescaped.length > 0 && unescaped != cid) {
-                result = replace_literal (result, "cid:" + unescaped, uri);
-                result = replace_literal (result, "CID:" + unescaped, uri);
+                result = Utils.replace_literal (result, "cid:" + unescaped, uri);
+                result = Utils.replace_literal (result, "CID:" + unescaped, uri);
             }
         }
         return result;
-    }
-
-    /* Vala’s string.replace() builds a GRegex and aborts on RegexError for some
-     * real-world MIME cid/data-uri pairs. Keep a plain literal substitute. */
-    private static string replace_literal (string text, string old, string replacement) {
-        if (text.length == 0 || old.length == 0 || old == replacement)
-            return text;
-
-        int index = text.index_of (old);
-        if (index < 0)
-            return text;
-
-        var builder = new StringBuilder ();
-        int start = 0;
-        while (index >= 0) {
-            builder.append (text.substring (start, index - start));
-            builder.append (replacement);
-            start = index + old.length;
-            index = text.index_of (old, start);
-        }
-        builder.append (text.substring (start));
-        return builder.str;
     }
 
     private static string decode_part_text (Camel.DataWrapper wrapper) {

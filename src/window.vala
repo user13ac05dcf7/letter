@@ -2,13 +2,33 @@
 public class Mail.Window : Adw.ApplicationWindow {
     static construct {
         typeof (SearchField).ensure ();
+        typeof (ListReaderSplit).ensure ();
     }
     private const int ACCOUNT_PANE_MIN = 220;
     private const int ACCOUNT_PANE_MAX = 320;
-    private const int FOLDER_PANE_MIN = 200;
-    private const int FOLDER_PANE_MAX = 520;
+    /* Online Accounts list pane (between rail and folders). Disabled while we
+     * gather feedback — account switch stays on the rail; add accounts from
+     * Preferences. Set true to restore the pane + header toggle. */
+    private const bool ACCOUNT_LIST_PANE_ENABLED = false;
+    /* Adw.OverlaySplitView: width = clamp(fraction×view, min, max).
+     * At the 920sp collapse the split is ~870px wide (window − rail); with
+     * 0.21 that lands near 180 — the usable minimum before hide. */
+    private const int FOLDER_PANE_MIN = 180;
+    private const int FOLDER_PANE_MAX = 260;
+    private const double FOLDER_PANE_FRACTION = 0.21;
+    /* Slightly above 900sp so header window controls are not clipped on
+     * the last pixels of shrink before collapse. */
+    private const double FOLDER_PANE_NARROW_SP = 920;
     private const int MESSAGE_PANE_MIN = 260;
     private const int MESSAGE_PANE_MAX = 560;
+    /* Under window pressure the list may use at most this share of the
+     * list+reader split (reader keeps the rest). ⅓ ⇒ ~1px list per 2px
+     * reader while both shrink — starts well before the reader chrome min. */
+    private const double MESSAGE_LIST_SHARE = 1.0 / 3.0;
+    /* Compose + menu + window controls in the split reader header.
+     * Action bar / important icon clip inside the reader; these must not. */
+    private const int READER_PANE_MIN = 320;
+    private const int ACCOUNT_RAIL_WIDTH = 48;
     private const int WINDOW_MIN_WIDTH = 800;
     private const int WINDOW_MIN_HEIGHT = 520;
 
@@ -18,10 +38,6 @@ public class Mail.Window : Adw.ApplicationWindow {
     private unowned Adw.OverlaySplitView folder_split;
     [GtkChild]
     private unowned Gtk.Box account_rail;
-    [GtkChild]
-    private unowned Gtk.Box account_rail_add_slot;
-    [GtkChild]
-    private unowned Gtk.Button account_rail_add;
     [GtkChild]
     private unowned Gtk.Box account_rail_list;
     [GtkChild]
@@ -33,11 +49,15 @@ public class Mail.Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned Adw.StatusPage no_accounts_page;
     [GtkChild]
-    private unowned Gtk.Paned content_split;
+    private unowned Adw.OverlaySplitView folder_pane_split;
+    [GtkChild]
+    private unowned Adw.ToolbarView folder_mail;
     [GtkChild]
     private unowned Adw.HeaderBar folder_header;
     [GtkChild]
     private unowned Gtk.ToggleButton sidebar_button;
+    [GtkChild]
+    private unowned Gtk.ToggleButton folder_pane_button;
     [GtkChild]
     private unowned Adw.WindowTitle folder_title;
     [GtkChild]
@@ -63,11 +83,15 @@ public class Mail.Window : Adw.ApplicationWindow {
     [GtkChild]
     private unowned Gtk.ToggleButton conversation_button;
     [GtkChild]
-    private unowned SearchField message_search;
+    private unowned Gtk.ToggleButton search_toggle_button;
+    private SearchField message_search;
+    private Gtk.SearchBar message_search_bar;
     [GtkChild]
     private unowned Gtk.MenuButton menu_button;
     [GtkChild]
     private unowned Gtk.Paned message_split;
+    [GtkChild]
+    private unowned ListReaderSplit message_split_frame;
     [GtkChild]
     private unowned Adw.Bin list_bin;
     [GtkChild]
@@ -81,6 +105,8 @@ public class Mail.Window : Adw.ApplicationWindow {
     private unowned Adw.Spinner conversation_sync_spinner;
     [GtkChild]
     private unowned Gtk.Paned split_mail;
+    [GtkChild]
+    private unowned ListReaderSplit split_mail_frame;
     [GtkChild]
     private unowned Adw.ToolbarView list_mail;
     [GtkChild]
@@ -102,6 +128,9 @@ public class Mail.Window : Adw.ApplicationWindow {
 
     private Settings settings;
     private AccountAvatars account_avatars = new AccountAvatars ();
+    private uint account_rail_generation;
+    private Gtk.CssProvider? account_rail_css;
+    private MessageDragPayload? active_message_drag;
     private Gtk.ListBox account_list;
     private Gtk.ListBox folder_list;
     private Gtk.Box people_box;
@@ -165,8 +194,19 @@ public class Mail.Window : Adw.ApplicationWindow {
     private Cancellable? folder_cancellable;
     private Cancellable? body_cancellable;
     private Cancellable? idle_cancellable;
-    private bool clamping_pane;
     private bool clamping_message_pane;
+    /* User-chosen list width; window shrink may go below, grow stops here. */
+    private int message_pane_preferred;
+    private bool syncing_folder_pane_toggle;
+    /* True while window is under the narrow breakpoint / chrome floor.
+     * Restore runs only when stably wide again. */
+    private bool folder_pane_narrow;
+    /* User opened folders as overlay while narrow; cleared on widen/autohide. */
+    private bool folder_pane_overlay_wanted;
+    private uint folder_pane_width_idle;
+    private uint folder_pane_hide_source;
+    private bool folder_pane_surface_bound;
+    private Adw.Breakpoint? folder_pane_narrow_break;
     private Adw.SpinnerPaintable folder_spinner;
     private Adw.SpinnerPaintable conversation_spinner;
     private HashTable<string, GenericArray<Message>> message_cache;
@@ -225,10 +265,12 @@ public class Mail.Window : Adw.ApplicationWindow {
     private string? pending_select_uid;
     private bool tearing_down;
     private HashTable<string, uint8> hidden_uids;
+    /* Optimistic move headers keyed by message_cache_key — survive RAM/disk
+     * eviction so opening the destination before F5 still lists them. */
+    private HashTable<string, GenericArray<Message>> optimistic_dest_headers;
     private PendingTransferUndo? pending_transfer_undo;
     private HashTable<string, uint8> collapsed_folders;
     private Gtk.SizeGroup account_header_sizes;
-    private Gtk.SizeGroup account_row_sizes;
     private uint sync_status_token;
     /* Foreground lines (send, search, open) own the bar. Startup sync and
      * scheduled sync keep a line underneath and show it again when the
@@ -306,6 +348,17 @@ public class Mail.Window : Adw.ApplicationWindow {
     public Window (Application app) {
         Object (application: app);
 
+        this.message_search = new SearchField () {
+            hexpand = true,
+            halign = Gtk.Align.FILL,
+            width_request = 0,
+            margin_start = 12,
+            margin_end = 12,
+            margin_top = 4,
+            margin_bottom = 4,
+            placeholder_text = _("Search"),
+        };
+        this.message_search.add_css_class ("mail-search-field");
         this.settings = new Settings (Config.APP_ID);
         add_action_entries (WINDOW_ACTIONS, this);
         Utils.add_mail_letter_shortcuts (this);
@@ -325,35 +378,54 @@ public class Mail.Window : Adw.ApplicationWindow {
         default_height = this.settings.get_int ("window-height")
             .clamp (WINDOW_MIN_HEIGHT, 4000);
         maximized = this.settings.get_boolean ("window-maximized");
-        width_request = WINDOW_MIN_WIDTH;
         height_request = WINDOW_MIN_HEIGHT;
-        this.sidebar_button.active = this.settings.get_boolean ("show-folder-sidebar");
-        this.sidebar_button.toggled.connect (() => {
+        update_window_width_request ();
+        if (ACCOUNT_LIST_PANE_ENABLED) {
+            this.sidebar_button.active = this.settings.get_boolean ("show-folder-sidebar");
+            this.sidebar_button.toggled.connect (() => {
+                apply_account_sidebar (this.sidebar_button.active);
+            });
+            this.folder_split.notify["show-sidebar"].connect (() => {
+                if (this.sidebar_button.active != this.folder_split.show_sidebar)
+                    this.sidebar_button.active = this.folder_split.show_sidebar;
+            });
+            this.folder_split.notify["collapsed"].connect (on_folder_split_collapsed);
             apply_account_sidebar (this.sidebar_button.active);
-        });
-        this.folder_split.notify["show-sidebar"].connect (() => {
-            if (this.sidebar_button.active != this.folder_split.show_sidebar)
-                this.sidebar_button.active = this.folder_split.show_sidebar;
-        });
-        this.folder_split.notify["collapsed"].connect (on_folder_split_collapsed);
-        apply_account_sidebar (this.sidebar_button.active);
-        if (this.folder_split.collapsed)
-            on_folder_split_collapsed ();
+            if (this.folder_split.collapsed)
+                on_folder_split_collapsed ();
+        } else {
+            apply_account_sidebar (false);
+        }
+        this.settings.changed["account-rail-enabled"].connect (apply_account_rail);
         this.settings.changed["account-rail"].connect (apply_account_rail);
+        this.settings.changed["account-rail-color"].connect (apply_account_rail);
         this.settings.changed["account-avatars"].connect (fill_account_rail);
+        this.settings.changed["account-order"].connect (on_accounts_changed);
         apply_account_rail ();
-        this.content_split.position = this.settings.get_int ("folder-pane-width")
-            .clamp (FOLDER_PANE_MIN, FOLDER_PANE_MAX);
-        this.content_split.notify["position"].connect (on_folder_pane_resized);
-        var message_pane_width = this.settings.get_int ("message-pane-width")
+        this.folder_pane_button.toggled.connect (on_folder_pane_toggled);
+        this.folder_pane_split.notify["show-sidebar"].connect (on_folder_pane_show_sidebar);
+        /* Same pattern as the account OverlaySplitView: breakpoint owns
+         * collapsed (animated); we only mirror show-sidebar. */
+        this.folder_pane_split.notify["collapsed"].connect (on_folder_pane_collapsed);
+        bind_folder_pane_narrow_breakpoint ();
+        apply_folder_pane_chrome ();
+        if (this.folder_pane_split.collapsed)
+            on_folder_pane_collapsed ();
+        else
+            apply_folder_pane (this.settings.get_boolean ("show-mail-folders-pane"));
+        this.map.connect (on_folder_pane_window_mapped);
+        if (get_mapped ())
+            on_folder_pane_window_mapped ();
+        this.message_pane_preferred = this.settings.get_int ("message-pane-width")
             .clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
-        this.message_split.position = message_pane_width;
-        this.split_mail.position = message_pane_width;
+        this.message_split.position = this.message_pane_preferred;
+        this.split_mail.position = this.message_pane_preferred;
         this.message_split.notify["position"].connect (on_message_pane_resized);
         this.split_mail.notify["position"].connect (on_split_mail_resized);
+        this.split_mail_frame.list_width_for.connect (split_mail_list_width_for);
+        this.message_split_frame.list_width_for.connect (message_split_list_width_for);
         this.settings.changed["reading-pane"].connect (apply_reading_pane);
         apply_reading_pane ();
-        notify["default-width"].connect (() => update_search_field_width ());
 
         this.folder_spinner = new Adw.SpinnerPaintable (this.no_folders_page);
         this.conversation_spinner = new Adw.SpinnerPaintable (this.conversation_page);
@@ -363,9 +435,9 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.header_cache_save_sources = new HashTable<string, uint> (str_hash, str_equal);
         this.folder_tree_cache = new HashTable<string, GenericArray<Folder>> (str_hash, str_equal);
         this.hidden_uids = new HashTable<string, uint8> (str_hash, str_equal);
+        this.optimistic_dest_headers = new HashTable<string, GenericArray<Message>> (str_hash, str_equal);
         this.collapsed_folders = new HashTable<string, uint8> (str_hash, str_equal);
         this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
-        this.account_row_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
         sync_toolbar_header_sizes ();
         foreach (var key in this.settings.get_strv ("collapsed-folders")) {
             if (key.length > 0)
@@ -542,6 +614,16 @@ public class Mail.Window : Adw.ApplicationWindow {
             return false;
         });
         this.message_list.add_controller (keys);
+        /* Own DropTarget that refuses our payload so Gtk.ListView never
+         * arms its insertion dndtarget (thin line above/below the row). */
+        var message_drop_reject = new Gtk.DropTarget (
+            typeof (MessageDragPayload),
+            Gdk.DragAction.MOVE
+        );
+        message_drop_reject.propagation_phase = Gtk.PropagationPhase.CAPTURE;
+        message_drop_reject.enter.connect (on_message_list_drop_enter);
+        message_drop_reject.motion.connect (on_message_list_drop_motion);
+        this.message_list.add_controller (message_drop_reject);
 
         this.account_scrolled = new Gtk.ScrolledWindow () {
             hscrollbar_policy = Gtk.PolicyType.NEVER,
@@ -618,16 +700,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         };
         var escape = new Gtk.EventControllerKey ();
         escape.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
-        escape.key_pressed.connect ((keyval, keycode, state) => {
-            if (keyval != Gdk.Key.Escape)
-                return false;
-            if ((state & Gtk.accelerator_get_default_mod_mask ()) != 0)
-                return false;
-            if (!in_search_mode ())
-                return false;
-            on_search_stopped ();
-            return true;
-        });
+        escape.key_pressed.connect (on_escape_key_pressed);
         /* Blueprint Window exposes add_controller(ShortcutController); cast to Widget. */
         ((Gtk.Widget) this).add_controller (escape);
         this.list_body = new Adw.Bin () {
@@ -636,10 +709,17 @@ public class Mail.Window : Adw.ApplicationWindow {
             child = this.message_scrolled,
         };
         this.list_pane = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        this.message_search_bar = new Gtk.SearchBar () {
+            hexpand = true,
+            search_mode_enabled = false,
+            child = this.message_search,
+        };
+        this.list_pane.append (this.message_search_bar);
         this.list_pane.append (this.list_body);
         this.list_pane.append (this.search_deeper_bar);
 
         this.unread_filter_button.toggled.connect (on_unread_filter_toggled);
+        this.search_toggle_button.toggled.connect (on_search_toggled);
         this.conversation_view = this.settings.get_boolean ("conversation-view");
         this.conversation_button.active = this.conversation_view;
         this.conversation_button.tooltip_text = this.conversation_view
@@ -650,10 +730,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.message_search.query_changed.connect (on_search_query_edited);
         this.message_search.activated.connect (on_search_activated);
         this.message_search.stopped.connect (on_search_stopped);
-        this.message_search.tooltip_text = "%s\n%s".printf (
-            SearchQuery.filter_hint (),
-            _("Chips and Enter run search.")
-        );
+        this.message_search.tooltip_text = SearchQuery.filter_hint ();
         this.message_search.bind_contacts (app.contacts);
         this.settings.changed["mark-as-read"].connect (on_mark_as_read_setting);
 
@@ -687,21 +764,20 @@ public class Mail.Window : Adw.ApplicationWindow {
                 continue;
             accounts.add (account);
         }
-        accounts.sort ((a, b) => {
-            if (a.has_mail != b.has_mail)
-                return a.has_mail ? -1 : 1;
-            return a.display_name.collate (b.display_name);
-        });
+        Account.sort_for_display (accounts, this.settings.get_strv ("account-order"));
         for (uint i = 0; i < accounts.length; i++)
             this.account_list.append (new AccountRow (accounts[i]));
 
         fill_account_rail ();
 
         if (this.account_list.get_row_at_index (0) == null) {
-            this.sidebar_bin.child = this.no_accounts_page;
             if (store.error_message != null)
                 this.no_accounts_page.description = Markup.escape_text (store.error_message);
-        } else {
+            if (ACCOUNT_LIST_PANE_ENABLED)
+                this.sidebar_bin.child = this.no_accounts_page;
+            else
+                this.folder_bin.child = this.no_accounts_page;
+        } else if (ACCOUNT_LIST_PANE_ENABLED) {
             this.sidebar_bin.child = this.account_scrolled;
         }
 
@@ -1026,6 +1102,11 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* Always drop locally-hidden (archived/moved pending flush) so Camel
          * summaries and disk header caches cannot resurrect them. */
         var visible = visible_messages (account, folder, messages);
+        /* Keep optimistic local headers when a disk/Camel list replaces RAM
+         * before the move has been flushed (F5 / sync). */
+        if (previous != null)
+            visible = merge_pending_local_headers (previous, visible);
+        visible = ensure_optimistic_dest_headers (account, folder, visible);
         /* Scale-based shrink guard. accept_empty is a finished server walk
          * that returned no UIDs (Empty Trash / emptied elsewhere) — must
          * replace the list, not merge the old index back. accept_server_shrink
@@ -1103,6 +1184,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             display_messages (account, folder, visible);
         else
             queue_conversation_refresh ();
+        maybe_harvest_sent_recipients (account, folder, visible);
         sync_bookmarks_folder ();
         sync_important_markers ();
         if (known.length > 0)
@@ -1167,6 +1249,29 @@ public class Mail.Window : Adw.ApplicationWindow {
             result.add (incoming[i]);
         }
         return result;
+    }
+
+    /* Re-attach optimistic move/draft headers missing from a disk/Camel list. */
+    private static GenericArray<Message> merge_pending_local_headers (
+        GenericArray<Message> previous,
+        GenericArray<Message> incoming
+    ) {
+        var have = new HashTable<string, uint8> (str_hash, str_equal);
+        for (uint i = 0; i < incoming.length; i++) {
+            if (incoming[i].uid != null && incoming[i].uid.length > 0)
+                have.set (incoming[i].uid, 1);
+        }
+
+        for (uint i = 0; i < previous.length; i++) {
+            var message = previous[i];
+            if (!message.local_only && !message.is_placeholder)
+                continue;
+            if (message.uid == null || message.uid.length == 0 || have.contains (message.uid))
+                continue;
+            have.set (message.uid, 1);
+            incoming.add (message);
+        }
+        return incoming;
     }
 
     private bool folder_skips_body_prefetch (Folder folder) {
@@ -1916,7 +2021,33 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void on_search () {
+        this.search_toggle_button.active = true;
         this.message_search.grab_focus ();
+    }
+
+    private void on_search_toggled () {
+        var active = this.search_toggle_button.active;
+        this.message_search_bar.search_mode_enabled = active;
+        this.search_toggle_button.tooltip_text = active ? _("Close Search") : _("Search");
+        if (active)
+            this.message_search.grab_focus ();
+        else
+            reset_message_search ();
+    }
+
+    private bool on_escape_key_pressed (uint keyval, uint keycode, Gdk.ModifierType state) {
+        if (keyval != Gdk.Key.Escape)
+            return false;
+        if ((state & Gtk.accelerator_get_default_mod_mask ()) != 0)
+            return false;
+        if (this.folder_pane_split.collapsed && this.folder_pane_split.show_sidebar) {
+            this.folder_pane_split.show_sidebar = false;
+            return true;
+        }
+        if (!this.search_toggle_button.active)
+            return false;
+        on_search_stopped ();
+        return true;
     }
 
     /* Typing updates suggestions. Search runs on Enter, when a chip is added
@@ -1945,13 +2076,20 @@ public class Mail.Window : Adw.ApplicationWindow {
         apply_search_query (this.message_search.query ());
     }
 
-    private void on_search_stopped () {
+    private void reset_message_search () {
         if (this.search_source != 0) {
             Source.remove (this.search_source);
             this.search_source = 0;
         }
         this.message_search.clear ();
         apply_search_query (new SearchQuery ());
+    }
+
+    private void on_search_stopped () {
+        if (this.search_toggle_button.active)
+            this.search_toggle_button.active = false;
+        else
+            reset_message_search ();
     }
 
     private bool in_search_mode () {
@@ -2901,6 +3039,7 @@ public class Mail.Window : Adw.ApplicationWindow {
     private void fill_account_rail () {
         var guard = this.selecting_account;
         this.selecting_account = true;
+        this.account_rail_generation++;
 
         Gtk.Widget? child = this.account_rail_list.get_first_child ();
         while (child != null) {
@@ -2934,9 +3073,12 @@ public class Mail.Window : Adw.ApplicationWindow {
             else
                 group = button;
             button.set_data ("account", account);
-            button.child = Utils.account_brand_image (account, 28);
-            if (this.settings.get_boolean ("account-avatars"))
-                show_account_avatar.begin (button, account);
+            if (this.settings.get_boolean ("account-avatars")) {
+                button.child = new Adw.Avatar (28, account_avatar_label (account), true);
+                show_account_avatar.begin (button, account, this.account_rail_generation);
+            } else {
+                button.child = Utils.account_brand_image (account, 28);
+            }
             button.toggled.connect (() => {
                 if (!button.active || this.selecting_account)
                     return;
@@ -2947,49 +3089,47 @@ public class Mail.Window : Adw.ApplicationWindow {
             if (this.selected_account != null && accounts_are_same (this.selected_account, account))
                 button.active = true;
 
-            var slot = new Gtk.Box (Gtk.Orientation.VERTICAL, 0) {
-                hexpand = true,
-                vexpand = false,
-                valign = Gtk.Align.FILL,
-                halign = Gtk.Align.FILL,
-            };
-            slot.add_css_class ("account-rail-slot");
-            slot.append (button);
-            this.account_rail_list.append (slot);
+            this.account_rail_list.append (button);
         }
 
-        sync_account_row_sizes ();
+        sync_toolbar_header_sizes ();
         if (this.selected_account != null)
             sync_account_selection (this.selected_account);
         this.selecting_account = guard;
     }
 
-    private async void show_account_avatar (Gtk.ToggleButton button, Account account) {
+    private static string account_avatar_label (Account account) {
+        if (account.display_name != null && account.display_name.strip ().length > 0)
+            return account.display_name;
+        if (account.email != null && account.email.length > 0)
+            return account.email;
+        return "?";
+    }
+
+    private async void show_account_avatar (Gtk.ToggleButton button, Account account, uint generation) {
         var goa = (get_application () as Application)?.accounts.goa;
         if (goa == null)
             return;
         var picture = yield this.account_avatars.load (goa, account);
-        if (picture != null)
-            button.child = new Adw.Avatar (28, account.display_name, false) { custom_image = picture };
-    }
-
-    private void sync_account_row_sizes () {
-        sync_toolbar_header_sizes ();
-
-        this.account_row_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
-        Gtk.Widget? rail = this.account_rail_list.get_first_child ();
-        for (int i = 0; this.account_list.get_row_at_index (i) != null && rail != null; i++) {
-            this.account_row_sizes.add_widget (this.account_list.get_row_at_index (i));
-            this.account_row_sizes.add_widget (rail);
-            rail = rail.get_next_sibling ();
+        if (generation != this.account_rail_generation || picture == null)
+            return;
+        if (button.get_parent () == null)
+            return;
+        var avatar = button.child as Adw.Avatar;
+        if (avatar != null) {
+            avatar.custom_image = picture;
+        } else {
+            avatar = new Adw.Avatar (28, account_avatar_label (account), true);
+            avatar.custom_image = picture;
+            button.child = avatar;
         }
     }
 
-    /* One continuous header height: rail +, accounts, folders, messages. */
+    /* Align folder / list / reader headers (account list pane optional). */
     private void sync_toolbar_header_sizes () {
         this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
-        this.account_header_sizes.add_widget (this.account_header);
-        this.account_header_sizes.add_widget (this.account_rail_add_slot);
+        if (ACCOUNT_LIST_PANE_ENABLED)
+            this.account_header_sizes.add_widget (this.account_header);
         this.account_header_sizes.add_widget (this.folder_header);
         if (this.reading_pane_split) {
             this.account_header_sizes.add_widget (this.list_header);
@@ -3000,7 +3140,16 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void apply_account_sidebar (bool expanded) {
+        if (!ACCOUNT_LIST_PANE_ENABLED) {
+            this.account_pane.visible = false;
+            this.folder_split.show_sidebar = false;
+            this.sidebar_button.visible = false;
+            apply_account_rail ();
+            return;
+        }
+
         this.account_pane.visible = true;
+        this.sidebar_button.visible = true;
         this.folder_split.show_sidebar = expanded;
         this.folder_split.min_sidebar_width = ACCOUNT_PANE_MIN;
         this.folder_split.max_sidebar_width = ACCOUNT_PANE_MAX;
@@ -3012,15 +3161,73 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void apply_account_rail () {
+        /* Legacy: "hide" was a colour-mode choice; migrate to the enable switch. */
+        if (this.settings.get_string ("account-rail") == "hide") {
+            this.settings.set_boolean ("account-rail-enabled", false);
+            this.settings.set_string ("account-rail", "default");
+        }
+
+        var enabled = this.settings.get_boolean ("account-rail-enabled");
         var mode = this.settings.get_string ("account-rail");
         this.account_rail.remove_css_class ("rail-theme");
-        if (mode == "hide") {
+        this.account_rail.remove_css_class ("rail-custom");
+        clear_account_rail_custom_css ();
+
+        if (!enabled) {
             this.account_rail.visible = false;
             return;
         }
+
         this.account_rail.visible = true;
-        if (mode == "theme")
+        if (mode == "theme") {
             this.account_rail.add_css_class ("rail-theme");
+        } else if (mode == "custom") {
+            this.account_rail.add_css_class ("rail-custom");
+            apply_account_rail_custom_css (this.settings.get_string ("account-rail-color"));
+        }
+    }
+
+    private void clear_account_rail_custom_css () {
+        if (this.account_rail_css == null)
+            return;
+        Gtk.StyleContext.remove_provider_for_display (
+            this.account_rail.get_display (),
+            this.account_rail_css
+        );
+        this.account_rail_css = null;
+    }
+
+    private void apply_account_rail_custom_css (string color) {
+        var hex = color.strip ();
+        if (hex.length == 0)
+            hex = "#3584e4";
+        if (!hex.has_prefix ("#"))
+            hex = "#" + hex;
+
+        var rgba = Gdk.RGBA ();
+        if (!rgba.parse (hex))
+            rgba.parse ("#3584e4");
+        var fg = rail_contrast_fg (rgba);
+
+        clear_account_rail_custom_css ();
+        this.account_rail_css = new Gtk.CssProvider ();
+        this.account_rail_css.load_from_string (
+            ".account-rail.rail-custom { --letter-rail-bg: %s; --letter-rail-fg: %s; }".printf (
+                hex,
+                fg
+            )
+        );
+        Gtk.StyleContext.add_provider_for_display (
+            this.account_rail.get_display (),
+            this.account_rail_css,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1
+        );
+    }
+
+    private static string rail_contrast_fg (Gdk.RGBA bg) {
+        /* Relative luminance (sRGB). */
+        double lum = 0.2126 * bg.red + 0.7152 * bg.green + 0.0722 * bg.blue;
+        return lum > 0.55 ? "#1c1c1c" : "#ffffff";
     }
 
     private void on_folder_split_collapsed () {
@@ -4158,7 +4365,34 @@ public class Mail.Window : Adw.ApplicationWindow {
             cancel_mark_seen ();
         }
 
+        /* Paint optimistic moves synchronously so the destination is never
+         * empty while the async disk/Camel path catches up. */
+        paint_optimistic_destination (folder);
         load_messages.begin (folder);
+    }
+
+    private void paint_optimistic_destination (Folder folder) {
+        var account = this.selected_account;
+        if (account == null)
+            return;
+        var key = message_cache_key (account, folder);
+        var pending = this.optimistic_dest_headers.get (key);
+        if (pending == null || pending.length == 0)
+            return;
+
+        var cache = ensure_optimistic_dest_headers (
+            account, folder, this.message_cache.get (key)
+        );
+        if (cache == null || cache.length == 0)
+            return;
+        Utils.sync_log (
+            "optimistic dest paint “%s” (%u headers, %u pending)".printf (
+                folder.name,
+                cache.length,
+                pending.length
+            )
+        );
+        display_messages (account, folder, cache);
     }
 
     private async void load_messages (Folder folder) {
@@ -4205,14 +4439,14 @@ public class Mail.Window : Adw.ApplicationWindow {
             if (from_disk != null && from_disk.length > 0) {
                 note_header_high_water (account, folder, from_disk.length);
                 store_folder_messages (account, folder, from_disk, null, false);
-                cached = from_disk;
+                cached = this.message_cache.get (cache_key) ?? from_disk;
                 Utils.sync_log ("open folder disk prime “%s” → %u headers".printf (
                     folder.name,
-                    from_disk.length
+                    cached.length
                 ));
             } else if (from_disk != null) {
                 store_folder_messages (account, folder, from_disk, null, false, true);
-                cached = from_disk;
+                cached = this.message_cache.get (cache_key) ?? from_disk;
                 Utils.sync_log ("open folder disk prime “%s” → 0 headers".printf (folder.name));
             }
         } else {
@@ -4231,13 +4465,17 @@ public class Mail.Window : Adw.ApplicationWindow {
                         )
                     );
                     store_folder_messages (account, folder, from_disk, null, false);
-                    cached = from_disk;
+                    /* Use the merged RAM list — from_disk alone drops local_only. */
+                    cached = this.message_cache.get (cache_key) ?? from_disk;
                 }
             }
         }
+        /* Pending optimistic moves outlive RAM stubs / disk repair. */
+        cached = ensure_optimistic_dest_headers (account, folder, cached);
         if (cached != null && cached.length > 0) {
             touch_message_cache_key (cache_key);
             display_messages (account, folder, cached);
+            maybe_harvest_sent_recipients (account, folder, cached);
             /* High-water is sync metadata only — never inflate folder.total /
              * the heading above the rows actually in the list (that made large
              * folders look full while scrolling into empty ListView space). */
@@ -4245,9 +4483,10 @@ public class Mail.Window : Adw.ApplicationWindow {
             /* Known empty. A stale tree count must not cover it. */
             touch_message_cache_key (cache_key);
             display_messages (account, folder, cached);
-        } else if (folder_waiting_for_cache (folder)) {
+        } else if (folder_waiting_for_cache (folder)
+            && !this.optimistic_dest_headers.contains (cache_key)) {
             show_folder_cache_align_loading (folder);
-        } else {
+        } else if (!this.optimistic_dest_headers.contains (cache_key)) {
             show_conversation_loading (
                 _("Loading Messages"),
                 _("Reading the local list for “%s”…").printf (folder.name)
@@ -4294,27 +4533,36 @@ public class Mail.Window : Adw.ApplicationWindow {
             );
             if (!is_current_folder (folder))
                 return;
-            cached = this.message_cache.get (cache_key);
+            cached = ensure_optimistic_dest_headers (
+                account, folder, this.message_cache.get (cache_key)
+            );
             if (cached != null && cached.length > 0)
                 display_messages (account, folder, cached);
             else if (hint_total > 0 || hint_unread > 0) {
                 folder.total = int.max (folder.total, hint_total);
                 folder.unread = int.max (folder.unread, hint_unread);
                 refresh_folder_badge (folder);
-                show_folder_cache_align_loading (folder);
+                if (!this.optimistic_dest_headers.contains (cache_key))
+                    show_folder_cache_align_loading (folder);
             }
         }
-        cached = this.message_cache.get (cache_key);
+        cached = ensure_optimistic_dest_headers (
+            account, folder, this.message_cache.get (cache_key)
+        );
         /* A finished align already stored an empty list and cleared the badge.
          * The pre-click hint must not put the aligning spinner back on top. */
         if (cached != null && cached.length == 0
             && folder.total <= 0 && folder.unread <= 0) {
             if (is_current_folder (folder) && this.search_text.length == 0)
                 display_messages (account, folder, cached);
+        } else if (cached != null && cached.length > 0) {
+            if (is_current_folder (folder) && this.search_text.length == 0)
+                display_messages (account, folder, cached);
         } else if ((cached == null || cached.length == 0)
             && (folder.total > 0 || folder.unread > 0 || hint_total > 0 || hint_unread > 0)
             && !folder_is_incoming_watch (folder)
-            && !folder.is_gmail_namespace) {
+            && !folder.is_gmail_namespace
+            && !this.optimistic_dest_headers.contains (cache_key)) {
             if (folder.total <= 0 && hint_total > 0)
                 folder.total = hint_total;
             if (folder.unread <= 0 && hint_unread > 0)
@@ -5326,9 +5574,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         var messages = new GenericArray<Message> ();
         for (uint i = 0; i < items.length; i++) {
             var item = items[i];
-            var preview = item.plain ?? "";
-            preview = preview.strip ();
-            if (preview.length > 120)
+            var preview = Utils.sanitize_message_preview (item.plain);
+            if (preview != null && preview.length > 120)
                 preview = preview.substring (0, 120);
             var status = item.last_error != null && item.attempts > 0
                 ? item.last_error
@@ -5695,9 +5942,9 @@ public class Mail.Window : Adw.ApplicationWindow {
         var from = header_cache_unescape (parts[5]);
         var to = header_cache_unescape (parts[6]);
         var cc = parts.length > 7 ? header_cache_unescape (parts[7]) : "";
-        var preview = parts.length > 8 ? header_cache_unescape (parts[8]) : "";
-        if (preview.length == 0)
-            preview = null;
+        var preview = Utils.sanitize_message_preview (
+            parts.length > 8 ? header_cache_unescape (parts[8]) : null
+        );
         var conversation_key = parts.length > 9 ? header_cache_unescape (parts[9]) : "";
         if (conversation_key.length == 0)
             conversation_key = null;
@@ -5795,7 +6042,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         var path = MailSession.header_list_cache_file (account_uid, folder_full_name);
         uint write_n = 0;
         for (uint i = 0; i < messages.length; i++) {
-            if (messages[i].uid != null && messages[i].uid.length > 0 && !messages[i].local_only)
+            if (messages[i].uid != null && messages[i].uid.length > 0)
                 write_n++;
         }
         if (FileUtils.test (path, FileTest.IS_REGULAR)) {
@@ -5841,8 +6088,6 @@ public class Mail.Window : Adw.ApplicationWindow {
             var message = messages[i];
             if (message.uid == null || message.uid.length == 0)
                 continue;
-            if (message.local_only)
-                continue;
 
             int flags = 0;
             if (message.seen)
@@ -5855,6 +6100,9 @@ public class Mail.Window : Adw.ApplicationWindow {
                 flags |= 1 << 3;
             if (message.outgoing)
                 flags |= 1 << 4;
+            /* Optimistic moves / local drafts must survive RAM eviction. */
+            if (message.local_only)
+                flags |= 1 << 5;
 
             builder.append (message.uid);
             builder.append_c ('\t');
@@ -5898,13 +6146,14 @@ public class Mail.Window : Adw.ApplicationWindow {
         }
     }
 
-    private static string header_cache_escape (string? raw) {
+    internal static string header_cache_escape (string? raw) {
         if (raw == null || raw.length == 0)
             return "";
-        return raw.replace ("\\", "\\\\").replace ("\t", "\\t").replace ("\n", "\\n");
+        var text = Utils.replace_literal (raw, "\\", "\\\\");
+        return Utils.replace_literal (Utils.replace_literal (text, "\t", "\\t"), "\n", "\\n");
     }
 
-    private static string header_cache_unescape (string raw) {
+    internal static string header_cache_unescape (string raw) {
         var builder = new StringBuilder ();
         var escaped = false;
         unichar c;
@@ -6200,11 +6449,23 @@ public class Mail.Window : Adw.ApplicationWindow {
         return visible;
     }
 
+    private void maybe_harvest_sent_recipients (
+        Account account,
+        Folder folder,
+        GenericArray<Message> messages
+    ) {
+        if (folder.kind != FolderKind.SENT || messages.length == 0)
+            return;
+        var app = get_application () as Application;
+        app?.contacts.harvest_sent_messages (account, messages);
+    }
+
     private void display_messages (Account account, Folder folder, GenericArray<Message> messages) {
         if (this.search_text.length > 0)
             return;
 
-        var stored = visible_messages (account, folder, messages);
+        var with_pending = ensure_optimistic_dest_headers (account, folder, messages) ?? messages;
+        var stored = visible_messages (account, folder, with_pending);
         Conversation.prune_duplicate_sends (stored);
         sort_messages_by_date (stored);
         this.message_cache.set (message_cache_key (account, folder), stored);
@@ -6226,12 +6487,18 @@ public class Mail.Window : Adw.ApplicationWindow {
                     this.conversation_grouping_dirty = true;
                     return;
                 }
-                if (showing_this_folder (folder) && !this.conversation_apply_quiet) {
+                var has_optimistic = this.optimistic_dest_headers.contains (
+                    message_cache_key (account, folder)
+                );
+                /* Optimistic moves must paint now — quiet regroup can run after
+                 * a Camel tip that briefly lacked the local_only header. */
+                if (showing_this_folder (folder) && !this.conversation_apply_quiet
+                    && !has_optimistic) {
                     schedule_quiet_regroup ();
                     return;
                 }
                 /* Click lands on rows at once. Threading then updates the model. */
-                if (!showing_this_folder (folder))
+                if (!showing_this_folder (folder) || has_optimistic)
                     show_known_folder_list (account, folder, stored);
                 var gen = ++this.display_messages_generation;
                 this.conversation_regroup_not_before =
@@ -6361,7 +6628,9 @@ public class Mail.Window : Adw.ApplicationWindow {
             return;
         }
 
-        if (is_showing_list () && same_conversation_ids (listed)) {
+        /* Only skip a full model rebuild when this folder's rows are already
+         * on screen — leftover Inbox ids must not block painting Sett. */
+        if (showing_this_folder (folder) && same_conversation_ids (listed)) {
             apply_conversation_seen (listed);
             if (this.unread_only) {
                 var still = listed_conversations (listed);
@@ -6672,6 +6941,17 @@ public class Mail.Window : Adw.ApplicationWindow {
         };
         click.pressed.connect (on_message_secondary_pressed);
         row.add_controller (click);
+
+        /* MOVE — valid folders show the move cursor; invalid ones (and the
+         * message list) show the forbidden cursor instead of copy “+”. */
+        var drag = new Gtk.DragSource () {
+            actions = Gdk.DragAction.MOVE,
+        };
+        drag.prepare.connect (on_message_drag_prepare);
+        drag.drag_begin.connect (on_message_drag_begin);
+        drag.drag_end.connect (on_message_drag_end);
+        drag.drag_cancel.connect (on_message_drag_cancel);
+        row.add_controller (drag);
         item.child = row;
     }
 
@@ -6705,12 +6985,193 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* This call may recycle the row. The extra ref lasts until return. */
         row.ref ();
         var conversation = row.conversation;
-        var position = row.list_position;
+        var position = position_of_conversation (conversation);
+        if (position != Gtk.INVALID_LIST_POSITION)
+            row.list_position = position;
         click.set_state (Gtk.EventSequenceState.CLAIMED);
         if (position != Gtk.INVALID_LIST_POSITION && !this.message_selection.is_selected (position))
             this.message_selection.select_item (position, true);
         popup_message_menu (row, x, y, conversation, null);
         row.unref ();
+    }
+
+    private uint position_of_conversation (Conversation? conversation) {
+        if (conversation == null)
+            return Gtk.INVALID_LIST_POSITION;
+        var n = this.message_store.n_items;
+        for (uint i = 0; i < n; i++) {
+            var item = this.message_store.get_item (i) as Conversation;
+            if (item == null)
+                continue;
+            if (item == conversation || item.id == conversation.id)
+                return i;
+        }
+        return Gtk.INVALID_LIST_POSITION;
+    }
+
+    private Gdk.ContentProvider? on_message_drag_prepare (Gtk.DragSource drag, double x, double y) {
+        unowned MessageRow? row = drag.widget as MessageRow;
+        if (row == null)
+            return null;
+        if (this.selected_folder != null && this.selected_folder.is_local_outbox)
+            return null;
+
+        /* Never trust row.list_position after a splice — ListView can lag on
+         * rebind, and selecting by a stale index drags the wrong mail. */
+        var conversation = row.conversation;
+        var position = position_of_conversation (conversation);
+        if (position == Gtk.INVALID_LIST_POSITION)
+            return null;
+        row.list_position = position;
+        if (!this.message_selection.is_selected (position))
+            this.message_selection.select_item (position, true);
+
+        var messages = selected_listed_messages ();
+        var movable = new GenericArray<Message> ();
+        for (uint i = 0; i < messages.length; i++) {
+            if (is_outbox_message (messages[i]) || messages[i].is_placeholder)
+                continue;
+            movable.add (messages[i]);
+        }
+        if (movable.length == 0)
+            return null;
+
+        this.active_message_drag = new MessageDragPayload (movable);
+        return new Gdk.ContentProvider.for_value (this.active_message_drag);
+    }
+
+    private void on_message_drag_begin (Gtk.DragSource drag, Gdk.Drag gdk_drag) {
+        this.message_list.add_css_class ("message-list-dragging");
+        var count = this.active_message_drag != null ? this.active_message_drag.count : 1;
+        /* Frozen Cairo texture — a live DragIcon/widget re-composites every
+         * motion frame and fringes a 1px hairline on the card edge (Wayland).
+         * Bake @scale pixels, but report logical size so GTK does not show it at 200%. */
+        var scale = drag.widget != null ? drag.widget.get_scale_factor () : 1;
+        var icon = build_message_drag_paintable (count, scale);
+        drag.set_icon (icon, icon.get_intrinsic_width () / 2, icon.get_intrinsic_height () / 2);
+    }
+
+    private void on_message_drag_end (Gtk.DragSource drag, Gdk.Drag gdk_drag, bool delete_data) {
+        this.message_list.remove_css_class ("message-list-dragging");
+        this.active_message_drag = null;
+        clear_folder_drop_highlights ();
+    }
+
+    private bool on_message_drag_cancel (Gtk.DragSource drag, Gdk.Drag gdk_drag, Gdk.DragCancelReason reason) {
+        this.message_list.remove_css_class ("message-list-dragging");
+        this.active_message_drag = null;
+        clear_folder_drop_highlights ();
+        return false;
+    }
+
+    private Gdk.DragAction on_message_list_drop_enter (Gtk.DropTarget target, double x, double y) {
+        return 0;
+    }
+
+    private Gdk.DragAction on_message_list_drop_motion (Gtk.DropTarget target, double x, double y) {
+        return 0;
+    }
+
+    private static void drag_rounded_rect (Cairo.Context cr, double x, double y, double w, double h, double r) {
+        cr.new_sub_path ();
+        cr.arc (x + w - r, y + r, r, -Math.PI / 2, 0);
+        cr.arc (x + w - r, y + h - r, r, 0, Math.PI / 2);
+        cr.arc (x + r, y + h - r, r, Math.PI / 2, Math.PI);
+        cr.arc (x + r, y + r, r, Math.PI, 3 * Math.PI / 2);
+        cr.close_path ();
+    }
+
+    private static Gdk.Paintable build_message_drag_paintable (uint count, int scale) {
+        if (scale < 1)
+            scale = 1;
+        const int width = 128;
+        const int height = 56;
+        var surface = new Cairo.ImageSurface (Cairo.Format.ARGB32, width * scale, height * scale);
+        var cr = new Cairo.Context (surface);
+        cr.scale (scale, scale);
+
+        uint cards = uint.min (count < 1 ? 1 : count, 3);
+        for (uint i = 0; i < cards; i++) {
+            var depth = cards - 1 - i;
+            double x = 8 + depth * 5;
+            double y = 6 + depth * 4;
+            double w = 100;
+            double h = 40;
+            drag_rounded_rect (cr, x, y, w, h, 8);
+            if (depth == 0)
+                cr.set_source_rgb (0.98, 0.98, 0.98);
+            else
+                cr.set_source_rgb (0.93, 0.93, 0.93);
+            cr.fill_preserve ();
+            cr.set_source_rgba (0.55, 0.55, 0.55, 0.35);
+            cr.set_line_width (1.0);
+            cr.stroke ();
+
+            if (depth == 0) {
+                cr.set_source_rgb (0.55, 0.72, 0.92);
+                double ly = y + 10;
+                drag_rounded_rect (cr, x + 10, ly, w - 20, 5, 2.5);
+                cr.fill ();
+                ly += 9;
+                drag_rounded_rect (cr, x + 10, ly, w - 20, 5, 2.5);
+                cr.fill ();
+                ly += 9;
+                drag_rounded_rect (cr, x + 10, ly, 48, 5, 2.5);
+                cr.fill ();
+            }
+        }
+
+        if (count > 1) {
+            string label = count.to_string ();
+            cr.select_font_face ("Sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
+            cr.set_font_size (11);
+            Cairo.TextExtents extents;
+            cr.text_extents (label, out extents);
+            double bw = double.max (22, extents.width + 12);
+            double bh = 18;
+            double bx = width - bw - 4;
+            double by = 2;
+            drag_rounded_rect (cr, bx, by, bw, bh, bh / 2);
+            cr.set_source_rgb (0.26, 0.52, 0.96);
+            cr.fill ();
+            cr.set_source_rgb (1, 1, 1);
+            cr.move_to (bx + (bw - extents.width) / 2 - extents.x_bearing,
+                by + (bh - extents.height) / 2 - extents.y_bearing);
+            cr.show_text (label);
+        }
+
+        surface.flush ();
+        unowned uint8[] data = surface.get_data ();
+        var copy = new uint8[surface.get_stride () * surface.get_height ()];
+        Memory.copy (copy, data, copy.length);
+        var texture = new Gdk.MemoryTexture (
+            surface.get_width (),
+            surface.get_height (),
+            Gdk.MemoryFormat.B8G8R8A8_PREMULTIPLIED,
+            new Bytes.take (copy),
+            surface.get_stride ()
+        );
+        return new MessageDragPaintable (texture, width, height);
+    }
+
+    private void clear_folder_drop_highlights () {
+        for (int i = 0; this.folder_list.get_row_at_index (i) != null; i++) {
+            var row = this.folder_list.get_row_at_index (i) as FolderRow;
+            row?.remove_css_class ("folder-drop");
+        }
+    }
+
+    private bool folder_accepts_message_drop (Folder folder, MessageDragPayload? payload) {
+        if (folder.is_virtual_view || folder.is_gmail_namespace)
+            return false;
+        if (payload == null || payload.messages.length == 0)
+            return false;
+        for (uint i = 0; i < payload.messages.length; i++) {
+            var from = folder_for_message (payload.messages[i]);
+            if (from != null && from.full_name != folder.full_name)
+                return true;
+        }
+        return false;
     }
 
     private uint selected_count () {
@@ -7590,11 +8051,103 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.reader_bin.visible = true;
             this.reader_mail.visible = true;
         }
-        update_search_field_width ();
+
+        update_window_width_request ();
+        ensure_split_reader_min ();
+    }
+
+    private int measure_reader_chrome_min () {
+        Gtk.Widget bar = this.reading_pane_split
+            ? (Gtk.Widget) this.reader_header
+            : this.conversation_header;
+        int minimum;
+        int natural;
+        int minimum_baseline;
+        int natural_baseline;
+        bar.measure (
+            Gtk.Orientation.HORIZONTAL,
+            -1,
+            out minimum,
+            out natural,
+            out minimum_baseline,
+            out natural_baseline
+        );
+        return int.max (READER_PANE_MIN, minimum);
+    }
+
+    private int split_shell_floor_without_folders () {
+        return ACCOUNT_RAIL_WIDTH + MESSAGE_PANE_MIN + measure_reader_chrome_min ();
+    }
+
+    private void update_window_width_request () {
+        /* Hard floor after folders are gone — resize bumps into this instead
+         * of clipping menu / minimize / maximize / close (native GTK feel). */
+        if (this.reading_pane_split)
+            width_request = int.max (WINDOW_MIN_WIDTH, split_shell_floor_without_folders ());
+        else
+            width_request = WINDOW_MIN_WIDTH;
+    }
+
+    private void ensure_split_reader_min () {
+        if (!this.reading_pane_split || !this.split_mail.visible || this.clamping_split_mail)
+            return;
+
+        var reader_min = measure_reader_chrome_min ();
+        this.reader_mail.width_request = reader_min;
+        apply_message_pane_preferred ();
+    }
+
+    private const int MAIL_SPLIT_HANDLE = 12;
+
+    /* Largest list width the split may use at this size: the reader keeps
+     * its chrome minimum and at least (1 − SHARE) of the space. */
+    private int message_list_cap (int total, int reader_min) {
+        var usable = int.max (0, total - MAIL_SPLIT_HANDLE);
+        var cap = int.min (total - reader_min, (int) (usable * MESSAGE_LIST_SHARE));
+        return cap.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+    }
+
+    /* Preference while it fits under the cap; under pressure the list follows
+     * the cap (1px list per 2px reader) and grows back to the preference. */
+    private int message_list_target_width (int total, int reader_min) {
+        return int.min (this.message_pane_preferred, message_list_cap (total, reader_min));
+    }
+
+    private int split_mail_list_width_for (ListReaderSplit frame, int size) {
+        if (!this.reading_pane_split || size <= MAIL_SPLIT_HANDLE)
+            return -1;
+        return message_list_target_width (size, measure_reader_chrome_min ());
+    }
+
+    private int message_split_list_width_for (ListReaderSplit frame, int size) {
+        if (this.reading_pane_split
+            || this.message_split.orientation != Gtk.Orientation.HORIZONTAL
+            || size <= MAIL_SPLIT_HANDLE)
+            return -1;
+        return message_list_target_width (size, READER_PANE_MIN);
+    }
+
+    /* Handle drag: save what the user chose. Dragging against the cap must
+     * not lower a wider saved preference. */
+    private void commit_message_pane_preferred (int pos, int total, int reader_min) {
+        var clamped = pos.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
+        if (total > MAIL_SPLIT_HANDLE) {
+            var cap = message_list_cap (total, reader_min);
+            if (clamped >= cap)
+                clamped = int.max (this.message_pane_preferred, cap);
+        }
+        if (clamped == this.message_pane_preferred)
+            return;
+        this.message_pane_preferred = clamped;
+        this.settings.set_int ("message-pane-width", clamped);
+    }
+
+    private void apply_message_pane_preferred () {
+        this.split_mail.queue_allocate ();
+        this.message_split.queue_allocate ();
     }
 
     private void enter_split_reading_headers () {
-        var pos = this.message_split.position.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
         detach_mail_chrome ();
         this.message_split.start_child = null;
         this.message_split.end_child = null;
@@ -7602,33 +8155,34 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.reader_mail_slot.child = this.reader_bin;
 
         this.list_header.title_widget = this.conversation_title;
-        this.list_header.pack_end (this.conversation_button);
+        this.list_header.pack_start (this.folder_pane_button);
+        this.list_header.pack_end (this.search_toggle_button);
         this.list_header.pack_end (this.unread_filter_button);
+        this.list_header.pack_end (this.conversation_button);
 
         this.reader_header.pack_start (this.compose_button);
-        this.reader_header.pack_start (this.message_search);
         this.reader_header.pack_end (this.menu_button);
         this.reader_header.pack_end (this.conversation_sync_spinner);
 
         this.unified_mail.visible = false;
         this.split_mail.visible = true;
         this.clamping_split_mail = true;
-        this.split_mail.position = pos;
+        this.split_mail.position = this.message_pane_preferred.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
         this.clamping_split_mail = false;
     }
 
     private void enter_unified_reading_headers () {
-        var pos = this.split_mail.position.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
         detach_mail_chrome ();
         this.list_mail_slot.child = null;
         this.reader_mail_slot.child = null;
         this.message_split.start_child = this.list_bin;
         this.message_split.end_child = this.reader_bin;
 
+        this.conversation_header.pack_start (this.folder_pane_button);
         this.conversation_header.pack_start (this.compose_button);
-        this.conversation_header.pack_start (this.unread_filter_button);
         this.conversation_header.pack_start (this.conversation_button);
-        this.conversation_header.pack_start (this.message_search);
+        this.conversation_header.pack_start (this.unread_filter_button);
+        this.conversation_header.pack_start (this.search_toggle_button);
         this.conversation_header.title_widget = this.conversation_title;
         this.conversation_header.pack_end (this.menu_button);
         this.conversation_header.pack_end (this.conversation_sync_spinner);
@@ -7636,15 +8190,16 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.split_mail.visible = false;
         this.unified_mail.visible = true;
         this.clamping_message_pane = true;
-        this.message_split.position = pos;
+        this.message_split.position = this.message_pane_preferred.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
         this.clamping_message_pane = false;
     }
 
     private void detach_mail_chrome () {
         header_detach (this.compose_button);
+        header_detach (this.folder_pane_button);
         header_detach (this.unread_filter_button);
         header_detach (this.conversation_button);
-        header_detach (this.message_search);
+        header_detach (this.search_toggle_button);
         header_detach (this.menu_button);
         header_detach (this.conversation_sync_spinner);
         if (this.conversation_header.title_widget == this.conversation_title)
@@ -7666,60 +8221,179 @@ public class Mail.Window : Adw.ApplicationWindow {
             ((Gtk.Box) parent).remove (widget);
     }
 
-    private void update_search_field_width () {
-        var narrow = this.get_width () > 0 && this.get_width () < 1100;
-        if (this.reading_pane_split)
-            this.message_search.width_request = narrow ? 240 : 330;
-        else
-            this.message_search.width_request = narrow ? 180 : 220;
-    }
-
     private void on_message_pane_resized () {
-        if (this.clamping_message_pane || this.reading_pane_split)
+        if (this.clamping_message_pane || this.reading_pane_split
+            || this.message_split_frame.allocating
+            || this.message_split.orientation != Gtk.Orientation.HORIZONTAL)
             return;
-
-        var pos = this.message_split.position;
-        var clamped = pos.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
-        if (clamped != pos) {
-            this.clamping_message_pane = true;
-            this.message_split.position = clamped;
-            this.clamping_message_pane = false;
-        }
-
-        this.settings.set_int ("message-pane-width", clamped);
+        commit_message_pane_preferred (
+            this.message_split.position, this.message_split.get_width (), READER_PANE_MIN);
     }
 
     private void on_split_mail_resized () {
-        if (this.clamping_split_mail || !this.reading_pane_split)
+        if (this.clamping_split_mail || !this.reading_pane_split
+            || this.split_mail_frame.allocating)
             return;
-
-        var pos = this.split_mail.position;
-        var clamped = pos.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX);
-        if (clamped != pos) {
-            this.clamping_split_mail = true;
-            this.split_mail.position = clamped;
-            this.clamping_split_mail = false;
-        }
-
-        this.settings.set_int ("message-pane-width", clamped);
+        commit_message_pane_preferred (
+            this.split_mail.position, this.split_mail.get_width (), measure_reader_chrome_min ());
     }
 
-    private void on_folder_pane_resized () {
-        if (this.clamping_pane)
+    private void bind_folder_pane_narrow_breakpoint () {
+        var bp = new Adw.Breakpoint (new Adw.BreakpointCondition.length (
+            Adw.BreakpointConditionLengthType.MAX_WIDTH,
+            FOLDER_PANE_NARROW_SP,
+            Adw.LengthUnit.SP
+        ));
+        /* Only setter — Adw animates collapsed; do not also set it in Vala. */
+        bp.add_setter (this.folder_pane_split, "collapsed", true);
+        add_breakpoint (bp);
+        this.folder_pane_narrow_break = bp;
+    }
+
+    private void on_folder_pane_window_mapped () {
+        if (!this.folder_pane_surface_bound) {
+            var surface = get_surface ();
+            if (surface != null) {
+                surface.notify["width"].connect (queue_folder_pane_width_sync);
+                surface.notify["height"].connect (queue_folder_pane_width_sync);
+                this.folder_pane_surface_bound = true;
+            }
+        }
+        queue_folder_pane_width_sync ();
+    }
+
+    private void queue_folder_pane_width_sync () {
+        if (this.folder_pane_width_idle != 0 || this.tearing_down)
+            return;
+        this.folder_pane_width_idle = Idle.add (() => {
+            this.folder_pane_width_idle = 0;
+            if (!this.tearing_down)
+                sync_folder_pane_to_window_width ();
+            return Source.REMOVE;
+        });
+    }
+
+    private void cancel_folder_pane_hide () {
+        if (this.folder_pane_hide_source == 0)
+            return;
+        Source.remove (this.folder_pane_hide_source);
+        this.folder_pane_hide_source = 0;
+    }
+
+    /* Breakpoint owns collapsed (animated). On collapse: keep sidebar visible
+     * briefly so Adw can run dock→overlay, then close the overlay (slide-out).
+     * On expand: restore preference — Adw runs overlay/dock slide-in. */
+    private void on_folder_pane_collapsed () {
+        if (this.folder_pane_split.collapsed) {
+            this.folder_pane_narrow = true;
+            this.folder_pane_overlay_wanted = false;
+            cancel_folder_pane_hide ();
+            if (this.folder_pane_split.show_sidebar) {
+                this.folder_pane_hide_source = Timeout.add (280, () => {
+                    this.folder_pane_hide_source = 0;
+                    if (this.tearing_down
+                        || !this.folder_pane_split.collapsed
+                        || this.folder_pane_overlay_wanted)
+                        return Source.REMOVE;
+                    set_folder_pane_sidebar (false);
+                    return Source.REMOVE;
+                });
+            } else {
+                sync_folder_pane_button (false);
+            }
+        } else {
+            cancel_folder_pane_hide ();
+            this.folder_pane_narrow = false;
+            this.folder_pane_overlay_wanted = false;
+            apply_folder_pane (this.settings.get_boolean ("show-mail-folders-pane"));
+        }
+        update_window_width_request ();
+    }
+
+    private void sync_folder_pane_to_window_width () {
+        if (this.tearing_down)
             return;
 
-        var pos = this.content_split.position;
-        var clamped = pos.clamp (FOLDER_PANE_MIN, FOLDER_PANE_MAX);
-        if (clamped != pos) {
-            this.clamping_pane = true;
-            this.content_split.position = clamped;
-            this.clamping_pane = false;
+        /* Adw reallocates the sidebar from fraction×width on its own —
+         * do not rewrite max/fraction here or the pane stays pinned. */
+        update_window_width_request ();
+        ensure_split_reader_min ();
+    }
+
+    private void apply_folder_pane_chrome () {
+        this.folder_pane_split.sidebar_width_unit = Adw.LengthUnit.SP;
+        this.folder_pane_split.min_sidebar_width = FOLDER_PANE_MIN;
+        this.folder_pane_split.max_sidebar_width = FOLDER_PANE_MAX;
+        this.folder_pane_split.sidebar_width_fraction = FOLDER_PANE_FRACTION;
+    }
+
+    private void sync_folder_pane_button (bool show) {
+        this.syncing_folder_pane_toggle = true;
+        this.folder_pane_button.active = show;
+        this.syncing_folder_pane_toggle = false;
+        this.folder_pane_button.tooltip_text = show
+            ? _("Hide folders")
+            : _("Show folders");
+    }
+
+    private void set_folder_pane_sidebar (bool show) {
+        if (this.folder_pane_split.show_sidebar == show) {
+            sync_folder_pane_button (show);
+            return;
+        }
+        this.syncing_folder_pane_toggle = true;
+        this.folder_pane_split.show_sidebar = show;
+        this.syncing_folder_pane_toggle = false;
+        sync_folder_pane_button (show);
+    }
+
+    private void apply_folder_pane (bool show) {
+        if (!this.folder_pane_split.collapsed)
+            apply_folder_pane_chrome ();
+        set_folder_pane_sidebar (show);
+    }
+
+    private void on_folder_pane_show_sidebar () {
+        if (this.syncing_folder_pane_toggle)
+            return;
+
+        var show = this.folder_pane_split.show_sidebar;
+        sync_folder_pane_button (show);
+        /* Overlay open/close while collapsed is temporary; docked toggles
+         * persist the preference for restore when the breakpoint lifts. */
+        if (this.folder_pane_split.collapsed)
+            this.folder_pane_overlay_wanted = show;
+        else
+            this.settings.set_boolean ("show-mail-folders-pane", show);
+    }
+
+    private void on_folder_pane_toggled () {
+        if (this.syncing_folder_pane_toggle)
+            return;
+
+        var show = this.folder_pane_button.active;
+        this.folder_pane_button.tooltip_text = show
+            ? _("Hide folders")
+            : _("Show folders");
+        if (this.folder_pane_split.collapsed) {
+            this.folder_pane_overlay_wanted = show;
+            cancel_folder_pane_hide ();
+            this.folder_pane_split.show_sidebar = show;
+            return;
         }
 
-        this.settings.set_int ("folder-pane-width", clamped);
+        this.folder_pane_overlay_wanted = false;
+        this.folder_pane_split.show_sidebar = show;
+        this.settings.set_boolean ("show-mail-folders-pane", show);
+        update_window_width_request ();
+        ensure_split_reader_min ();
     }
 
     private void on_toggle_sidebar () {
+        if (!ACCOUNT_LIST_PANE_ENABLED) {
+            this.folder_pane_button.active = !this.folder_pane_button.active;
+            return;
+        }
         this.sidebar_button.active = !this.sidebar_button.active;
     }
 
@@ -8573,7 +9247,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         if (message == null || folder == null)
             return;
 
-        var destination = yield pick_folder (this, folders_from_tree (), folder);
+        var destination = yield pick_folder (this, folders_from_tree (), folder, 1, this.selected_account);
         if (destination == null)
             return;
 
@@ -8662,7 +9336,9 @@ public class Mail.Window : Adw.ApplicationWindow {
         Folder? current = folder_for_message (messages[0]);
         if (current == null)
             current = this.selected_folder;
-        var destination = yield pick_folder (this, folders_from_tree (), current, messages.length);
+        var destination = yield pick_folder (
+            this, folders_from_tree (), current, messages.length, this.selected_account
+        );
         if (destination == null)
             return;
 
@@ -8934,18 +9610,19 @@ public class Mail.Window : Adw.ApplicationWindow {
             refresh_folder_badge (groups[i].folder);
         refresh_folder_badge (destination);
 
-        /* Persist both sides of the optimistic move so a live folder-changed
-         * / eviction cannot rebuild from a stale disk index missing the move. */
+        /* Persist both sides immediately (never shrink) so opening the
+         * destination before F5 still shows the optimistic headers. */
         for (uint i = 0; i < groups.length; i++) {
-            var src_cache = this.message_cache.get (message_cache_key (account, groups[i].folder));
-            if (src_cache != null)
-                queue_header_list_cache_save (account, groups[i].folder, src_cache);
+            var src_key = message_cache_key (account, groups[i].folder);
+            this.grouped_list_cache.remove (src_key);
+            persist_optimistic_move_headers (account, groups[i].folder);
         }
-        var dest_cache = this.message_cache.get (message_cache_key (account, destination));
-        if (dest_cache != null) {
+        var dest_key = message_cache_key (account, destination);
+        this.grouped_list_cache.remove (dest_key);
+        var dest_cache = this.message_cache.get (dest_key);
+        if (dest_cache != null)
             note_header_high_water (account, destination, dest_cache.length);
-            queue_header_list_cache_save (account, destination, dest_cache);
-        }
+        persist_optimistic_move_headers (account, destination);
 
         /* Enqueue Camel moves into the deferred registry. Undo toast is local
          * only — server push waits for the sync timer or F5. */
@@ -9083,6 +9760,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         message.local_only = item.local_only;
         if (item.folder_full_name != null)
             message.folder_full_name = item.folder_full_name;
+        forget_optimistic_dest_header (account, destination, current_uid);
+        forget_optimistic_dest_header (account, destination, uid);
         remove_from_folder_cache (account, destination, current_uid);
         add_to_folder_cache (account, from, message);
         from.total++;
@@ -9092,6 +9771,137 @@ public class Mail.Window : Adw.ApplicationWindow {
             destination.total--;
         if (unseen && destination.unread > 0)
             destination.unread--;
+
+        persist_optimistic_move_headers (account, from);
+        persist_optimistic_move_headers (account, destination);
+    }
+
+    private void remember_optimistic_dest_header (Account account, Folder destination, Message message) {
+        if (message.uid == null || message.uid.length == 0)
+            return;
+        var key = message_cache_key (account, destination);
+        var list = this.optimistic_dest_headers.get (key);
+        if (list == null) {
+            list = new GenericArray<Message> ();
+            this.optimistic_dest_headers.set (key, list);
+        }
+        for (uint i = 0; i < list.length; i++) {
+            if (list[i].uid == message.uid) {
+                list[i] = message;
+                Utils.sync_log ("optimistic dest remember “%s” uid %s (update)".printf (
+                    destination.full_name,
+                    message.uid
+                ));
+                return;
+            }
+        }
+        list.add (message);
+        Utils.sync_log ("optimistic dest remember “%s” uid %s (now %u)".printf (
+            destination.full_name,
+            message.uid,
+            list.length
+        ));
+    }
+
+    private void forget_optimistic_dest_header (Account account, Folder destination, string? uid) {
+        if (uid == null || uid.length == 0)
+            return;
+        var key = message_cache_key (account, destination);
+        var list = this.optimistic_dest_headers.get (key);
+        if (list == null)
+            return;
+        for (uint i = 0; i < list.length; i++) {
+            if (list[i].uid != uid)
+                continue;
+            list.remove_index (i);
+            break;
+        }
+        if (list.length == 0)
+            this.optimistic_dest_headers.remove (key);
+    }
+
+    /* Re-attach optimistic move headers so destination open never depends on
+     * whether RAM/disk still holds the local_only row. */
+    private GenericArray<Message>? ensure_optimistic_dest_headers (
+        Account account,
+        Folder folder,
+        GenericArray<Message>? messages
+    ) {
+        var key = message_cache_key (account, folder);
+        var pending = this.optimistic_dest_headers.get (key);
+        if (pending == null || pending.length == 0)
+            return messages;
+
+        var list = messages;
+        if (list == null)
+            list = new GenericArray<Message> ();
+
+        var have = new HashTable<string, uint8> (str_hash, str_equal);
+        for (uint i = 0; i < list.length; i++) {
+            if (list[i].uid != null && list[i].uid.length > 0)
+                have.set (list[i].uid, 1);
+        }
+
+        var added = false;
+        for (uint i = 0; i < pending.length; i++) {
+            var message = pending[i];
+            if (message.uid == null || message.uid.length == 0)
+                continue;
+            if (have.contains (message.uid))
+                continue;
+            Conversation.apply_folder (message, folder, null);
+            message.local_only = true;
+            list.add (message);
+            have.set (message.uid, 1);
+            added = true;
+        }
+
+        if (!added && messages != null)
+            return messages;
+
+        this.message_cache.set (key, list);
+        touch_message_cache_key (key);
+        this.grouped_list_cache.remove (key);
+        if (added)
+            Utils.sync_log ("optimistic dest inject “%s” → %u headers (+pending)".printf (
+                folder.full_name,
+                list.length
+            ));
+        return list;
+    }
+
+    /* Write RAM headers now without accept_shrink — optimistic moves must not
+     * replace a large on-disk index with a live stub. Always write when the
+     * list holds local_only rows (small folders skip the usual 200 floor). */
+    private void persist_optimistic_move_headers (Account account, Folder folder) {
+        var key = message_cache_key (account, folder);
+        var cache = this.message_cache.get (key);
+        if (cache == null)
+            return;
+
+        var has_local = false;
+        for (uint i = 0; i < cache.length; i++) {
+            if (cache[i].local_only) {
+                has_local = true;
+                break;
+            }
+        }
+        if (!has_local && !header_list_cache_worth_saving (folder, cache))
+            return;
+
+        var existing = this.header_cache_save_sources.get (key);
+        if (existing != 0) {
+            Source.remove (existing);
+            this.header_cache_save_sources.remove (key);
+        }
+        save_header_list_cache (
+            account.source_uid ?? account.uid,
+            folder.full_name,
+            folder.name,
+            cache,
+            false
+        );
+        note_header_high_water (account, folder, cache.length);
     }
 
     private void finish_thread_bulk () {
@@ -9157,6 +9967,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         message.local_only = true;
         this.mail_session.rekey_body (account, from, old_uid, destination, old_uid);
         add_to_folder_cache (account, destination, message);
+        remember_optimistic_dest_header (account, destination, message);
         destination.total++;
         if (unseen)
             destination.unread++;
@@ -9350,13 +10161,25 @@ public class Mail.Window : Adw.ApplicationWindow {
     private void add_to_folder_cache (Account account, Folder folder, Message message) {
         var key = message_cache_key (account, folder);
         var cache = this.message_cache.get (key);
-        if (cache == null) {
-            cache = load_header_list_cache (account, folder);
-            if (cache == null)
+        /* A live folder-changed stub must not swallow a large disk index —
+         * otherwise the optimistic move is the only header left in RAM and
+         * the next open repairs from disk without it. */
+        var disk_n = disk_header_list_count (account, folder);
+        if (cache == null || (disk_n > 0 && cache.length + LARGE_HEADER_GAP < disk_n)) {
+            var from_disk = load_header_list_cache (account, folder);
+            if (from_disk != null && (cache == null || from_disk.length > cache.length)) {
+                if (cache != null)
+                    from_disk = merge_pending_local_headers (cache, from_disk);
+                cache = from_disk;
+                this.message_cache.set (key, cache);
+            } else if (cache == null) {
                 cache = new GenericArray<Message> ();
-            this.message_cache.set (key, cache);
-            touch_message_cache_key (key);
+                this.message_cache.set (key, cache);
+            }
         }
+        touch_message_cache_key (key);
+        /* Stale threaded snapshot would hide the just-moved header. */
+        this.grouped_list_cache.remove (key);
 
         for (uint i = 0; i < cache.length; i++) {
             if (cache[i].uid == message.uid
@@ -9560,7 +10383,13 @@ public class Mail.Window : Adw.ApplicationWindow {
         on_message_selection_changed ();
     }
 
-    public static async Folder? pick_folder (Gtk.Widget parent, GenericArray<Folder> folders, Folder? current, uint count = 1) {
+    public static async Folder? pick_folder (
+        Gtk.Widget parent,
+        GenericArray<Folder> folders,
+        Folder? current,
+        uint count = 1,
+        Account? account = null
+    ) {
         var description = count > 1
             ? _("Choose where to move the selected messages.")
             : _("Choose where to move this message.");
@@ -9573,11 +10402,45 @@ public class Mail.Window : Adw.ApplicationWindow {
         dialog.set_response_appearance ("move", Adw.ResponseAppearance.SUGGESTED);
         dialog.set_response_enabled ("move", false);
 
+        var search = new Gtk.SearchEntry () {
+            hexpand = true,
+            placeholder_text = _("Search folders"),
+        };
+        search.stop_search.connect (() => dialog.close ());
+
+        /* Account header stays pinned; folder rows collapse like the sidebar tree. */
+        var account_expanded = true;
+        var collapsed = new GenericSet<string> (str_hash, str_equal);
         var list = new Gtk.ListBox () {
             selection_mode = Gtk.SelectionMode.SINGLE,
-            valign = Gtk.Align.START,
+            activate_on_single_click = false,
+            valign = Gtk.Align.FILL,
+            vexpand = true,
         };
-        list.add_css_class ("boxed-list");
+        list.add_css_class ("folder-pick-list");
+        list.set_placeholder (new Gtk.Label (_("No matching folders.")) {
+            margin_top = 12,
+            margin_bottom = 12,
+        });
+        list.set_filter_func ((row) => {
+            var pick = row as FolderPickRow;
+            if (pick == null)
+                return false;
+            return folder_pick_row_visible (
+                pick, list, collapsed, account_expanded, search.text.casefold ().strip ()
+            );
+        });
+
+        FolderPickAccountHeader? account_header = null;
+        if (account != null) {
+            account_header = new FolderPickAccountHeader (account);
+            account_header.expanded = true;
+            account_header.toggled.connect (() => {
+                account_expanded = account_header.expanded;
+                list.invalidate_filter ();
+            });
+        }
+
         Folder? picked = null;
         for (uint i = 0; i < folders.length; i++) {
             var folder = folders[i];
@@ -9586,23 +10449,145 @@ public class Mail.Window : Adw.ApplicationWindow {
             if (folder.is_virtual_view)
                 continue;
 
-            list.append (new FolderPickRow (folder));
+            var pick_row = new FolderPickRow (folder);
+            pick_row.expander_toggled.connect (() => {
+                var key = pick_row.mail_folder.full_name;
+                if (collapsed.contains (key))
+                    collapsed.remove (key);
+                else
+                    collapsed.add (key);
+                folder_pick_refresh_expanders (list, collapsed);
+                list.invalidate_filter ();
+            });
+            list.append (pick_row);
         }
+        folder_pick_refresh_expanders (list, collapsed);
 
         list.row_selected.connect ((row) => {
             var pick = row as FolderPickRow;
-            picked = pick != null ? pick.mail_folder : null;
-            dialog.set_response_enabled ("move", picked != null);
+            if (pick == null || !pick.mail_folder.can_accept_messages) {
+                picked = null;
+                dialog.set_response_enabled ("move", false);
+                return;
+            }
+            picked = pick.mail_folder;
+            dialog.set_response_enabled ("move", true);
+        });
+        /* Enter / double-click on a writable folder confirms Move (Reddit QoL). */
+        list.row_activated.connect ((row) => {
+            var pick = row as FolderPickRow;
+            if (pick == null || !pick.mail_folder.can_accept_messages)
+                return;
+            picked = pick.mail_folder;
+            dialog.set_response_enabled ("move", true);
+            dialog.response ("move");
+        });
+
+        search.changed.connect (() => {
+            var query = search.text.strip ();
+            /* Keep the pinned account visible and expand so matches sit under it. */
+            if (account_header != null && query.length > 0 && !account_header.expanded)
+                account_header.expanded = true;
+            /* Search hits show the parent path so omonimi stay distinguishable. */
+            for (int i = 0; list.get_row_at_index (i) != null; i++) {
+                var pick = list.get_row_at_index (i) as FolderPickRow;
+                pick?.set_searching (query.length > 0);
+            }
+            list.invalidate_filter ();
+            list.unselect_all ();
+            picked = null;
+            dialog.set_response_enabled ("move", false);
         });
 
         var scrolled = new Gtk.ScrolledWindow () {
             min_content_height = 280,
+            max_content_height = 400,
+            vexpand = true,
+            hscrollbar_policy = Gtk.PolicyType.NEVER,
             child = list,
         };
-        dialog.extra_child = scrolled;
+
+        var tree = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        tree.add_css_class ("folder-pick-tree");
+        if (account_header != null)
+            tree.append (account_header);
+        tree.append (scrolled);
+
+        var frame = new Gtk.Frame (null) {
+            child = tree,
+        };
+        frame.add_css_class ("folder-pick-frame");
+
+        var content = new Gtk.Box (Gtk.Orientation.VERTICAL, 10);
+        content.append (search);
+        content.append (frame);
+        dialog.extra_child = content;
+
+        Idle.add (() => {
+            search.grab_focus ();
+            return Source.REMOVE;
+        });
 
         var response = yield dialog.choose (parent, null);
         return response == "move" ? picked : null;
+    }
+
+    private static bool folder_pick_row_visible (
+        FolderPickRow target,
+        Gtk.ListBox list,
+        GenericSet<string> collapsed,
+        bool account_expanded,
+        string query
+    ) {
+        if (query.length > 0) {
+            return target.mail_folder.name.casefold ().contains (query)
+                || target.mail_folder.full_name.casefold ().contains (query);
+        }
+        if (!account_expanded)
+            return false;
+
+        Folder? hide_under = null;
+        uint hide_indent = 0;
+        for (int i = 0; list.get_row_at_index (i) != null; i++) {
+            var row = list.get_row_at_index (i) as FolderPickRow;
+            if (row == null)
+                continue;
+
+            var folder = row.mail_folder;
+            if (hide_under != null && folder.indent > hide_indent) {
+                if (row == target)
+                    return false;
+                continue;
+            }
+
+            hide_under = null;
+            if (row == target)
+                return true;
+
+            if (folder.has_children && collapsed.contains (folder.full_name)) {
+                hide_under = folder;
+                hide_indent = folder.indent;
+            }
+        }
+        return true;
+    }
+
+    private static void folder_pick_refresh_expanders (Gtk.ListBox list, GenericSet<string> collapsed) {
+        for (int i = 0; list.get_row_at_index (i) != null; i++) {
+            var row = list.get_row_at_index (i) as FolderPickRow;
+            if (row == null)
+                continue;
+
+            var has_children = false;
+            for (int j = i + 1; list.get_row_at_index (j) != null; j++) {
+                var next = list.get_row_at_index (j) as FolderPickRow;
+                if (next == null)
+                    continue;
+                has_children = next.mail_folder.indent > row.mail_folder.indent;
+                break;
+            }
+            row.update_expander (has_children, !collapsed.contains (row.mail_folder.full_name));
+        }
     }
 
     private void set_message_actions_enabled (bool enabled) {
@@ -9885,6 +10870,70 @@ public class Mail.Window : Adw.ApplicationWindow {
          * row alive after the folder list is rebuilt. */
         row.context_pressed.connect (popup_folder_menu);
         row.expander_toggled.connect (toggle_folder_collapsed);
+
+        var target = new Gtk.DropTarget (typeof (MessageDragPayload), Gdk.DragAction.MOVE);
+        target.preload = true;
+        target.accept.connect (on_folder_drop_accept);
+        target.enter.connect (on_folder_drop_enter);
+        target.leave.connect (on_folder_drop_leave);
+        target.drop.connect (on_folder_drop);
+        row.add_controller (target);
+    }
+
+    private MessageDragPayload? payload_from_drop_target (Gtk.DropTarget target) {
+        var value = target.get_value ();
+        if (value.holds (typeof (MessageDragPayload))) {
+            var payload = value.get_object () as MessageDragPayload;
+            if (payload != null)
+                return payload;
+        }
+        return this.active_message_drag;
+    }
+
+    private bool on_folder_drop_accept (Gtk.DropTarget target, Gdk.Drop drop) {
+        var row = target.widget as FolderRow;
+        if (row == null)
+            return false;
+        return folder_accepts_message_drop (row.folder, payload_from_drop_target (target));
+    }
+
+    private Gdk.DragAction on_folder_drop_enter (Gtk.DropTarget target, double x, double y) {
+        var row = target.widget as FolderRow;
+        if (row == null)
+            return 0;
+
+        var payload = payload_from_drop_target (target);
+        clear_folder_drop_highlights ();
+        if (!folder_accepts_message_drop (row.folder, payload)) {
+            target.reject ();
+            return 0;
+        }
+
+        row.add_css_class ("folder-drop");
+        return Gdk.DragAction.MOVE;
+    }
+
+    private void on_folder_drop_leave (Gtk.DropTarget target) {
+        var row = target.widget as FolderRow;
+        row?.remove_css_class ("folder-drop");
+    }
+
+    private bool on_folder_drop (Gtk.DropTarget target, Value value, double x, double y) {
+        var row = target.widget as FolderRow;
+        row?.remove_css_class ("folder-drop");
+        if (row == null)
+            return false;
+
+        var payload = value.get_object () as MessageDragPayload;
+        if (payload == null)
+            payload = this.active_message_drag;
+        if (!folder_accepts_message_drop (row.folder, payload))
+            return false;
+
+        /* Local optimistic move + deferred registry only — no server flush. */
+        transfer_messages (payload.messages, row.folder, false, false);
+        this.active_message_drag = null;
+        return true;
     }
 
     private bool on_folder_key_pressed (uint keyval) {
@@ -11296,9 +12345,10 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.settings.set_int ("window-width", get_width ().clamp (WINDOW_MIN_WIDTH, 4000));
         this.settings.set_int ("window-height", get_height ().clamp (WINDOW_MIN_HEIGHT, 4000));
         this.settings.set_boolean ("window-maximized", maximized);
-        this.settings.set_boolean ("show-folder-sidebar", this.sidebar_button.active);
-        this.settings.set_int ("folder-pane-width", this.content_split.position.clamp (FOLDER_PANE_MIN, FOLDER_PANE_MAX));
-        this.settings.set_int ("message-pane-width", this.message_split.position.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX));
+        if (ACCOUNT_LIST_PANE_ENABLED)
+            this.settings.set_boolean ("show-folder-sidebar", this.sidebar_button.active);
+        this.settings.set_int ("folder-pane-width", FOLDER_PANE_MAX);
+        this.settings.set_int ("message-pane-width", this.message_pane_preferred.clamp (MESSAGE_PANE_MIN, MESSAGE_PANE_MAX));
     }
 
     private void teardown_on_close () {
@@ -11312,6 +12362,11 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.mail_session?.persist_mutation_registry_now ();
         this.mail_session?.flush_prefetch_progress ();
 
+        cancel_folder_pane_hide ();
+        if (this.folder_pane_width_idle != 0) {
+            Source.remove (this.folder_pane_width_idle);
+            this.folder_pane_width_idle = 0;
+        }
         if (this.sync_source != 0) {
             Source.remove (this.sync_source);
             this.sync_source = 0;
@@ -11373,17 +12428,186 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 }
 
-private class Mail.FolderPickRow : Adw.ActionRow {
+/* Pinned account root for the Move dialog — expand/collapse the folder tree. */
+private class Mail.FolderPickAccountHeader : Gtk.Box {
+    public signal void toggled ();
+
+    private Gtk.Image expander;
+    private bool _expanded = true;
+
+    public bool expanded {
+        get { return this._expanded; }
+        set {
+            if (this._expanded == value)
+                return;
+            this._expanded = value;
+            sync_expander ();
+            toggled ();
+        }
+    }
+
+    public FolderPickAccountHeader (Account account) {
+        Object (orientation: Gtk.Orientation.HORIZONTAL, spacing: 8);
+        add_css_class ("folder-pick-account");
+        hexpand = true;
+        valign = Gtk.Align.CENTER;
+
+        this.expander = new Gtk.Image.from_icon_name ("pan-down-symbolic") {
+            pixel_size = 16,
+            valign = Gtk.Align.CENTER,
+        };
+        this.expander.add_css_class ("folder-expander");
+        this.expander.add_css_class ("dim-label");
+        append (this.expander);
+
+        var icon = new Gtk.Image.from_icon_name ("avatar-default-symbolic");
+        icon.add_css_class ("folder-icon");
+        append (icon);
+
+        var label = new Gtk.Label (account.email ?? account.display_name) {
+            hexpand = true,
+            xalign = 0,
+            ellipsize = Pango.EllipsizeMode.END,
+            use_markup = false,
+        };
+        label.add_css_class ("folder-name");
+        append (label);
+
+        var click = new Gtk.GestureClick ();
+        click.pressed.connect (() => {
+            this.expanded = !this.expanded;
+        });
+        add_controller (click);
+        sync_expander ();
+    }
+
+    private void sync_expander () {
+        this.expander.icon_name = this._expanded ? "pan-down-symbolic" : "pan-end-symbolic";
+        this.expander.tooltip_text = this._expanded ? _("Collapse") : _("Expand");
+        this.tooltip_text = this.expander.tooltip_text;
+    }
+}
+
+/* Same expander + indent model as the sidebar FolderRow. */
+private class Mail.FolderPickRow : Gtk.ListBoxRow {
     public Folder mail_folder { get; construct; }
+    public signal void expander_toggled ();
+
+    private Gtk.Image expander;
+    private Gtk.Box row_box;
+    private Gtk.Label path_label;
+    private bool searching;
 
     public FolderPickRow (Folder folder) {
-        Object (
-            mail_folder: folder,
-            title: folder.name,
-            activatable: true,
-            use_markup: false
-        );
-        add_prefix (new Gtk.Image.from_icon_name (folder.icon_name));
+        Object (mail_folder: folder);
+    }
+
+    construct {
+        /* Click selects; Enter / double-click activates Move when writable. */
+        this.activatable = this.mail_folder.can_accept_messages;
+        this.selectable = this.mail_folder.can_accept_messages;
+        add_css_class ("folder-pick-row");
+        if (!this.mail_folder.can_accept_messages)
+            add_css_class ("folder-pick-disabled");
+
+        this.row_box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8) {
+            hexpand = true,
+            valign = Gtk.Align.CENTER,
+        };
+
+        this.expander = new Gtk.Image.from_icon_name ("pan-end-symbolic") {
+            pixel_size = 16,
+            valign = Gtk.Align.CENTER,
+        };
+        this.expander.add_css_class ("folder-expander");
+        this.expander.add_css_class ("dim-label");
+        var expander_click = new Gtk.GestureClick ();
+        expander_click.set_propagation_phase (Gtk.PropagationPhase.CAPTURE);
+        expander_click.pressed.connect (on_expander_pressed);
+        this.expander.add_controller (expander_click);
+        this.row_box.append (this.expander);
+
+        var icon = new Gtk.Image.from_icon_name (this.mail_folder.icon_name);
+        icon.add_css_class ("folder-icon");
+        this.row_box.append (icon);
+
+        var text = new Gtk.Box (Gtk.Orientation.VERTICAL, 0) {
+            hexpand = true,
+            valign = Gtk.Align.CENTER,
+        };
+        var label = new Gtk.Label (this.mail_folder.name) {
+            hexpand = true,
+            xalign = 0,
+            ellipsize = Pango.EllipsizeMode.END,
+            use_markup = false,
+        };
+        label.add_css_class ("folder-name");
+        text.append (label);
+
+        this.path_label = new Gtk.Label (parent_path_label (this.mail_folder)) {
+            hexpand = true,
+            xalign = 0,
+            ellipsize = Pango.EllipsizeMode.MIDDLE,
+            use_markup = false,
+            visible = false,
+        };
+        this.path_label.add_css_class ("folder-pick-path");
+        this.path_label.add_css_class ("dim-label");
+        text.append (this.path_label);
+        this.row_box.append (text);
+
+        this.child = this.row_box;
+        apply_tree_indent ();
+        this.tooltip_text = this.mail_folder.can_accept_messages
+            ? this.mail_folder.full_name
+            : _("This folder cannot receive messages.");
+        update_expander (this.mail_folder.has_children, true);
+    }
+
+    public void set_searching (bool searching) {
+        if (this.searching == searching)
+            return;
+        this.searching = searching;
+        var path = parent_path_label (this.mail_folder);
+        this.path_label.label = path ?? "";
+        this.path_label.visible = searching && path != null && path.length > 0;
+        /* Flat list while filtering — the path subtitle carries hierarchy. */
+        this.expander.visible = !searching;
+        apply_tree_indent ();
+    }
+
+    private void apply_tree_indent () {
+        this.row_box.margin_start = (!this.searching && this.mail_folder.indent > 0)
+            ? (int) this.mail_folder.indent * 16
+            : 0;
+    }
+
+    private static string? parent_path_label (Folder folder) {
+        var full = folder.full_name ?? "";
+        var name = folder.name ?? "";
+        if (full.length == 0 || full == name)
+            return null;
+        var slash = full.last_index_of_char ('/');
+        if (slash > 0)
+            return full.substring (0, slash).replace ("/", " › ");
+        return full;
+    }
+
+    private void on_expander_pressed (Gtk.GestureClick click, int n_press, double x, double y) {
+        if (!this.mail_folder.has_children)
+            return;
+        expander_toggled ();
+        click.set_state (Gtk.EventSequenceState.CLAIMED);
+    }
+
+    public void update_expander (bool has_children, bool expanded) {
+        this.mail_folder.has_children = has_children;
+        this.expander.opacity = has_children ? 1 : 0;
+        this.expander.can_target = has_children;
+        this.expander.icon_name = expanded ? "pan-down-symbolic" : "pan-end-symbolic";
+        this.expander.tooltip_text = has_children
+            ? (expanded ? _("Collapse") : _("Expand"))
+            : null;
     }
 }
 
@@ -11410,4 +12634,106 @@ private class Mail.PendingTransferUndo {
     public GenericArray<TransferUndoItem> items;
     public Adw.Toast? toast;
     public bool resolved;
+}
+
+public class Mail.MessageDragPaintable : Object, Gdk.Paintable {
+    private Gdk.Texture texture;
+    private int logical_width;
+    private int logical_height;
+
+    public MessageDragPaintable (Gdk.Texture texture, int logical_width, int logical_height) {
+        this.texture = texture;
+        this.logical_width = logical_width;
+        this.logical_height = logical_height;
+    }
+
+    public void snapshot (Gdk.Snapshot snapshot, double width, double height) {
+        var gtk = snapshot as Gtk.Snapshot;
+        if (gtk == null)
+            return;
+        var bounds = Graphene.Rect ();
+        bounds.init (0, 0, (float) width, (float) height);
+        gtk.append_texture (this.texture, bounds);
+    }
+
+    public int get_intrinsic_width () {
+        return this.logical_width;
+    }
+
+    public int get_intrinsic_height () {
+        return this.logical_height;
+    }
+}
+
+/* Wraps the list + reader Gtk.Paned (final in GTK4). The list width is
+ * decided in size_allocate from the real width of this allocation, so window
+ * resizes never lag a frame behind or depend on a guessed window width.
+ * Plain Gtk.Widget on purpose: widgets with a layout manager (Adw.Bin) never
+ * get their size_allocate vfunc called. */
+public class Mail.ListReaderSplit : Gtk.Widget {
+    private Gtk.Widget? _child;
+
+    public Gtk.Widget? child {
+        get { return this._child; }
+        set {
+            if (this._child == value)
+                return;
+            if (this._child != null)
+                this._child.unparent ();
+            this._child = value;
+            if (this._child != null)
+                this._child.set_parent (this);
+        }
+    }
+
+    /* True while GTK lays the split out: position changes are not user drags. */
+    public bool allocating;
+
+    /* Start-child size for this allocation, or -1 to keep the position. */
+    public signal int list_width_for (int size);
+
+    public override void dispose () {
+        this.child = null;
+        base.dispose ();
+    }
+
+    public override Gtk.SizeRequestMode get_request_mode () {
+        return this._child != null
+            ? this._child.get_request_mode ()
+            : Gtk.SizeRequestMode.CONSTANT_SIZE;
+    }
+
+    public override void compute_expand_internal (out bool hexpand_p, out bool vexpand_p) {
+        hexpand_p = this._child != null && this._child.visible
+            && this._child.compute_expand (Gtk.Orientation.HORIZONTAL);
+        vexpand_p = this._child != null && this._child.visible
+            && this._child.compute_expand (Gtk.Orientation.VERTICAL);
+    }
+
+    public override void measure (Gtk.Orientation orientation, int for_size,
+                                  out int minimum, out int natural,
+                                  out int minimum_baseline, out int natural_baseline) {
+        minimum = 0;
+        natural = 0;
+        minimum_baseline = -1;
+        natural_baseline = -1;
+        if (this._child != null && this._child.visible)
+            this._child.measure (orientation, for_size, out minimum, out natural,
+                                 out minimum_baseline, out natural_baseline);
+    }
+
+    public override void size_allocate (int width, int height, int baseline) {
+        if (this._child == null || !this._child.visible)
+            return;
+        var paned = this._child as Gtk.Paned;
+        this.allocating = true;
+        if (paned != null) {
+            var size = paned.orientation == Gtk.Orientation.HORIZONTAL ? width : height;
+            var target = list_width_for (size);
+            if (target >= 0 && target != paned.position)
+                paned.position = target;
+        }
+        this._child.allocate (width, height, baseline, null);
+        this.allocating = false;
+    }
 }

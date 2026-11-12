@@ -77,7 +77,8 @@ public class Mail.Account : Object {
     public string? provider_icon { get; set; }
     public bool enabled { get; set; default = true; }
 
-    public string signature_key {
+    /* Stable id for settings (signatures, rail order). Prefer GOA, then EDS. */
+    public string stable_id {
         owned get {
             if (this.goa_id != null && this.goa_id.length > 0)
                 return this.goa_id;
@@ -87,6 +88,47 @@ public class Mail.Account : Object {
                 return this.uid;
             return this.email ?? "";
         }
+    }
+
+    public string signature_key {
+        owned get {
+            return this.stable_id;
+        }
+    }
+
+    public string order_key {
+        owned get {
+            return this.stable_id;
+        }
+    }
+
+    /** Sort for rail / Preferences: saved order first, then mail-capable, then name. */
+    public static void sort_for_display (GenericArray<Account> accounts, string[] order) {
+        accounts.sort_with_data ((a, b) => {
+            int ia = order_index (order, a.order_key);
+            int ib = order_index (order, b.order_key);
+            if (ia >= 0 || ib >= 0) {
+                if (ia < 0)
+                    return 1;
+                if (ib < 0)
+                    return -1;
+                if (ia != ib)
+                    return ia - ib;
+            }
+            if (a.has_mail != b.has_mail)
+                return a.has_mail ? -1 : 1;
+            return a.display_name.collate (b.display_name);
+        });
+    }
+
+    private static int order_index (string[] order, string key) {
+        if (key.length == 0)
+            return -1;
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == key)
+                return i;
+        }
+        return -1;
     }
 
     public string subtitle {
@@ -275,6 +317,13 @@ public class Mail.Folder : Object {
     public bool is_archive_mailbox {
         get {
             return this.kind == FolderKind.ARCHIVE || this.kind == FolderKind.ALL;
+        }
+    }
+
+    /* Move / copy targets — [Gmail] is a label namespace, not a mailbox. */
+    public bool can_accept_messages {
+        get {
+            return !this.is_virtual_view && !this.is_gmail_namespace;
         }
     }
 
@@ -513,6 +562,9 @@ public class Mail.Message : Object {
     public string from { get; set; }
     public string to { get; set; }
     public string cc { get; set; default = ""; }
+    /* Raw To/Cc headers (with addresses). `to`/`cc` are display-only lists. */
+    public string? to_header { get; set; }
+    public string? cc_header { get; set; }
     public string? from_blob { get; set; }
     public string? to_blob { get; set; }
     /* Lowercase addresses for the People view: the sender, and the To and
@@ -542,5 +594,18 @@ public class Mail.Message : Object {
                 || (this.uid != null && this.uid.has_prefix ("local-sent-"))
                 || (this.uid != null && this.uid.has_prefix ("local-draft-"));
         }
+    }
+}
+
+/* Payload for dragging listed messages onto a folder row. */
+public class Mail.MessageDragPayload : Object {
+    public GenericArray<Message> messages { get; private set; }
+
+    public MessageDragPayload (GenericArray<Message> messages) {
+        this.messages = messages;
+    }
+
+    public uint count {
+        get { return this.messages.length; }
     }
 }

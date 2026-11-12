@@ -1,7 +1,7 @@
 project(
   'letter',
   ['vala', 'c'],
-  version: '1.5.0',
+  version: '1.7.1',
   license: 'GPL-3.0-or-later',
   meson_version: '>= 1.3',
   default_options: [
@@ -46,6 +46,14 @@ ical_dep = dependency('libical-glib')
 goa_dep = dependency('goa-1.0', version: '>= 3.50')
 webkit_dep = dependency('webkitgtk-6.0', version: '>= 2.44')
 gsound_dep = dependency('gsound', version: '>= 1.0')
+soup_dep = dependency('libsoup-3.0', version: '>= 3.0')
+json_glib_dep = dependency('json-glib-1.0', version: '>= 1.6')
+gnutls_dep = dependency('gnutls', version: '>= 3.6')
+tls_issuer_dep = declare_dependency(
+  sources: files('src/tls-issuer.c'),
+  include_directories: include_directories('src'),
+  dependencies: [gio_unix_dep, gnutls_dep],
+)
 
 # Camel 3.58 renamed get_uids→dup_uids, search_by_expression→search_sync,
 # and FolderSearch.util_hash_message_id→search_util_hash_message_id. Ubuntu
@@ -87,6 +95,9 @@ mail_deps = [
   goa_dep,
   webkit_dep,
   gsound_dep,
+  soup_dep,
+  json_glib_dep,
+  tls_issuer_dep,
 ]
 
 prefix = get_option('prefix')

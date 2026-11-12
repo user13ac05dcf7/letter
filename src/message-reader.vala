@@ -28,6 +28,9 @@ public class Mail.MessageReader : Gtk.Box {
     private ulong body_loaded_id;
     private ulong body_failed_id;
     private bool load_remote_images;
+    private TlsImageFetcher? image_fetcher;
+    private Cancellable image_recovery_cancellable = new Cancellable ();
+    private MessageContent? recovered_images;
     private bool document_ready;
     private bool expect_document;
     private Gtk.Box white_cover;
@@ -55,6 +58,7 @@ public class Mail.MessageReader : Gtk.Box {
         vexpand = true;
         this.settings = new Settings (Config.APP_ID);
         this.settings.changed["message-body-background"].connect (on_body_background_changed);
+        this.settings.changed["recover-remote-images"].connect (on_body_background_changed);
         Adw.StyleManager.get_default ().notify["dark"].connect (on_body_background_changed);
         sync_body_chrome_class ();
 
@@ -69,22 +73,19 @@ public class Mail.MessageReader : Gtk.Box {
         this.header_actions.valign = Gtk.Align.CENTER;
         this.header_actions.visible = false;
 
-        this.priority_badge = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 4) {
+        this.priority_badge = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0) {
             visible = false,
             hexpand = false,
             halign = Gtk.Align.START,
             valign = Gtk.Align.CENTER,
+            tooltip_text = _("Important message"),
         };
         this.priority_badge.add_css_class ("priority-badge");
-        var priority_icon = new Gtk.Image.from_icon_name ("mail-mark-important-symbolic");
-        priority_icon.add_css_class ("priority-badge-icon");
-        var priority_label = new Gtk.Label (_("Important message")) {
-            xalign = 0,
-            use_markup = false,
+        var priority_icon = new Gtk.Image.from_icon_name ("mail-mark-important-symbolic") {
+            pixel_size = 16,
         };
-        priority_label.add_css_class ("caption");
+        priority_icon.add_css_class ("priority-badge-icon");
         this.priority_badge.append (priority_icon);
-        this.priority_badge.append (priority_label);
 
         var actions_row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8) {
             hexpand = true,
@@ -93,7 +94,20 @@ public class Mail.MessageReader : Gtk.Box {
         actions_row.add_css_class ("reader-action-row");
         actions_row.append (this.priority_badge);
         actions_row.append (this.header_actions);
-        header.append (actions_row);
+        /* Do not let the action bar / important pill raise the reader pane
+         * (and window) minimum width — clip instead of pushing the close
+         * button off-screen. */
+        var actions_clip = new Gtk.ScrolledWindow () {
+            hexpand = true,
+            vexpand = false,
+            has_frame = false,
+            hscrollbar_policy = Gtk.PolicyType.NEVER,
+            vscrollbar_policy = Gtk.PolicyType.NEVER,
+            propagate_natural_width = false,
+            propagate_natural_height = true,
+        };
+        actions_clip.child = actions_row;
+        header.append (actions_clip);
 
         var meta_block = new Gtk.Box (Gtk.Orientation.VERTICAL, 4) {
             margin_start = 20,
@@ -540,6 +554,74 @@ html, body { margin: 0; height: 100%; background: %s; }
         return view;
     }
 
+    private async void recover_failed_images (uint epoch) {
+        var view = this.webview;
+        var cancellable = this.image_recovery_cancellable;
+        if (view == null || !this.load_remote_images || this.current == null
+            || !this.settings.get_boolean ("recover-remote-images"))
+            return;
+        uint deadline = 0;
+        deadline = Timeout.add_seconds (30, () => {
+            deadline = 0;
+            cancellable.cancel ();
+            return Source.REMOVE;
+        });
+        try {
+            var result = yield view.evaluate_javascript (
+                "JSON.stringify([...new Set(Array.from(document.images).filter(i => i.complete && i.naturalWidth === 0 && (i.currentSrc || i.src).startsWith('https:')).map(i => i.currentSrc || i.src))].slice(0, 32))",
+                -1, null, null, cancellable
+            );
+            if (epoch != this.html_epoch || !this.load_remote_images)
+                return;
+            var parser = new Json.Parser ();
+            parser.load_from_data (result.to_string ());
+            var sources = parser.get_root ().get_array ();
+            if (sources.get_length () == 0)
+                return;
+            var images = new MessageContent () {
+                inline_token = InlineImagePages.reserve (),
+                inline_images = new GenericArray<InlineImage> (),
+            };
+            this.recovered_images = images;
+            if (this.image_fetcher == null)
+                this.image_fetcher = new TlsImageFetcher ();
+            size_t remaining = 16 * 1024 * 1024;
+            for (uint i = 0; i < sources.get_length () && remaining > 0; i++) {
+                if (epoch != this.html_epoch || cancellable.is_cancelled () || !this.load_remote_images)
+                    return;
+                try {
+                    var uri = sources.get_string_element (i);
+                    string mime;
+                    var bytes = yield this.image_fetcher.fetch (uri, cancellable, remaining, out mime);
+                    if (epoch != this.html_epoch || cancellable.is_cancelled () || !this.load_remote_images)
+                        return;
+                    remaining -= bytes.get_size ();
+                    var index = images.inline_images.length;
+                    images.inline_images.add (new InlineImage () { data = bytes, mime_type = mime });
+                    InlineImagePages.publish (images);
+                    var source = Json.to_string (new Json.Node (Json.NodeType.VALUE).init_string (uri), false);
+                    var replacement = Json.to_string (new Json.Node (Json.NodeType.VALUE).init_string (
+                        InlineImagePages.uri (images.inline_token, index)
+                    ), false);
+                    yield view.evaluate_javascript (
+                        "Array.from(document.images).forEach(i => { if ((i.currentSrc || i.src) === %s) { if (i.parentElement.tagName === 'PICTURE') i.parentElement.querySelectorAll('source').forEach(s => s.remove()); i.removeAttribute('srcset'); i.src = %s; } })"
+                            .printf (source, replacement),
+                        -1, null, null, cancellable
+                    );
+                } catch (Error e) {
+                    if (!(e is IOError.CANCELLED))
+                        debug ("Remote image recovery failed");
+                }
+            }
+        } catch (Error e) {
+            if (!(e is IOError.CANCELLED))
+                debug ("Could not inspect failed images");
+        } finally {
+            if (deadline != 0)
+                Source.remove (deadline);
+        }
+    }
+
     private static bool web_process_limited;
 
     /* Site isolation gives every origin in a message its own WebKit process.
@@ -616,6 +698,8 @@ html, body { margin: 0; height: 100%; background: %s; }
     /* Only when the reader itself goes away. Between messages the same
      * view stays mapped and load_html() replaces the document. */
     private void retire_webview () {
+        this.image_recovery_cancellable.cancel ();
+        this.recovered_images = null;
         var old = this.webview;
         if (old == null)
             return;
@@ -884,6 +968,9 @@ html, body { margin: 0; height: 100%; background: %s; }
     /* becomes_ready: a real message (or its error page). The waiting page
      * stays unreadable so Print does not catch the spinner. */
     private void load_reader_html (string html, bool becomes_ready) {
+        this.image_recovery_cancellable.cancel ();
+        this.image_recovery_cancellable = new Cancellable ();
+        this.recovered_images = null;
         var view = this.webview;
         if (view == null)
             return;
@@ -908,6 +995,8 @@ html, body { margin: 0; height: 100%; background: %s; }
                 this.document_ready = true;
             if (this.expect_document && body_follow_dark ())
                 fix_dark_on_dark_text.begin (view, epoch);
+            if (this.expect_document && this.load_remote_images)
+                recover_failed_images.begin (epoch);
             release_white_after_paint (cover, epoch);
         });
         this.body_failed_id = view.load_failed.connect ((event, uri, error) => {

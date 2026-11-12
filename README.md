@@ -1,6 +1,9 @@
 # Letter
 
 [![Validate](https://github.com/stalvatero/letter/actions/workflows/ci.yml/badge.svg)](https://github.com/stalvatero/letter/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/stalvatero/letter?label=release)](https://github.com/stalvatero/letter/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/stalvatero/letter/total?label=downloads)](https://github.com/stalvatero/letter/releases)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](COPYING)
 
 Letter is a GTK 4 and libadwaita email client for the GNOME desktop. It sits next to Calendar and Contacts and uses the same identities: **GNOME Online Accounts** for login, **Evolution Data Server** and Camel for mail.
 
@@ -10,7 +13,7 @@ This is not a GNOME Core application, but it follows the clean GNOME 50 look and
 
 Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 
-**1.5.0** is the current release. Reading, composing, search, notifications, and cache-first sync are in place, with Appearance preferences for theme, reading mode, and the accounts rail. Install the Flatpak from [Releases](https://github.com/stalvatero/letter/releases). Account setup still happens only in GNOME Settings → Online Accounts. There is no in-app IMAP wizard and no mailbox that exists only inside Letter.
+**1.7.1** is the current release. Reading, composing, search, notifications, and cache-first sync are in place, with Appearance preferences for theme, reading mode, and the accounts rail (including custom order and colour). Install the Flatpak from [Releases](https://github.com/stalvatero/letter/releases). Account setup still happens only in GNOME Settings → Online Accounts. There is no in-app IMAP wizard and no mailbox that exists only inside Letter.
 
 ### Available languages
 
@@ -19,13 +22,11 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - German (translation by [Christian Lauinger](https://github.com/ChrisLauinger77))
 - Greek (translation by [Ioannis Argyropoulos](https://github.com/Argy22))
 - Italian
+- Japanese (translated by [Kansa_Fu](https://github.com/Kansa-fu))
 - More will come — translations via pull request are very welcome.
 
 
-
 ## What the current version does:
-
-
 
 ### Accounts and desktop integration
 
@@ -33,7 +34,6 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - No second account wizard and no local unnecessary “On this computer” mailbox
 - Account rail with provider icons and fast switch between the enabled email accounts
 - Per-account HTML multi-signatures, with a starred default for new messages
-
 
 
 ### Reading
@@ -49,7 +49,6 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - Customizable mark as read on selection, after a delay, or never
 
 
-
 ### Sync and local cache
 
 - After the first full sync, Letter prefers the **local cache** for folder lists, headers, bookmarks, and unread badges so the UI stays responsive
@@ -59,8 +58,6 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - Pending soft changes survive a quit, crash or offline working in a small on-disk registry and flush on the next start
 - Sending uses a virtual **Outbox** (retry / edit / cancel);
 
-
-
 ### People
 
 - The folder pane lists the people you exchange mail with, sorted by your most recent exchange, with unread badges; the people button in its header switches to folders and back
@@ -69,13 +66,10 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - Filter the list by name or address; right-click a person to write to them or copy their address
 - Junk, Trash and Drafts are left out
 
-
-
 ### Search
 
 - Search as you type in the current folder
 - Operator localized chips: `from:`, `to:` `cc:`, and **contains:** as the default when you press Enter
-
 
 
 ### Composing
@@ -90,7 +84,6 @@ Feel free to try it out and enjoy the app's potential. All feedback is welcome.
 - Save drafts
 
 
-
 ### Keyboard
 
 Keyboard shortcuts can be viewed by pressing F1 or via the Letter main menu.
@@ -102,7 +95,6 @@ Keyboard shortcuts can be viewed by pressing F1 or via the Letter main menu.
 - Light, dark, or follow the system colour and accent.
 - Sync interval and how many days of bodies to keep locally
 - Preferences page for recommended packages and how to install them
-
 
 
 ## What it needs
@@ -136,13 +128,20 @@ Tip: Use the **Microsoft 365** (Graph) account type, not classic Exchange Web Se
 
 For the full experience, **Hunspell** and **Sushi** are recommended. Hunspell (package name `hunspell` and `hunspell-en_us` or `hunspell-it` or `hunspell-YOUR_LANG`) spell-checks while you compose, so install it with a dictionary for your language. Sushi (package name `sushi` or `gnome-sushi`, check your distro) previews an attachment in place. Letter still composes and sends mail when they are not installed: spell check stays off, and an attachment opens in the default application.
 
+## Known issues
+
+These are limitations of the current stack (GNOME Online Accounts, Evolution Data Server, Camel, and distro library packaging). They are tracked here so they are not mistaken for Letter bugs. They are not fixable in Letter proper until the planned **Letter Engine** (and related Identity work) owns mail and contacts end to end.
+
+- **Microsoft 365 Global Address List (GAL)** — Organisation directory search and autocomplete depend on how Evolution Data Server and Online Accounts expose Exchange / Graph address books. Gaps, empty results, or incomplete GAL behaviour come from that layer, not from Letter’s UI. Letter already prefers the composing account’s books and honours EDS autocomplete flags where they exist; a full, reliable GAL experience needs the Engine.
+- **No `.deb` / `.rpm` (or similar) packages** — Distros ship different versions of WebKit, EDS, Camel, and related libraries. Linking against each system’s stack reintroduces bugs that Letter has already patched or pinned inside the Flatpak. Packaging per distribution would look like Letter regressions when the fault is the host libraries. Flatpak remains the supported install path until the Engine reduces that dependency surface.
+
 ## Install
 
 Download the Flatpak from [Releases](https://github.com/stalvatero/letter/releases). It needs GNOME Platform **50** from Flathub.
 
 ```sh
 flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-flatpak install --user ./Letter-*-x86_64.flatpak
+flatpak install --user ./Letter-*-x86_64.flatpak # change the * with the number of version downloaded
 ```
 
 Add an account in **Settings → Online Accounts**, then open Letter.
@@ -152,7 +151,6 @@ Add an account in **Settings → Online Accounts**, then open Letter.
 ```sh
 flatpak uninstall --user io.github.user13ac05dcf7.Letter
 ```
-
 
 
 ## Build from source

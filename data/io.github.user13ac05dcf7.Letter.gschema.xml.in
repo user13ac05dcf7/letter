@@ -22,6 +22,11 @@
       <summary>Show folder sidebar</summary>
       <description>Whether the folder sidebar is visible on wide layouts.</description>
     </key>
+    <key name="show-mail-folders-pane" type="b">
+      <default>true</default>
+      <summary>Show mail folders pane</summary>
+      <description>Whether the mail folders pane is visible beside the message list.</description>
+    </key>
     <key name="show-people" type="b">
       <default>true</default>
       <summary>Show people</summary>
@@ -33,9 +38,9 @@
       <description>Whether threads you wrote in with two or more others also appear in People as a group.</description>
     </key>
     <key name="folder-pane-width" type="i">
-      <default>280</default>
+      <default>260</default>
       <summary>Folder pane width</summary>
-      <description>Width of the folder list pane in pixels.</description>
+      <description>Preferred folder list pane width hint (Adw clamps between about 180–260sp as a fraction of the window). Under about 920sp the pane autohides.</description>
     </key>
     <key name="last-account-uid" type="s">
       <default>''</default>
@@ -57,20 +62,35 @@
       <summary>Application theme</summary>
       <description>Application appearance: follow the system, light, or dark.</description>
     </key>
+    <key name="account-rail-enabled" type="b">
+      <default>true</default>
+      <summary>Enable accounts rail</summary>
+      <description>Whether the account switcher rail is shown.</description>
+    </key>
     <key name="account-rail" type="s">
       <choices>
         <choice value="default"/>
         <choice value="theme"/>
-        <choice value="hide"/>
+        <choice value="custom"/>
       </choices>
       <default>'default'</default>
-      <summary>Accounts rail</summary>
-      <description>Accounts rail style: accent colour (default), match the window/header chrome, or hide the rail.</description>
+      <summary>Accounts rail colour</summary>
+      <description>Accounts rail colour: system accent (default), follow the window theme, or a custom colour.</description>
+    </key>
+    <key name="account-rail-color" type="s">
+      <default>'#3584e4'</default>
+      <summary>Custom accounts rail colour</summary>
+      <description>Hex colour (#RRGGBB) used when the accounts rail colour mode is custom.</description>
     </key>
     <key name="account-avatars" type="b">
       <default>false</default>
       <summary>Account pictures</summary>
-      <description>Show Google profile pictures in the accounts rail.</description>
+      <description>Show profile pictures or initials in the accounts rail.</description>
+    </key>
+    <key name="account-order" type="as">
+      <default>[]</default>
+      <summary>Account display order</summary>
+      <description>Stable account ids (GOA / source UID) in the order shown in the accounts rail and Preferences. Empty means alphabetical.</description>
     </key>
     <key name="reader-zoom" type="d">
       <default>1.0</default>
@@ -91,7 +111,7 @@
     <key name="message-pane-width" type="i">
       <default>360</default>
       <summary>Message list width</summary>
-      <description>Width or height of the message list next to the reading pane, in pixels.</description>
+      <description>Preferred width of the message list (about 260–560px). The list may shrink below this when the window is narrow, then grow back only up to this preference.</description>
     </key>
     <key name="compose-width" type="i">
       <default>720</default>
@@ -107,6 +127,11 @@
       <default>[]</default>
       <summary>Trusted senders</summary>
       <description>Email addresses allowed to load remote images. Microsoft 365 and Exchange also trust your mailbox, your organization domain, and contacts in the address book.</description>
+    </key>
+    <key name="recover-remote-images" type="b">
+      <default>false</default>
+      <summary>Retry failed remote images</summary>
+      <description>If an image from a trusted sender fails to load because the site’s HTTPS certificate chain is incomplete, download it again with a recovery path that can fetch missing intermediate certificates. Off by default: uses extra network requests and may skip some revocation checks.</description>
     </key>
     <key name="sync-interval" type="i">
       <default>300</default>
