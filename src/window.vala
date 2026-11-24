@@ -14,6 +14,10 @@ public class Mail.Window : Adw.ApplicationWindow {
      * At the 920sp collapse the split is ~870px wide (window − rail); with
      * 0.21 that lands near 180 — the usable minimum before hide. */
     private const int FOLDER_PANE_MIN = 180;
+    /* Room for close/minimize/maximize when Tweaks puts window controls on
+     * the start of the folder-pane HeaderBar (same idea as Files’ wider
+     * sidebar with left decorations). */
+    private const int FOLDER_PANE_MIN_WITH_CONTROLS = 220;
     private const int FOLDER_PANE_MAX = 260;
     private const double FOLDER_PANE_FRACTION = 0.21;
     /* Slightly above 900sp so header window controls are not clipped on
@@ -272,6 +276,10 @@ public class Mail.Window : Adw.ApplicationWindow {
      * eviction so opening the destination before F5 still lists them. */
     private HashTable<string, GenericArray<Message>> optimistic_dest_headers;
     private PendingTransferUndo? pending_transfer_undo;
+    /* One toast for Queued → Sent (HIGH re-queues the previous toast; reuse). */
+    private Adw.Toast? send_lifecycle_toast;
+    /* Sticky “could not send” toasts — dismiss when the same item later sends. */
+    private HashTable<string, Adw.Toast> outbox_attention_toasts;
     private HashTable<string, uint8> collapsed_folders;
     private Gtk.SizeGroup account_header_sizes;
     private uint sync_status_token;
@@ -410,9 +418,17 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* Same pattern as the account OverlaySplitView: breakpoint owns
          * collapsed (animated); we only mirror show-sidebar. */
         this.folder_pane_split.notify["collapsed"].connect (on_folder_pane_collapsed);
-        bind_folder_pane_narrow_breakpoint ();
+        var gtk_settings = Gtk.Settings.get_default ();
+        if (gtk_settings != null) {
+            gtk_settings.notify["gtk-decoration-layout"].connect (() => {
+                sync_folder_pane_for_start_controls ();
+                sync_window_controls ();
+                update_window_width_request ();
+            });
+        }
+        sync_folder_pane_for_start_controls ();
         apply_folder_pane_chrome ();
-        if (this.folder_pane_split.collapsed)
+        if (this.folder_pane_split.collapsed && !window_controls_on_start ())
             on_folder_pane_collapsed ();
         else
             apply_folder_pane (this.settings.get_boolean ("show-mail-folders-pane"));
@@ -439,9 +455,11 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.folder_tree_cache = new HashTable<string, GenericArray<Folder>> (str_hash, str_equal);
         this.hidden_uids = new HashTable<string, uint8> (str_hash, str_equal);
         this.optimistic_dest_headers = new HashTable<string, GenericArray<Message>> (str_hash, str_equal);
+        this.outbox_attention_toasts = new HashTable<string, Adw.Toast> (str_hash, str_equal);
         this.collapsed_folders = new HashTable<string, uint8> (str_hash, str_equal);
         this.account_header_sizes = new Gtk.SizeGroup (Gtk.SizeGroupMode.VERTICAL);
         sync_toolbar_header_sizes ();
+        sync_window_controls ();
         foreach (var key in this.settings.get_strv ("collapsed-folders")) {
             if (key.length > 0)
                 this.collapsed_folders.set (key, 1);
@@ -811,6 +829,35 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.toast_overlay.add_toast (new Adw.Toast (Markup.escape_text (message)) {
             timeout = 5,
         });
+    }
+
+    /* Queued / Sending / Sent share one toast. A second HIGH toast would push
+     * the first into Adw’s queue and it would reappear after timeout. */
+    public void show_send_toast (string message) {
+        var title = Markup.escape_text (message);
+        if (this.send_lifecycle_toast != null) {
+            this.send_lifecycle_toast.title = title;
+            this.send_lifecycle_toast.@ref ();
+            this.toast_overlay.add_toast (this.send_lifecycle_toast);
+            return;
+        }
+
+        var toast = new Adw.Toast (title) {
+            timeout = 5,
+            priority = Adw.ToastPriority.HIGH,
+        };
+        this.send_lifecycle_toast = toast;
+        toast.dismissed.connect (() => {
+            if (this.send_lifecycle_toast == toast)
+                this.send_lifecycle_toast = null;
+        });
+        this.toast_overlay.add_toast (toast);
+    }
+
+    private void dismiss_send_lifecycle_toast () {
+        var toast = this.send_lifecycle_toast;
+        this.send_lifecycle_toast = null;
+        toast?.dismiss ();
     }
 
     public MailSession? peek_session () {
@@ -1749,24 +1796,38 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void on_outbox_item_sent (PendingMail item) {
-        show_toast (_("Sent “%s”").printf (item.display_subject));
+        dismiss_outbox_attention_toast (item.id);
+        show_send_toast (_("Sent “%s”").printf (item.display_subject));
         sync_outbox_folder ();
     }
 
     private void on_outbox_needs_attention (PendingMail item, string message) {
+        dismiss_send_lifecycle_toast ();
+        dismiss_outbox_attention_toast (item.id);
         var toast = new Adw.Toast (
             Markup.escape_text (
                 _("Could not send “%s”: %s").printf (item.display_subject, message)
             )
         ) {
             timeout = 0,
+            priority = Adw.ToastPriority.HIGH,
             button_label = _("Outbox"),
         };
         toast.button_clicked.connect (() => {
             select_outbox_folder ();
         });
+        toast.dismissed.connect (() => {
+            if (this.outbox_attention_toasts.get (item.id) == toast)
+                this.outbox_attention_toasts.remove (item.id);
+        });
+        this.outbox_attention_toasts.set (item.id, toast);
         this.toast_overlay.add_toast (toast);
         sync_outbox_folder ();
+    }
+
+    private void dismiss_outbox_attention_toast (string id) {
+        Adw.Toast? toast = this.outbox_attention_toasts.take (id);
+        toast?.dismiss ();
     }
 
     private void open_pending_compose (PendingMail item, bool from_outbox) {
@@ -2164,7 +2225,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         var folders = folders_from_tree ();
         var seen = new HashTable<string, uint8> (str_hash, str_equal);
         var token = show_sync_status (_("Searching…"));
-        this.search_busy = true;
+        set_search_busy (true, _("Searching…"));
         Utils.sync_log ("search begin “%s”".printf (query_key));
 
         try {
@@ -2216,8 +2277,10 @@ public class Mail.Window : Adw.ApplicationWindow {
 
             hide_sync_status (token);
             token = show_sync_status (_("Searching message bodies…"));
+            set_search_busy (true, _("Searching message bodies…"));
 
-            /* Phase 2 — local body-text index (cached MIME only). */
+            /* Phase 2 — local body-text index (cached MIME only). Yields inside
+             * BodyTextIndex.scan_async so the list stays clickable. */
             for (uint i = 0; i < folders.length; i++) {
                 if (generation != this.search_generation || this.search_text != query_key)
                     return;
@@ -2276,9 +2339,18 @@ public class Mail.Window : Adw.ApplicationWindow {
 
             Utils.sync_log ("search done “%s” → %u hits".printf (query_key, results.length));
         } finally {
-            this.search_busy = false;
+            set_search_busy (false);
             hide_sync_status (token);
         }
+    }
+
+    private void set_search_busy (bool busy, string? tip = null) {
+        this.search_busy = busy;
+        this.conversation_sync_spinner.visible = busy;
+        if (busy && tip != null && tip.length > 0)
+            this.conversation_sync_spinner.tooltip_text = tip;
+        else if (!busy)
+            this.conversation_sync_spinner.tooltip_text = _("Updating…");
     }
 
     private static bool searchable_folder (Folder folder) {
@@ -2400,7 +2472,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             if (clause.kind != SearchFilterKind.TEXT)
                 continue;
             has_text = true;
-            var hit = folded.contains (clause.folded);
+            var hit = SearchQuery.folded_matches_haystack (folded, clause.folded, false);
             if (query.match_any) {
                 if (hit)
                     text_ok = true;
@@ -2544,8 +2616,8 @@ public class Mail.Window : Adw.ApplicationWindow {
         set_search_deeper_bar (false);
 
         var generation = this.search_generation;
-        this.search_busy = true;
         var token = show_sync_status (_("Indexing more local messages…"));
+        set_search_busy (true, _("Indexing more local messages…"));
         uint indexed = 0;
         try {
             var folders = folders_from_tree ();
@@ -2573,7 +2645,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             Utils.sync_log ("search deepen indexed +%u bodies".printf (indexed));
         } finally {
             hide_sync_status (token);
-            this.search_busy = false;
+            set_search_busy (false);
         }
 
         if (generation != this.search_generation || this.search_text != query_key)
@@ -3143,12 +3215,109 @@ public class Mail.Window : Adw.ApplicationWindow {
         }
     }
 
+    /* Multipane chrome: only the leftmost HeaderBar may show start window
+     * controls, and only the rightmost may show end controls. GTK then
+     * places close/minimize/maximize from gtk-decoration-layout (Tweaks).
+     * Without start on the folder pane, left-side decorations vanish. */
+    private void sync_window_controls () {
+        this.account_header.show_start_title_buttons = false;
+        this.account_header.show_end_title_buttons = false;
+        this.folder_header.show_start_title_buttons = false;
+        this.folder_header.show_end_title_buttons = false;
+        this.list_header.show_start_title_buttons = false;
+        this.list_header.show_end_title_buttons = false;
+        this.reader_header.show_start_title_buttons = false;
+        this.reader_header.show_end_title_buttons = false;
+        this.conversation_header.show_start_title_buttons = false;
+        this.conversation_header.show_end_title_buttons = false;
+
+        var left = leftmost_chrome_header ();
+        var right = rightmost_chrome_header ();
+        if (left != null)
+            left.show_start_title_buttons = true;
+        if (right != null)
+            right.show_end_title_buttons = true;
+
+        if (!this.folder_pane_split.collapsed) {
+            this.folder_pane_split.min_sidebar_width = left == this.folder_header
+                ? FOLDER_PANE_MIN_WITH_CONTROLS
+                : FOLDER_PANE_MIN;
+        }
+        sync_folder_pane_for_start_controls ();
+    }
+
+    private Adw.HeaderBar? leftmost_chrome_header () {
+        if (ACCOUNT_LIST_PANE_ENABLED
+            && this.account_pane.visible
+            && this.folder_split.show_sidebar)
+            return this.account_header;
+
+        /* Folder list is the natural left chrome (account list pane is off). */
+        if (this.folder_pane_split.show_sidebar)
+            return this.folder_header;
+
+        if (this.reading_pane_split)
+            return this.list_header;
+        return this.conversation_header;
+    }
+
+    private Adw.HeaderBar? rightmost_chrome_header () {
+        if (this.reading_pane_split && this.reader_mail.visible)
+            return this.reader_header;
+        return this.conversation_header;
+    }
+
+    /* gtk-decoration-layout start segment non-empty → Tweaks put controls left. */
+    private static bool window_controls_on_start () {
+        var settings = Gtk.Settings.get_default ();
+        if (settings == null)
+            return false;
+        var layout = settings.gtk_decoration_layout ?? "";
+        var colon = layout.index_of_char (':');
+        if (colon <= 0)
+            return false;
+        return layout.substring (0, colon).strip ().length > 0;
+    }
+
+    /* With left-side window controls the folder pane must stay docked: if it
+     * collapses, start buttons jump onto the message list and clip it.
+     * ApplicationWindow cannot remove breakpoints — idle the narrow one with
+     * max-width 0 instead. */
+    private void sync_folder_pane_for_start_controls () {
+        bind_folder_pane_narrow_breakpoint ();
+        if (this.folder_pane_narrow_break == null)
+            return;
+
+        if (window_controls_on_start ()) {
+            this.folder_pane_narrow_break.condition = new Adw.BreakpointCondition.length (
+                Adw.BreakpointConditionLengthType.MAX_WIDTH,
+                0,
+                Adw.LengthUnit.SP
+            );
+            cancel_folder_pane_hide ();
+            this.folder_pane_narrow = false;
+            this.folder_pane_overlay_wanted = false;
+            if (this.folder_pane_split.collapsed)
+                this.folder_pane_split.collapsed = false;
+            if (!this.folder_pane_split.show_sidebar)
+                set_folder_pane_sidebar (true);
+            return;
+        }
+
+        this.folder_pane_narrow_break.condition = new Adw.BreakpointCondition.length (
+            Adw.BreakpointConditionLengthType.MAX_WIDTH,
+            FOLDER_PANE_NARROW_SP,
+            Adw.LengthUnit.SP
+        );
+    }
+
     private void apply_account_sidebar (bool expanded) {
         if (!ACCOUNT_LIST_PANE_ENABLED) {
             this.account_pane.visible = false;
             this.folder_split.show_sidebar = false;
             this.sidebar_button.visible = false;
             apply_account_rail ();
+            sync_window_controls ();
             return;
         }
 
@@ -3162,6 +3331,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             ? _("Hide account list")
             : _("Show account list");
         apply_account_rail ();
+        sync_window_controls ();
     }
 
     private void apply_account_rail () {
@@ -5697,33 +5867,29 @@ public class Mail.Window : Adw.ApplicationWindow {
 
     private static size_t estimate_message_bytes (Message message) {
         size_t n = 384;
-        if (message.uid != null)
-            n += message.uid.length;
-        if (message.subject != null)
-            n += message.subject.length;
-        if (message.from != null)
-            n += message.from.length;
-        if (message.to != null)
-            n += message.to.length;
-        if (message.cc != null)
-            n += message.cc.length;
-        if (message.preview != null)
-            n += message.preview.length;
-        if (message.search_blob != null)
-            n += message.search_blob.length;
-        if (message.from_blob != null)
-            n += message.from_blob.length;
-        if (message.to_blob != null)
-            n += message.to_blob.length;
-        if (message.from_address != null)
-            n += message.from_address.length;
-        if (message.recipient_addresses != null)
-            n += message.recipient_addresses.length;
-        if (message.conversation_key != null)
-            n += message.conversation_key.length;
-        if (message.msgid_refs != null)
-            n += message.msgid_refs.length * 8;
+        n += estimate_str_bytes (message.uid);
+        n += estimate_str_bytes (message.subject);
+        n += estimate_str_bytes (message.from);
+        n += estimate_str_bytes (message.to);
+        n += estimate_str_bytes (message.cc);
+        n += estimate_str_bytes (message.preview);
+        n += estimate_str_bytes (message.search_blob);
+        n += estimate_str_bytes (message.from_blob);
+        n += estimate_str_bytes (message.to_blob);
+        n += estimate_str_bytes (message.from_address);
+        n += estimate_str_bytes (message.recipient_addresses);
+        n += estimate_str_bytes (message.conversation_key);
+        if (message.msgid_refs != null && message.msgid_refs.length > 0)
+            n += (size_t) message.msgid_refs.length * 8;
         return n;
+    }
+
+    /* string.length is int; a multi‑GiB corrupt preview can wrap negative and
+     * sign-extend into size_t (~2^64), inverting the cache ceiling (#49). */
+    private static size_t estimate_str_bytes (string? value) {
+        if (value == null || value.length <= 0)
+            return 0;
+        return (size_t) value.length;
     }
 
     private size_t estimate_message_cache_bytes () {
@@ -6029,11 +6195,37 @@ public class Mail.Window : Adw.ApplicationWindow {
         };
     }
 
+    /* Corrupt previews (invalid UTF-8 ×6 amplification) made one Sent index
+     * 400+ MiB; loading it OOMs before any log line (#49). Healthy indexes
+     * for tens of thousands of headers stay well under this. */
+    private const int64 HEADER_LIST_CACHE_MAX_BYTES = 48 * 1024 * 1024;
+    private const int HEADER_LIST_LINE_MAX_BYTES = 8 * 1024;
+
     private static GenericArray<Message>? load_header_list_cache (Account account, Folder folder) {
         var account_uid = account.source_uid ?? account.uid;
         var path = MailSession.header_list_cache_file (account_uid, folder.full_name);
         if (!FileUtils.test (path, FileTest.IS_REGULAR))
             return null;
+
+        try {
+            var info = File.new_for_path (path).query_info (
+                FileAttribute.STANDARD_SIZE,
+                FileQueryInfoFlags.NONE
+            );
+            if (info.get_size () > HEADER_LIST_CACHE_MAX_BYTES) {
+                Utils.sync_log (
+                    "header list cache quarantine “%s” (%lld bytes > %lld); rebuild from Camel".printf (
+                        folder.full_name,
+                        info.get_size (),
+                        HEADER_LIST_CACHE_MAX_BYTES
+                    )
+                );
+                quarantine_header_list_cache (path);
+                return null;
+            }
+        } catch (Error e) {
+            debug ("Could not stat header list cache: %s", e.message);
+        }
 
         string contents;
         try {
@@ -6055,7 +6247,14 @@ public class Mail.Window : Adw.ApplicationWindow {
             var line = lines[i];
             if (line.length == 0)
                 continue;
+            if (line.length > HEADER_LIST_LINE_MAX_BYTES) {
+                line = trim_header_cache_line (line);
+                if (line.length == 0)
+                    continue;
+            }
             var parts = line.split ("\t", 11);
+            if (parts.length > 8 && parts[8].length > Utils.MESSAGE_PREVIEW_INPUT_MAX_BYTES)
+                parts[8] = parts[8].substring (0, Utils.MESSAGE_PREVIEW_INPUT_MAX_BYTES);
             var message = message_from_header_cache_parts (folder, parts, outgoing);
             if (message != null)
                 messages.add (message);
@@ -6064,6 +6263,46 @@ public class Mail.Window : Adw.ApplicationWindow {
         /* Valid file with no rows is a known empty folder. null means the
          * index is missing — the next open must not treat those the same. */
         return messages;
+    }
+
+    private static void quarantine_header_list_cache (string path) {
+        try {
+            move_aside_cache_file (path, path + ".corrupt");
+            var highwater = path + ".highwater";
+            if (FileUtils.test (highwater, FileTest.IS_REGULAR))
+                move_aside_cache_file (highwater, highwater + ".corrupt");
+        } catch (Error e) {
+            warning ("Could not quarantine header list cache %s: %s", path, e.message);
+            try {
+                File.new_for_path (path).delete ();
+            } catch (Error e2) {
+                warning ("Could not delete oversized header list cache %s: %s", path, e2.message);
+            }
+        }
+    }
+
+    private static void move_aside_cache_file (string path, string dest) throws Error {
+        var src = File.new_for_path (path);
+        var dst = File.new_for_path (dest);
+        if (dst.query_exists ())
+            dst.delete ();
+        src.move (dst, FileCopyFlags.OVERWRITE);
+    }
+
+    /* Keep uid/date/flags/… fields; drop an oversized preview so split stays cheap. */
+    private static string trim_header_cache_line (string line) {
+        var parts = line.split ("\t", 11);
+        if (parts.length < 9)
+            return line.substring (0, int.min (line.length, HEADER_LIST_LINE_MAX_BYTES));
+        if (parts[8].length > Utils.MESSAGE_PREVIEW_MAX_BYTES)
+            parts[8] = parts[8].substring (0, Utils.MESSAGE_PREVIEW_MAX_BYTES);
+        var builder = new StringBuilder ();
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0)
+                builder.append_c ('\t');
+            builder.append (parts[i]);
+        }
+        return builder.str;
     }
 
     private static void save_header_list_cache (
@@ -8086,6 +8325,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.reader_mail.visible = true;
         }
 
+        sync_window_controls ();
         update_window_width_request ();
         ensure_split_reader_min ();
     }
@@ -8113,7 +8353,25 @@ public class Mail.Window : Adw.ApplicationWindow {
         return ACCOUNT_RAIL_WIDTH + MESSAGE_PANE_MIN + measure_reader_chrome_min ();
     }
 
+    private int split_shell_floor_with_folders () {
+        return ACCOUNT_RAIL_WIDTH
+            + FOLDER_PANE_MIN_WITH_CONTROLS
+            + MESSAGE_PANE_MIN
+            + measure_reader_chrome_min ();
+    }
+
     private void update_window_width_request () {
+        /* Left-side window controls: keep the folder pane (and its HeaderBar)
+         * so start buttons never land on the message list when the window
+         * shrinks. Floor stays above the former auto-collapse width. */
+        if (window_controls_on_start ()) {
+            width_request = int.max (
+                (int) FOLDER_PANE_NARROW_SP + 1,
+                split_shell_floor_with_folders ()
+            );
+            return;
+        }
+
         /* Hard floor after folders are gone — resize bumps into this instead
          * of clipping menu / minimize / maximize / close (native GTK feel). */
         if (this.reading_pane_split)
@@ -8273,9 +8531,13 @@ public class Mail.Window : Adw.ApplicationWindow {
     }
 
     private void bind_folder_pane_narrow_breakpoint () {
+        if (this.folder_pane_narrow_break != null)
+            return;
+
+        var width = window_controls_on_start () ? 0 : FOLDER_PANE_NARROW_SP;
         var bp = new Adw.Breakpoint (new Adw.BreakpointCondition.length (
             Adw.BreakpointConditionLengthType.MAX_WIDTH,
-            FOLDER_PANE_NARROW_SP,
+            width,
             Adw.LengthUnit.SP
         ));
         /* Only setter — Adw animates collapsed; do not also set it in Vala. */
@@ -8318,6 +8580,20 @@ public class Mail.Window : Adw.ApplicationWindow {
      * briefly so Adw can run dock→overlay, then close the overlay (slide-out).
      * On expand: restore preference — Adw runs overlay/dock slide-in. */
     private void on_folder_pane_collapsed () {
+        if (window_controls_on_start ()) {
+            /* Start controls need the folder HeaderBar — undo any collapse. */
+            cancel_folder_pane_hide ();
+            this.folder_pane_narrow = false;
+            this.folder_pane_overlay_wanted = false;
+            if (this.folder_pane_split.collapsed)
+                this.folder_pane_split.collapsed = false;
+            if (!this.folder_pane_split.show_sidebar)
+                set_folder_pane_sidebar (true);
+            sync_window_controls ();
+            update_window_width_request ();
+            return;
+        }
+
         if (this.folder_pane_split.collapsed) {
             this.folder_pane_narrow = true;
             this.folder_pane_overlay_wanted = false;
@@ -8327,7 +8603,8 @@ public class Mail.Window : Adw.ApplicationWindow {
                     this.folder_pane_hide_source = 0;
                     if (this.tearing_down
                         || !this.folder_pane_split.collapsed
-                        || this.folder_pane_overlay_wanted)
+                        || this.folder_pane_overlay_wanted
+                        || window_controls_on_start ())
                         return Source.REMOVE;
                     set_folder_pane_sidebar (false);
                     return Source.REMOVE;
@@ -8341,6 +8618,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.folder_pane_overlay_wanted = false;
             apply_folder_pane (this.settings.get_boolean ("show-mail-folders-pane"));
         }
+        sync_window_controls ();
         update_window_width_request ();
     }
 
@@ -8359,6 +8637,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.folder_pane_split.min_sidebar_width = FOLDER_PANE_MIN;
         this.folder_pane_split.max_sidebar_width = FOLDER_PANE_MAX;
         this.folder_pane_split.sidebar_width_fraction = FOLDER_PANE_FRACTION;
+        sync_window_controls ();
     }
 
     private void sync_folder_pane_button (bool show) {
@@ -8399,6 +8678,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             this.folder_pane_overlay_wanted = show;
         else
             this.settings.set_boolean ("show-mail-folders-pane", show);
+        sync_window_controls ();
     }
 
     private void on_folder_pane_toggled () {
@@ -8406,6 +8686,12 @@ public class Mail.Window : Adw.ApplicationWindow {
             return;
 
         var show = this.folder_pane_button.active;
+        /* Left-side window controls live on the folder HeaderBar — keep it. */
+        if (window_controls_on_start () && !show) {
+            sync_folder_pane_button (true);
+            return;
+        }
+
         this.folder_pane_button.tooltip_text = show
             ? _("Hide folders")
             : _("Show folders");
@@ -8419,6 +8705,7 @@ public class Mail.Window : Adw.ApplicationWindow {
         this.folder_pane_overlay_wanted = false;
         this.folder_pane_split.show_sidebar = show;
         this.settings.set_boolean ("show-mail-folders-pane", show);
+        sync_window_controls ();
         update_window_width_request ();
         ensure_split_reader_min ();
     }
@@ -8435,6 +8722,54 @@ public class Mail.Window : Adw.ApplicationWindow {
         var popover = new Gtk.PopoverMenu.from_model (this.menu_button.menu_model);
         popover.add_child (new ThemeSelector (this.settings), "theme");
         this.menu_button.popover = popover;
+
+        var app = get_application () as Application;
+        if (app != null)
+            app.notify["update-available"].connect (sync_update_badges);
+        sync_update_badges ();
+    }
+
+    /* Keep the native MenuButton / GMenu chrome; badge via CSS + label prefix. */
+    private void sync_update_badges () {
+        var app = get_application () as Application;
+        var show = app != null && app.update_available;
+        if (show)
+            this.menu_button.add_css_class ("has-update-badge");
+        else
+            this.menu_button.remove_css_class ("has-update-badge");
+        this.menu_button.tooltip_text = show
+            ? _("Main Menu — update available")
+            : _("Main Menu");
+        set_updates_menu_badged (show);
+    }
+
+    private void set_updates_menu_badged (bool badged) {
+        var root = this.menu_button.menu_model as Menu;
+        if (root == null)
+            return;
+
+        var plain = _("Check for _Updates…");
+        /* Red circle keeps native GMenu weight/alignment (no custom Button). */
+        var marked = "🔴 " + _("Check for _Updates…");
+        for (int s = 0; s < root.get_n_items (); s++) {
+            var section = root.get_item_link (s, Menu.LINK_SECTION) as Menu;
+            if (section == null)
+                continue;
+            for (int i = 0; i < section.get_n_items (); i++) {
+                var action = section.get_item_attribute_value (i, Menu.ATTRIBUTE_ACTION, VariantType.STRING);
+                if (action == null || action.get_string () != "app.check-updates")
+                    continue;
+                var label = section.get_item_attribute_value (i, Menu.ATTRIBUTE_LABEL, VariantType.STRING);
+                var current = label != null ? label.get_string () : "";
+                var want = badged ? marked : plain;
+                if (current == want)
+                    return;
+                var item = new MenuItem (want, "app.check-updates");
+                section.remove (i);
+                section.insert_item (i, item);
+                return;
+            }
+        }
     }
 
     private void on_fullscreen () {
@@ -9677,6 +10012,8 @@ public class Mail.Window : Adw.ApplicationWindow {
             items = undo_items,
         };
         this.pending_transfer_undo = pending;
+        /* Do not push Queued/Sent into Adw’s toast queue behind Undo. */
+        dismiss_send_lifecycle_toast ();
         var toast = new Adw.Toast (transfer_undo_title (destination, moved)) {
             button_label = _("Undo"),
             timeout = 3,
@@ -10507,14 +10844,21 @@ public class Mail.Window : Adw.ApplicationWindow {
             picked = pick.mail_folder;
             dialog.set_response_enabled ("move", true);
         });
-        /* Enter / double-click on a writable folder confirms Move (Reddit QoL). */
+        /* Enter / double-click on a writable folder confirms Move (Reddit QoL).
+         * Emit the AlertDialog response outside the ListBox activate/key
+         * handler — calling response() synchronously left the dialog open
+         * after the move (#43). */
         list.row_activated.connect ((row) => {
             var pick = row as FolderPickRow;
             if (pick == null || !pick.mail_folder.can_accept_messages)
                 return;
             picked = pick.mail_folder;
             dialog.set_response_enabled ("move", true);
-            dialog.response ("move");
+            Idle.add (() => {
+                dialog.response ("move");
+                dialog.force_close ();
+                return Source.REMOVE;
+            });
         });
 
         search.changed.connect (() => {
@@ -11466,7 +11810,7 @@ public class Mail.Window : Adw.ApplicationWindow {
             var app = get_application () as Application;
             if (id != null)
                 app?.outbox?.request_send_now (id);
-            show_toast (_("Sending…"));
+            show_send_toast (_("Sending…"));
         });
         add_ctx_action (group, "move", !outbox, () => on_move ());
         add_ctx_action (group, "archive", !outgoing && !archived && !outbox, () => on_archive ());

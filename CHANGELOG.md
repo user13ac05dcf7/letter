@@ -7,7 +7,7 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 How we maintain it:
 
-- During development, add bullets under **[Unreleased](https://github.com/stalvatero/letter/compare/v1.7.1...HEAD)**.
+- During development, add bullets under **[Unreleased](https://github.com/stalvatero/letter/compare/v1.8.0...HEAD)**.
 - On each release (rc or stable), rename that section to the version + date, and
 copy a short summary into `data/io.github.stalvatero.Letter.metainfo.xml.in.in`
 (`<releases>`, leave msgstr empty in po files — keep release notes in English)
@@ -17,7 +17,58 @@ refactors unless they affect behaviour.
 
 
 
-## [Unreleased](https://github.com/stalvatero/letter/compare/v1.7.1...HEAD)
+## [Unreleased](https://github.com/stalvatero/letter/compare/v1.8.0...HEAD)
+
+## [1.8.0](https://github.com/stalvatero/letter/compare/v1.7.1...v1.8.0) - 2026-11-23
+
+### Translations
+
+- Spanish translation by [msc-ffs](https://github.com/msc-ffs).
+
+### Changed
+
+- Search: Space no longer creates chips. Enter runs the query with the live
+  draft (no “Contains” chip). Only From:/To: suggestions pin a chip. Chips
+  stay left-aligned; overflow pans with swipe/wheel and never shows a
+  scrollbar (`GTK_POLICY_EXTERNAL`). From:/To: suggestions hide once the
+  draft contains a space. Suggestion popover anchors under the whole field.
+- Once per session, Letter quietly checks for updates after startup settles.
+  If a newer release exists, a red dot appears on the main menu button and
+  beside **Check for Updates…**; opening that entry shows the release dialog
+  and clears the badges.
+
+### Fixed
+
+- Search after Enter no longer freezes the message list for seconds while
+  scanning body-text indexes: the scan yields to the main loop, and the
+  header `Adw.Spinner` stays visible until the search (headers + bodies)
+  finishes.
+- Outbox send toasts (Queued → Sent) reuse one high-priority toast so
+  “Queued” does not reappear after “Sent”, and archive Undo dismisses the
+  send toast instead of parking it for minutes. A later successful send
+  dismisses a stale “could not send” toast.
+- Compose window no longer flashes a white editor while opening in dark mode
+  (placeholder/stack stayed hard-coded light until WebKit finished loading).
+- Invalid UTF-8 in Camel / header-cache previews no longer grows ×6 on every
+  sanitize pass (`collapse_spaces` was re-encoding `(unichar)-1` as six bad
+  bytes). Previews are hard-capped; oversized header-list files are
+  quarantined so startup cannot OOM (#49).
+- Compose paste inserts clipboard images again (screenshots, etc.). Ctrl+V /
+  Paste read the image from GTK’s clipboard first; WebKit’s DOM paste alone
+  often sees empty `clipboardData` on modern GNOME/Wayland (#47).
+- Compose Ctrl+V / Paste attaches files copied from the file manager instead of
+  inserting their path as plain text (e.g. `/home/…/Attachment.pdf`).
+- Attachment preview works when Sushi is the Flatpak NautilusPreviewer (e.g.
+  Fedora atomic): Letter exports the file through the Documents portal before
+  `ShowFile`, so the sandboxed previewer can read it (#45).
+- Move to Folder: Enter / double-click on a folder closes the dialog after the
+  move (it previously moved but left the modal open) (#43).
+- Window controls (close / minimize / maximize) stay visible when GNOME Tweaks
+  moves them to the left: they use the folder-pane HeaderBar on the start side
+  (and the reader / unified header on the end), like other multipane GNOME apps.
+  With left-side controls the folder pane no longer auto-collapses on a narrow
+  window (and cannot be hidden), so the message list is not clipped under the
+  buttons.
 
 ## [1.7.1](https://github.com/stalvatero/letter/compare/v1.7.0...v1.7.1) - 2026-10-23
 

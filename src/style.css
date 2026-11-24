@@ -589,6 +589,14 @@ headerbar button.people-toggle:checked {
   background: #ffffff;
 }
 
+.compose-follow-dark.compose-body,
+.compose-follow-dark .compose-body-stack,
+.compose-follow-dark .compose-body-placeholder,
+.compose-follow-dark webview.compose-body {
+  background: #1e1e1e;
+  background-color: #1e1e1e;
+}
+
 webview.message-body {
   background: #ffffff;
   background-color: #ffffff;
@@ -970,8 +978,11 @@ button.recipient-more label {
   box-shadow: none;
 }
 
-.mail-search-flow-scroll scrollbar.horizontal {
-  min-height: 4px;
+/* Scrollbar policy is EXTERNAL — never paint a bar (swipe/wheel still pan). */
+.mail-search-flow-scroll scrollbar {
+  opacity: 0;
+  min-width: 0;
+  min-height: 0;
 }
 
 text.mail-search-input {
@@ -1065,4 +1076,28 @@ text.mail-search-input:focus-within {
 
 .search-suggest-row {
   padding: 6px 8px;
+}
+
+/* Quiet idle update check — red dot on the native header MenuButton only.
+ * Do not set MenuButton.child (that made the button look permanently pressed). */
+menubutton.has-update-badge > button {
+  background-image: radial-gradient(
+    circle 3.5px at calc(100% - 7px) 7px,
+    var(--error-color) 0%,
+    var(--error-color) 99%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
+}
+
+menubutton.has-update-badge > button:hover,
+menubutton.has-update-badge > button:active,
+menubutton.has-update-badge > button:checked {
+  background-image: radial-gradient(
+    circle 3.5px at calc(100% - 7px) 7px,
+    var(--error-color) 0%,
+    var(--error-color) 99%,
+    transparent 100%
+  );
+  background-repeat: no-repeat;
 }
